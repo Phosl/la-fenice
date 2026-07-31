@@ -23,6 +23,7 @@ export function HomePage({ content }: HomePageProps) {
     url: siteIdentity.siteUrl,
     email: siteIdentity.email,
     telephone: siteIdentity.phone.display,
+    logo: `${siteIdentity.siteUrl}/logo-la-fenice.svg`,
     image: `${siteIdentity.siteUrl}${page.hero.image.src}`,
     address: {
       "@type": "PostalAddress",

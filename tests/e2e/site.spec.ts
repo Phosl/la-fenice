@@ -137,6 +137,40 @@ test("German and Cyrillic pages fit the active viewport", async ({ page }) => {
   }
 });
 
+test("location pages reveal the verified La Fenice map and directions", async ({ page }) => {
+  const directionsUrl =
+    "https://www.google.com/maps/dir/?api=1&destination=40.6277721%2C14.4937307";
+  const embedUrl =
+    "https://www.google.com/maps?q=40.6277721,14.4937307&z=15&output=embed";
+
+  await page.route("https://www.google.com/maps**", (route) => route.abort());
+
+  for (const [path, openMapLabel, directionsLabel] of [
+    ["/location", "Open interactive map", "Get directions"],
+    ["/it/posizione", "Apri la mappa interattiva", "Ottieni indicazioni"],
+    ["/de/lage", "Interaktive Karte öffnen", "Route planen"],
+    ["/ru/raspolozhenie", "Открыть интерактивную карту", "Построить маршрут"],
+  ] as const) {
+    await page.goto(path);
+    await expectHydrated(page);
+
+    const iframe = page.locator(".map-reveal iframe");
+    await expect(iframe).toHaveCount(0);
+    await expect(page.getByRole("link", { name: directionsLabel })).toHaveAttribute(
+      "href",
+      directionsUrl,
+    );
+    await expect(
+      page.getByRole("link", {
+        name: "Via Guglielmo Marconi 4, 84017 Positano (SA), Italy",
+      }),
+    ).toHaveAttribute("href", directionsUrl);
+
+    await page.getByRole("button", { name: openMapLabel }).click();
+    await expect(iframe).toHaveAttribute("src", embedUrl);
+  }
+});
+
 test("advertises all experiences with direct email requests", async ({ page }) => {
   await page.goto("/it");
   await expectHydrated(page);

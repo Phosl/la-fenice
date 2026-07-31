@@ -144,7 +144,7 @@ export function SiteHeader({
       >
         <div className="container site-header__inner">
           <Link aria-label="La Fenice Positano" className="site-header__brand" href={getLocalizedPath("home", locale)}>
-            <LogoLockup compact />
+            <LogoLockup adaptive compact />
           </Link>
 
           <nav aria-label={primaryNavigationLabel} className="desktop-nav">

@@ -14,6 +14,7 @@ import {
   supportedLocales,
   switchLocalePath,
 } from "./routes";
+import { siteIdentity } from "./site";
 import type { GalleryImage } from "./types";
 
 const isGalleryImage = (value: unknown): value is GalleryImage => {
@@ -116,6 +117,25 @@ describe("localized content contract", () => {
       expect(privacy.metadata.robots).toBe("noindex");
       expect(terms.metadata.robots).toBe("noindex");
     }
+  });
+});
+
+describe("audited site identity", () => {
+  it("uses the verified La Fenice address and Google Maps listing", () => {
+    expect(siteIdentity.address.street).toBe("Via Guglielmo Marconi 4");
+    expect(siteIdentity.address.formatted).toBe(
+      "Via Guglielmo Marconi 4, 84017 Positano (SA), Italy",
+    );
+    expect(siteIdentity.coordinates).toEqual({
+      latitude: 40.6277721,
+      longitude: 14.4937307,
+    });
+    expect(siteIdentity.maps.place).toBe(
+      "https://www.google.com/maps?cid=7908776521279981555",
+    );
+    expect(siteIdentity.maps.directions).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=40.6277721%2C14.4937307",
+    );
   });
 });
 

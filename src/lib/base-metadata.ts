@@ -16,8 +16,8 @@ export function buildBaseMetadata(locale: Locale): Metadata {
     description: homeMetadata.description,
     manifest: "/site.webmanifest",
     icons: {
-      icon: "/favicon.svg",
-      apple: "/favicon.svg",
+      icon: "/logo-la-fenice.svg",
+      apple: "/logo-la-fenice.svg",
     },
   };
 }

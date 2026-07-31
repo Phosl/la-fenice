@@ -205,53 +205,28 @@ img {
 }
 
 /* Brand and intro */
-.phoenix-mark {
-  display: block;
-}
-
 .logo-lockup {
-  align-items: center;
-  color: var(--cobalt);
-  display: inline-flex;
-  gap: 10px;
-  line-height: 1;
+  display: inline-block;
+  line-height: 0;
+  position: relative;
+  width: 190px;
 }
 
-.logo-lockup__mark {
-  height: 66px;
-  width: 105px;
+.logo-lockup__asset {
+  display: block;
+  height: auto;
+  transition: opacity 180ms ease;
+  width: 100%;
 }
 
-.logo-lockup__words {
-  display: grid;
-  gap: 2px;
+.logo-lockup--compact {
+  width: 112px;
 }
 
-.logo-lockup__name {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  letter-spacing: -0.04em;
-  white-space: nowrap;
-}
-
-.logo-lockup__place {
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-}
-
-.logo-lockup--compact .logo-lockup__mark {
-  height: 44px;
-  width: 68px;
-}
-
-.logo-lockup--compact .logo-lockup__name {
-  font-size: 1.35rem;
-}
-
-.logo-lockup--inverse {
-  color: white;
+.logo-lockup--adaptive .logo-lockup__asset--white {
+  inset: 0;
+  opacity: 0;
+  position: absolute;
 }
 
 .logo-intro {
@@ -289,34 +264,9 @@ img {
 
 .logo-intro .logo-lockup {
   animation: intro-lockup 1.2s cubic-bezier(.2, .75, .2, 1) both;
-  flex-direction: column;
-  gap: 16px;
   position: relative;
+  width: min(72vw, 520px);
   z-index: 1;
-}
-
-.logo-intro .logo-lockup__mark {
-  height: min(28vw, 190px);
-  width: min(50vw, 340px);
-}
-
-.logo-intro .logo-lockup__words {
-  justify-items: center;
-}
-
-.logo-intro .logo-lockup__name {
-  font-size: clamp(2.2rem, 6vw, 4.5rem);
-}
-
-.logo-intro .logo-lockup__place {
-  font-size: 0.68rem;
-}
-
-.logo-intro .phoenix-mark__drawing path,
-.logo-intro .phoenix-mark__drawing circle {
-  animation: draw-phoenix 900ms 100ms ease-out both;
-  stroke-dasharray: 620;
-  stroke-dashoffset: 620;
 }
 
 .logo-intro__skip {
@@ -332,10 +282,6 @@ img {
   position: absolute;
   text-transform: uppercase;
   z-index: 2;
-}
-
-@keyframes draw-phoenix {
-  to { stroke-dashoffset: 0; }
 }
 
 @keyframes intro-lockup {
@@ -399,8 +345,12 @@ img {
   text-decoration: none;
 }
 
-.site-header[data-overlay="true"][data-condensed="false"] .logo-lockup {
-  color: white;
+.site-header[data-overlay="true"][data-condensed="false"] .logo-lockup--adaptive .logo-lockup__asset--blue {
+  opacity: 0;
+}
+
+.site-header[data-overlay="true"][data-condensed="false"] .logo-lockup--adaptive .logo-lockup__asset--white {
+  opacity: 1;
 }
 
 .desktop-nav {
@@ -2118,9 +2068,7 @@ img {
 
 @media (max-width: 560px) {
   :root { --container: calc(100vw - 28px); --header-height: 72px; }
-  .logo-lockup--compact .logo-lockup__mark { height: 38px; width: 58px; }
-  .logo-lockup--compact .logo-lockup__name { font-size: 1.15rem; }
-  .logo-lockup--compact .logo-lockup__place { font-size: .48rem; }
+  .logo-lockup--compact { width: 90px; }
   .display-title { font-size: clamp(3.4rem, 18vw, 5.1rem); }
   .section-title { font-size: clamp(2.6rem, 13vw, 4rem); }
   .home-hero__content { gap: 22px; }

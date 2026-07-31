@@ -1,8 +1,9 @@
 import type { SiteIdentity } from "./types";
 
-const latitude = 40.6281394;
-const longitude = 14.4899299;
+const latitude = 40.6277721;
+const longitude = 14.4937307;
 const mapQuery = encodeURIComponent(`${latitude},${longitude}`);
+const googleMapsCid = "7908776521279981555";
 
 /**
  * Non-localized, audited business details from the current public website.
@@ -20,13 +21,13 @@ export const siteIdentity = {
   },
   vatNumber: "01222840652",
   address: {
-    street: "Via Marconi 4",
+    street: "Via Guglielmo Marconi 4",
     postalCode: "84017",
     locality: "Positano",
     province: "SA",
     region: "Campania",
     countryCode: "IT",
-    formatted: "Via Marconi 4, 84017 Positano (SA), Italy",
+    formatted: "Via Guglielmo Marconi 4, 84017 Positano (SA), Italy",
   },
   coordinates: {
     latitude,
@@ -45,7 +46,7 @@ export const siteIdentity = {
     },
   ],
   maps: {
-    place: `https://www.google.com/maps/search/?api=1&query=${mapQuery}`,
+    place: `https://www.google.com/maps?cid=${googleMapsCid}`,
     directions: `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`,
   },
   photographyCredit: "Tim Evancook",

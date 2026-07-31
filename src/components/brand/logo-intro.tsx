@@ -26,7 +26,7 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
   }, [dismiss]);
 
   return (
-    <div aria-label="La Fenice Positano" aria-live="polite" className="logo-intro" role="status">
+    <div className="logo-intro">
       <div className="logo-intro__halo" />
       <LogoLockup />
       <button className="logo-intro__skip" onClick={dismiss} type="button">
