@@ -137,6 +137,65 @@ test("German and Cyrillic pages fit the active viewport", async ({ page }) => {
   }
 });
 
+test("mobile heroes keep iPhone gutters without overlapping the sticky CTA", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-360", "Dedicated iPhone geometry check");
+
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await expectHydrated(page);
+
+    const homeGeometry = await page.evaluate(() => {
+      const content = document.querySelector<HTMLElement>(".home-hero__content");
+      const stickyCta = document.querySelector<HTMLElement>(".mobile-availability");
+      if (!content || !stickyCta) throw new Error("Mobile home hero geometry is unavailable");
+
+      const contentRect = content.getBoundingClientRect();
+      const stickyCtaRect = stickyCta.getBoundingClientRect();
+      return {
+        contentLeft: contentRect.left,
+        contentRight: contentRect.right,
+        contentBottom: contentRect.bottom,
+        stickyCtaTop: stickyCtaRect.top,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(homeGeometry.contentLeft).toBeGreaterThanOrEqual(20);
+    expect(homeGeometry.viewportWidth - homeGeometry.contentRight).toBeGreaterThanOrEqual(20);
+    expect(homeGeometry.stickyCtaTop - homeGeometry.contentBottom).toBeGreaterThanOrEqual(12);
+
+    await page.goto("/de/verfuegbarkeit");
+    await expectHydrated(page);
+
+    const pageGeometry = await page.evaluate(() => {
+      const content = document.querySelector<HTMLElement>(".page-hero__content");
+      const title = document.querySelector<HTMLElement>(".page-hero .display-title");
+      if (!content || !title) throw new Error("Mobile page hero geometry is unavailable");
+
+      const contentRect = content.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      return {
+        contentLeft: contentRect.left,
+        contentRight: contentRect.right,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        titleLeft: titleRect.left,
+        titleRight: titleRect.right,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(pageGeometry.contentLeft).toBeGreaterThanOrEqual(20);
+    expect(pageGeometry.viewportWidth - pageGeometry.contentRight).toBeGreaterThanOrEqual(20);
+    expect(pageGeometry.titleLeft).toBeGreaterThanOrEqual(20);
+    expect(pageGeometry.titleRight).toBeLessThanOrEqual(pageGeometry.viewportWidth - 20);
+    expect(pageGeometry.overflow).toBeLessThanOrEqual(1);
+  }
+});
+
 test("location pages reveal the verified La Fenice map and directions", async ({ page }) => {
   const directionsUrl =
     "https://www.google.com/maps/dir/?api=1&destination=40.6277721%2C14.4937307";
