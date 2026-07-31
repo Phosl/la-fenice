@@ -66,6 +66,15 @@ describe("localized content contract", () => {
     }
   });
 
+  it("keeps the approved garden-to-sea concept aligned across locales", () => {
+    expect(getContent("en").pages.home.hero.title).toBe(
+      "From the garden to the sea",
+    );
+    expect(getContent("it").pages.home.hero.title).toBe(
+      "Dal giardino al mare",
+    );
+  });
+
   it("provides meaningful alt text and resolvable local fallback images", () => {
     for (const content of Object.values(siteContent)) {
       const images = collectImages(content.pages);
