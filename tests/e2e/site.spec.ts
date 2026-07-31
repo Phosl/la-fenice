@@ -1,9 +1,27 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function expectHydrated(page: Page) {
-  await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true", {
-    timeout: 15_000,
-  });
+  try {
+    await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 15_000,
+    });
+  } catch (error) {
+    const [pageErrors, consoleMessages] = await Promise.all([
+      page.pageErrors(),
+      page.consoleMessages(),
+    ]);
+    const diagnostics = [
+      ...pageErrors.map((entry) => `pageerror: ${entry.message}`),
+      ...consoleMessages
+        .filter((entry) => entry.type() === "error")
+        .map((entry) => `console: ${entry.text()}`),
+    ];
+
+    throw new Error(
+      `Client hydration did not complete.${diagnostics.length ? `\n${diagnostics.join("\n")}` : " No browser error was reported."}`,
+      { cause: error },
+    );
+  }
 }
 
 test.beforeEach(async ({ page }) => {
