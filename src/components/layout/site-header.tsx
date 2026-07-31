@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { LogoLockup } from "@/components/brand/logo-lockup";
 import { CloseIcon, MenuIcon } from "@/components/ui/icons";
 import { switchLocalePath } from "@/lib/content/routes";
@@ -33,6 +33,21 @@ export function SiteHeader({
   const toggleRef = useRef<HTMLButtonElement>(null);
   const otherLocale: Locale = locale === "en" ? "it" : "en";
   const localeHref = switchLocalePath(pathname, otherLocale);
+
+  const handleLocaleChange = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    window.location.assign(localeHref);
+  };
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -110,7 +125,12 @@ export function SiteHeader({
           </Link>
           <div className="mobile-nav__meta">
             <span>{changeLanguageLabel}</span>
-            <a href={localeHref} hrefLang={otherLocale} tabIndex={menuOpen ? 0 : -1}>
+            <a
+              href={localeHref}
+              hrefLang={otherLocale}
+              onClick={handleLocaleChange}
+              tabIndex={menuOpen ? 0 : -1}
+            >
               {otherLocale.toUpperCase()}
             </a>
           </div>
@@ -139,7 +159,12 @@ export function SiteHeader({
               </Link>
             ))}
             <span className="language-switcher">
-              <a aria-label={`${changeLanguageLabel}: ${otherLocale.toUpperCase()}`} href={localeHref} hrefLang={otherLocale}>
+              <a
+                aria-label={`${changeLanguageLabel}: ${otherLocale.toUpperCase()}`}
+                href={localeHref}
+                hrefLang={otherLocale}
+                onClick={handleLocaleChange}
+              >
                 {otherLocale.toUpperCase()}
               </a>
             </span>
