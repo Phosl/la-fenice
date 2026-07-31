@@ -17,6 +17,8 @@ export function LogoIntro() {
   }, []);
 
   useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+
     if (document.documentElement.classList.contains("intro-seen")) return;
 
     const timer = window.setTimeout(dismiss, INTRO_DURATION_MS);

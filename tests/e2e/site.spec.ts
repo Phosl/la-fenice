@@ -1,4 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function expectHydrated(page: Page) {
+  await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true", {
+    timeout: 15_000,
+  });
+}
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -8,6 +14,7 @@ test.beforeEach(async ({ page }) => {
 
 test("renders the English narrative and switches to Italian", async ({ page }) => {
   await page.goto("/");
+  await expectHydrated(page);
   await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://www.lafenicepositano.com");
 
@@ -24,6 +31,7 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
 
 test("opens and closes the room gallery lightbox", async ({ page }) => {
   await page.goto("/rooms");
+  await expectHydrated(page);
   const firstImage = page.getByRole("button", { name: /^view gallery:/i }).first();
   await firstImage.click();
   const lightbox = page.locator("dialog.lightbox[open]");
@@ -52,6 +60,7 @@ test("intro can be skipped and stays dismissed for the session", async ({ browse
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("/");
+  await expectHydrated(page);
   const intro = page.locator(".logo-intro");
   if (await intro.isVisible()) {
     await page.locator(".logo-intro__skip").click();
