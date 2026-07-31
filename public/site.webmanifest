@@ -1,0 +1,9 @@
+{
+  "name": "La Fenice Positano",
+  "short_name": "La Fenice",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4efe5",
+  "theme_color": "#153d68",
+  "icons": []
+}
