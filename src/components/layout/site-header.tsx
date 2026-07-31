@@ -110,9 +110,9 @@ export function SiteHeader({
           </Link>
           <div className="mobile-nav__meta">
             <span>{changeLanguageLabel}</span>
-            <Link href={localeHref} hrefLang={otherLocale} tabIndex={menuOpen ? 0 : -1}>
+            <a href={localeHref} hrefLang={otherLocale} tabIndex={menuOpen ? 0 : -1}>
               {otherLocale.toUpperCase()}
-            </Link>
+            </a>
           </div>
         </nav>
       </div>
@@ -139,9 +139,9 @@ export function SiteHeader({
               </Link>
             ))}
             <span className="language-switcher">
-              <Link aria-label={`${changeLanguageLabel}: ${otherLocale.toUpperCase()}`} href={localeHref} hrefLang={otherLocale}>
+              <a aria-label={`${changeLanguageLabel}: ${otherLocale.toUpperCase()}`} href={localeHref} hrefLang={otherLocale}>
                 {otherLocale.toUpperCase()}
-              </Link>
+              </a>
             </span>
             <Link className="button-primary" href={navigation.availability.href}>
               {navigation.availability.label}
