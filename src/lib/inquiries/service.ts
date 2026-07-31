@@ -1,6 +1,8 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { getContent } from "@/lib/content";
+import type { Locale } from "@/lib/content/types";
 
 import {
   hasFilledInquiryHoneypot,
@@ -65,10 +67,8 @@ export interface InquiryService {
   submit(input: unknown): Promise<PublicInquirySubmissionResult>;
 }
 
-function publicUnavailableMessage(locale: "en" | "it"): string {
-  return locale === "it"
-    ? "Non è stato possibile inviare la richiesta. Contattaci direttamente via email o telefono."
-    : "We could not send your request. Please contact us directly by email or phone.";
+function publicUnavailableMessage(locale: Locale): string {
+  return getContent(locale).pages.availability.form.errorMessage;
 }
 
 function failedDeliveryResult(): InquiryDeliveryResult {

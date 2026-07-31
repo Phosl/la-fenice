@@ -1,5 +1,6 @@
 import { NotFoundView } from "@/components/pages/not-found-view";
+import { getContent } from "@/lib/content";
 
 export default function NotFound() {
-  return <NotFoundView locale="en" />;
+  return <NotFoundView content={getContent("en")} />;
 }

@@ -4,6 +4,13 @@ import { getContent } from "@/lib/content";
 import { getLanguageAlternates, getLocalizedPath } from "@/lib/content/routes";
 import type { Locale, RouteKey } from "@/lib/content/types";
 
+const openGraphLocales = {
+  en: "en_GB",
+  it: "it_IT",
+  de: "de_DE",
+  ru: "ru_RU",
+} as const satisfies Record<Locale, string>;
+
 export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
   const page = getContent(locale).pages[route];
   const metadata = page.metadata;
@@ -15,11 +22,7 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
     description: metadata.description,
     alternates: {
       canonical: canonicalPath,
-      languages: {
-        en: paths.en,
-        it: paths.it,
-        "x-default": paths.en,
-      },
+      languages: paths,
     },
     robots:
       metadata.robots === "noindex"
@@ -27,7 +30,10 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
         : { index: true, follow: true },
     openGraph: {
       type: "website",
-      locale: locale === "it" ? "it_IT" : "en_GB",
+      locale: openGraphLocales[locale],
+      alternateLocale: Object.entries(openGraphLocales)
+        .filter(([candidate]) => candidate !== locale)
+        .map(([, openGraphLocale]) => openGraphLocale),
       title: metadata.title,
       description: metadata.description,
       url: getAbsoluteUrl(canonicalPath),

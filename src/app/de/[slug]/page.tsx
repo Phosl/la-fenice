@@ -10,18 +10,18 @@ import { buildMetadata } from "@/lib/page-metadata";
 type PageProps = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
-  return getLocalizedStaticParams("en");
+  return getLocalizedStaticParams("de");
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const route = getContentRouteFromSlug("en", slug);
-  return route ? buildMetadata("en", route) : {};
+  const route = getContentRouteFromSlug("de", slug);
+  return route ? buildMetadata("de", route) : {};
 }
 
-export default async function EnglishContentPage({ params }: PageProps) {
+export default async function GermanContentPage({ params }: PageProps) {
   const { slug } = await params;
-  const route = getContentRouteFromSlug("en", slug);
+  const route = getContentRouteFromSlug("de", slug);
   if (!route) notFound();
-  return <RoutePage locale="en" route={route} />;
+  return <RoutePage locale="de" route={route} />;
 }

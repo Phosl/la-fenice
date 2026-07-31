@@ -51,6 +51,29 @@ describe("inquiry service rollout behavior", () => {
     });
   });
 
+  it.each(["de", "ru"] as const)(
+    "keeps %s inquiries email-only when database persistence is unavailable",
+    async (locale) => {
+      const service = serviceWith(
+        {
+          deliver: vi
+            .fn()
+            .mockResolvedValue({ status: "sent", provider: "resend" }),
+        },
+        {
+          persist: vi.fn().mockResolvedValue({
+            status: "skipped",
+            reason: "not-configured",
+          }),
+        },
+      );
+
+      await expect(
+        service.submit({ ...validSubmission, locale }),
+      ).resolves.toMatchObject({ ok: true, status: "accepted" });
+    },
+  );
+
   it("returns only safe contact fallback when delivery fails", async () => {
     const service = serviceWith(
       {
@@ -71,6 +94,31 @@ describe("inquiry service rollout behavior", () => {
       fallback: { email: "info@lafenicepositano.com" },
     });
     expect(JSON.stringify(result)).not.toContain("INTERNAL_PROVIDER_DETAIL");
+  });
+
+  it.each([
+    ["de", "Bitte versuchen Sie es erneut"],
+    ["ru", "Попробуйте ещё раз"],
+  ] as const)("localises the %s delivery fallback", async (locale, copy) => {
+    const service = serviceWith(
+      {
+        deliver: vi
+          .fn()
+          .mockResolvedValue({ status: "failed", provider: "resend" }),
+      },
+      {
+        persist: vi
+          .fn()
+          .mockResolvedValue({ status: "skipped", reason: "not-configured" }),
+      },
+    );
+
+    const result = await service.submit({ ...validSubmission, locale });
+
+    expect(result).toMatchObject({ ok: false, status: "unavailable" });
+    if (!result.ok && result.status === "unavailable") {
+      expect(result.message).toContain(copy);
+    }
   });
 
   it("silently suppresses honeypot submissions", async () => {

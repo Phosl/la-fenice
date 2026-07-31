@@ -6,6 +6,7 @@ import { getLocalizedPath } from "@/lib/content/routes";
 import { siteIdentity } from "@/lib/content/site";
 import type { SiteContent } from "@/lib/content/types";
 import { CtaSection } from "./cta-section";
+import { HomeExperiences } from "./home-experiences";
 import { SiteShell } from "@/components/layout/site-shell";
 
 type HomePageProps = {
@@ -14,35 +15,6 @@ type HomePageProps = {
 
 export function HomePage({ content }: HomePageProps) {
   const page = content.pages.home;
-  const isItalian = content.locale === "it";
-  const proofItems = isItalian
-    ? [
-        ["3", "ettari di terrazzamenti"],
-        ["01", "piscina con acqua di mare"],
-        ["01", "accesso privato al mare"],
-      ]
-    : [
-        ["3", "hectares of terraced land"],
-        ["01", "seawater swimming pool"],
-        ["01", "private access to the sea"],
-      ];
-  const locationCopy = isItalian
-    ? {
-        eyebrow: "Posizione",
-        title: "Tra la strada costiera e il mare",
-        text: "La Fenice segue la pendenza naturale di Positano. Le scale collegano camere, giardini, piscina e spiaggia: una caratteristica essenziale da conoscere prima del soggiorno.",
-        link: "Scopri la posizione",
-        badge: "Via Marconi 4",
-        scroll: "Scorri",
-      }
-    : {
-        eyebrow: "Location",
-        title: "Between the coastal road and the sea",
-        text: "La Fenice follows the natural slope of Positano. Steps connect the rooms, gardens, pool and beach—an essential part of the place to understand before your stay.",
-        link: "Explore the location",
-        badge: "Via Marconi 4",
-        scroll: "Scroll",
-      };
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -87,15 +59,15 @@ export function HomePage({ content }: HomePageProps) {
               </Link>
             </div>
           </div>
-          <span className="scroll-cue">{locationCopy.scroll}</span>
+          <span className="scroll-cue">{page.locationTeaser.scrollLabel}</span>
         </section>
 
-        <section aria-label={isItalian ? "In breve" : "At a glance"} className="proof-strip">
+        <section aria-label={page.proof.ariaLabel} className="proof-strip">
           <div className="proof-strip__grid">
-            {proofItems.map(([number, label]) => (
-              <div className="proof-item" key={label}>
-                <span className="proof-item__number">{number}</span>
-                <span className="proof-item__label">{label}</span>
+            {page.proof.items.map((item) => (
+              <div className="proof-item" key={item.label}>
+                <span className="proof-item__number">{item.value}</span>
+                <span className="proof-item__label">{item.label}</span>
               </div>
             ))}
           </div>
@@ -117,10 +89,8 @@ export function HomePage({ content }: HomePageProps) {
           <div className="container">
             <div className="story-flow__heading">
               <div>
-                <span className="eyebrow">{isItalian ? "Dall'alto verso il mare" : "From the hillside to the sea"}</span>
-                <h2 className="section-title">
-                  {isItalian ? "Quattro capitoli, un solo paesaggio." : "Four chapters, one landscape."}
-                </h2>
+                <span className="eyebrow">{page.storyHeading.eyebrow}</span>
+                <h2 className="section-title">{page.storyHeading.title}</h2>
               </div>
             </div>
 
@@ -144,11 +114,13 @@ export function HomePage({ content }: HomePageProps) {
           </div>
         </section>
 
+        <HomeExperiences page={page} />
+
         <section className="quote-section">
           <div className="container">
             <blockquote>
               {page.stepsNotice.title}
-              <cite>{isItalian ? "Una nota importante sull'accessibilità" : "An important note about access"}</cite>
+              <cite>{page.accessibilityNoteLabel}</cite>
             </blockquote>
           </div>
         </section>
@@ -156,11 +128,11 @@ export function HomePage({ content }: HomePageProps) {
         <section className="location-tease">
           <div className="container location-tease__grid">
             <div className="location-tease__copy">
-              <span className="eyebrow">{locationCopy.eyebrow}</span>
-              <h2 className="section-title">{locationCopy.title}</h2>
+              <span className="eyebrow">{page.locationTeaser.eyebrow}</span>
+              <h2 className="section-title">{page.locationTeaser.title}</h2>
               <p>{page.stepsNotice.text}</p>
               <Link className="button-link" href={getLocalizedPath("location", content.locale)}>
-                {locationCopy.link}
+                {page.locationTeaser.linkLabel}
                 <ArrowIcon />
               </Link>
             </div>
@@ -171,12 +143,12 @@ export function HomePage({ content }: HomePageProps) {
                 sizes="(max-width: 820px) 100vw, 58vw"
                 src={page.introduction.image?.src ?? page.hero.image.src}
               />
-              <span className="location-tease__badge">{locationCopy.badge}</span>
+              <span className="location-tease__badge">{page.locationTeaser.badge}</span>
             </div>
           </div>
         </section>
 
-        <CtaSection locale={content.locale} />
+        <CtaSection content={content} />
       </main>
     </SiteShell>
   );

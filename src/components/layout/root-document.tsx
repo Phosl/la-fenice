@@ -1,5 +1,5 @@
 import { LogoIntro } from "@/components/brand/logo-intro";
-import type { Locale } from "@/lib/content/types";
+import type { SiteContent } from "@/lib/content/types";
 
 const introBootstrap = `
 try {
@@ -13,18 +13,18 @@ try {
 
 type RootDocumentProps = {
   children: React.ReactNode;
-  locale: Locale;
+  content: SiteContent;
 };
 
-export function RootDocument({ children, locale }: RootDocumentProps) {
+export function RootDocument({ children, content }: RootDocumentProps) {
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={content.locale} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: introBootstrap }} />
         <a className="skip-link" href="#main-content">
-          {locale === "it" ? "Vai al contenuto" : "Skip to content"}
+          {content.common.skipToContent}
         </a>
-        <LogoIntro />
+        <LogoIntro skipLabel={content.common.skipIntro} />
         {children}
       </body>
     </html>

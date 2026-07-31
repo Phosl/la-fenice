@@ -1,6 +1,11 @@
 import type { Locale, RouteKey } from "./types";
 
-export const supportedLocales = ["en", "it"] as const satisfies readonly Locale[];
+export const supportedLocales = [
+  "en",
+  "it",
+  "de",
+  "ru",
+] as const satisfies readonly Locale[];
 export const defaultLocale: Locale = "en";
 
 export const routeKeys = [
@@ -40,6 +45,30 @@ export const routeSlugs: Record<Locale, Record<RouteKey, string>> = {
     availability: "disponibilita",
     privacy: "privacy",
     terms: "condizioni",
+  },
+  de: {
+    home: "",
+    rooms: "zimmer",
+    pool: "pool",
+    privateBeach: "privatstrand",
+    gardenTable: "garten-und-genuss",
+    location: "lage",
+    gettingHere: "anreise",
+    availability: "verfuegbarkeit",
+    privacy: "datenschutz",
+    terms: "bedingungen",
+  },
+  ru: {
+    home: "",
+    rooms: "nomera",
+    pool: "basseyn",
+    privateBeach: "chastnyy-plyazh",
+    gardenTable: "sad-i-vkusy",
+    location: "raspolozhenie",
+    gettingHere: "kak-dobratsya",
+    availability: "zapros-nalichiya",
+    privacy: "konfidentsialnost",
+    terms: "usloviya",
   },
 };
 
@@ -104,9 +133,12 @@ export const switchLocalePath = (
 
 export const getLanguageAlternates = (
   route: RouteKey,
-): Record<Locale, string> => ({
+): Record<Locale | "x-default", string> => ({
   en: getLocalizedPath(route, "en"),
   it: getLocalizedPath(route, "it"),
+  de: getLocalizedPath(route, "de"),
+  ru: getLocalizedPath(route, "ru"),
+  "x-default": getLocalizedPath(route, defaultLocale),
 });
 
 export interface LegacyRedirect {

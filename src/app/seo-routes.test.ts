@@ -3,7 +3,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import nextConfig from "../../next.config";
-import { legacyRedirects, routeKeys } from "../lib/content/routes";
+import {
+  getLanguageAlternates,
+  getLocalizedPath,
+  legacyRedirects,
+  routeKeys,
+  supportedLocales,
+} from "../lib/content/routes";
+import type { Locale } from "../lib/content/types";
+import { buildMetadata } from "../lib/page-metadata";
 import robots from "./robots";
 import sitemap from "./sitemap";
 
@@ -57,32 +65,122 @@ describe("legacy routing", () => {
   });
 });
 
+describe("localized routing", () => {
+  it("publishes the approved German and Russian ASCII slugs", () => {
+    expect(
+      Object.fromEntries(
+        routeKeys.map((route) => [route, getLocalizedPath(route, "de")]),
+      ),
+    ).toEqual({
+      home: "/de",
+      rooms: "/de/zimmer",
+      pool: "/de/pool",
+      privateBeach: "/de/privatstrand",
+      gardenTable: "/de/garten-und-genuss",
+      location: "/de/lage",
+      gettingHere: "/de/anreise",
+      availability: "/de/verfuegbarkeit",
+      privacy: "/de/datenschutz",
+      terms: "/de/bedingungen",
+    });
+
+    expect(
+      Object.fromEntries(
+        routeKeys.map((route) => [route, getLocalizedPath(route, "ru")]),
+      ),
+    ).toEqual({
+      home: "/ru",
+      rooms: "/ru/nomera",
+      pool: "/ru/basseyn",
+      privateBeach: "/ru/chastnyy-plyazh",
+      gardenTable: "/ru/sad-i-vkusy",
+      location: "/ru/raspolozhenie",
+      gettingHere: "/ru/kak-dobratsya",
+      availability: "/ru/zapros-nalichiya",
+      privacy: "/ru/konfidentsialnost",
+      terms: "/ru/usloviya",
+    });
+  });
+});
+
 describe("metadata routes", () => {
-  it("publishes both locales with reciprocal language alternates", () => {
+  it("publishes 32 localized URLs with reciprocal language alternates", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://preview.example.com";
     const entries = sitemap();
 
-    expect(entries).toHaveLength((routeKeys.length - 2) * 2);
-    expect(entries.find(({ url }) => url === "https://preview.example.com/")).toMatchObject(
-      {
-        priority: 1,
-        alternates: {
-          languages: {
-            en: "https://preview.example.com/",
-            it: "https://preview.example.com/it",
-            "x-default": "https://preview.example.com/",
-          },
+    expect(entries).toHaveLength(32);
+    expect(entries).toHaveLength(
+      (routeKeys.length - 2) * supportedLocales.length,
+    );
+    expect(
+      entries.find(({ url }) => url === "https://preview.example.com/"),
+    ).toMatchObject({
+      priority: 1,
+      alternates: {
+        languages: {
+          en: "https://preview.example.com/",
+          it: "https://preview.example.com/it",
+          de: "https://preview.example.com/de",
+          ru: "https://preview.example.com/ru",
+          "x-default": "https://preview.example.com/",
         },
       },
-    );
+    });
     expect(
       entries.find(
         ({ url }) => url === "https://preview.example.com/it/camere",
       ),
     ).toMatchObject({ priority: 0.9 });
-    expect(entries.some(({ url }) => url.endsWith("/privacy"))).toBe(false);
-    expect(entries.some(({ url }) => url.endsWith("/terms"))).toBe(false);
-    expect(entries.some(({ url }) => url.endsWith("/condizioni"))).toBe(false);
+    expect(
+      entries.find(
+        ({ url }) => url === "https://preview.example.com/de/zimmer",
+      ),
+    ).toMatchObject({ priority: 0.9 });
+    expect(
+      entries.find(
+        ({ url }) =>
+          url === "https://preview.example.com/ru/zapros-nalichiya",
+      ),
+    ).toMatchObject({ priority: 0.9 });
+
+    for (const locale of supportedLocales) {
+      for (const route of ["privacy", "terms"] as const) {
+        expect(
+          entries.some(
+            ({ url }) =>
+              url ===
+              `https://preview.example.com${getLocalizedPath(route, locale)}`,
+          ),
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("builds canonical, Open Graph and hreflang metadata for all locales", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://preview.example.com";
+    const openGraphLocales = {
+      en: "en_GB",
+      it: "it_IT",
+      de: "de_DE",
+      ru: "ru_RU",
+    } as const satisfies Record<Locale, string>;
+
+    for (const locale of supportedLocales) {
+      const canonicalPath = getLocalizedPath("rooms", locale);
+      const metadata = buildMetadata(locale, "rooms");
+
+      expect(metadata.alternates).toEqual({
+        canonical: canonicalPath,
+        languages: getLanguageAlternates("rooms"),
+      });
+      expect(metadata.openGraph).toMatchObject({
+        locale: openGraphLocales[locale],
+        alternateLocale: Object.entries(openGraphLocales)
+          .filter(([candidate]) => candidate !== locale)
+          .map(([, openGraphLocale]) => openGraphLocale),
+        url: `https://preview.example.com${canonicalPath}`,
+      });
+    }
   });
 
   it("adds baseline security headers to every route", async () => {

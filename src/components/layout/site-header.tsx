@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LogoLockup } from "@/components/brand/logo-lockup";
 import { CloseIcon, MenuIcon } from "@/components/ui/icons";
-import { switchLocalePath } from "@/lib/content/routes";
+import { getLocalizedPath, switchLocalePath } from "@/lib/content/routes";
 import type { Locale } from "@/lib/content/types";
 import type { NavigationModel } from "@/lib/content/navigation";
+import { LanguageSwitcher, type LanguageOption } from "./language-switcher";
 
 type SiteHeaderProps = {
   locale: Locale;
@@ -15,6 +16,8 @@ type SiteHeaderProps = {
   openMenuLabel: string;
   closeMenuLabel: string;
   changeLanguageLabel: string;
+  languageNames: Record<Locale, string>;
+  primaryNavigationLabel: string;
   overlay?: boolean;
 };
 
@@ -24,6 +27,8 @@ export function SiteHeader({
   openMenuLabel,
   closeMenuLabel,
   changeLanguageLabel,
+  languageNames,
+  primaryNavigationLabel,
   overlay = true,
 }: SiteHeaderProps) {
   const pathname = usePathname();
@@ -31,8 +36,13 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const otherLocale: Locale = locale === "en" ? "it" : "en";
-  const localeHref = switchLocalePath(pathname, otherLocale);
+  const languageOptions = Object.entries(languageNames).map(
+    ([targetLocale, label]) => ({
+      locale: targetLocale as Locale,
+      label,
+      href: switchLocalePath(pathname, targetLocale as Locale),
+    }),
+  ) satisfies LanguageOption[];
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -80,14 +90,14 @@ export function SiteHeader({
     <>
       <div
         aria-hidden={!menuOpen}
-        aria-label={openMenuLabel}
+        aria-label={primaryNavigationLabel}
         aria-modal="true"
         className="mobile-nav"
         data-open={menuOpen}
         ref={menuRef}
         role="dialog"
       >
-        <nav aria-label="Mobile navigation" className="mobile-nav__inner">
+        <nav aria-label={primaryNavigationLabel} className="mobile-nav__inner">
           {navigation.primary.map((item) => (
             <Link
               aria-current={pathname === item.href ? "page" : undefined}
@@ -110,9 +120,19 @@ export function SiteHeader({
           </Link>
           <div className="mobile-nav__meta">
             <span>{changeLanguageLabel}</span>
-            <a href={localeHref} hrefLang={otherLocale} tabIndex={menuOpen ? 0 : -1}>
-              {otherLocale.toUpperCase()}
-            </a>
+            <div className="mobile-nav__languages">
+              {languageOptions.map((option) => (
+                <a
+                  aria-current={option.locale === locale ? "true" : undefined}
+                  href={option.href}
+                  hrefLang={option.locale}
+                  key={option.locale}
+                  tabIndex={menuOpen ? 0 : -1}
+                >
+                  {option.label}
+                </a>
+              ))}
+            </div>
           </div>
         </nav>
       </div>
@@ -123,11 +143,11 @@ export function SiteHeader({
         data-overlay={overlay}
       >
         <div className="container site-header__inner">
-          <Link aria-label="La Fenice Positano" className="site-header__brand" href={locale === "it" ? "/it" : "/"}>
+          <Link aria-label="La Fenice Positano" className="site-header__brand" href={getLocalizedPath("home", locale)}>
             <LogoLockup compact />
           </Link>
 
-          <nav aria-label="Primary navigation" className="desktop-nav">
+          <nav aria-label={primaryNavigationLabel} className="desktop-nav">
             {navigation.primary.map((item) => (
               <Link
                 aria-current={pathname === item.href ? "page" : undefined}
@@ -138,11 +158,11 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
-            <span className="language-switcher">
-              <a aria-label={`${changeLanguageLabel}: ${otherLocale.toUpperCase()}`} href={localeHref} hrefLang={otherLocale}>
-                {otherLocale.toUpperCase()}
-              </a>
-            </span>
+            <LanguageSwitcher
+              activeLocale={locale}
+              label={changeLanguageLabel}
+              options={languageOptions}
+            />
             <Link className="button-primary" href={navigation.availability.href}>
               {navigation.availability.label}
             </Link>

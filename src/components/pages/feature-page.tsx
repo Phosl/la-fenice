@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { MapReveal } from "@/components/location/map-reveal";
 import { ArrowIcon } from "@/components/ui/icons";
 import { getLocalizedPath } from "@/lib/content/routes";
+import { siteIdentity } from "@/lib/content/site";
 import type { FeaturePageContent, SiteContent } from "@/lib/content/types";
 import { CtaSection } from "./cta-section";
 import { PageBodyLayout } from "./page-body-layout";
@@ -16,7 +17,6 @@ type FeaturePageProps = {
 
 export function FeaturePage({ content, page }: FeaturePageProps) {
   const isLocation = page.route === "location";
-  const isItalian = content.locale === "it";
 
   return (
     <SiteShell content={content}>
@@ -42,7 +42,7 @@ export function FeaturePage({ content, page }: FeaturePageProps) {
           ))}
           {page.note ? (
             <div className="review-notice">
-              <strong>{isItalian ? "Da sapere" : "Good to know"}</strong>
+              <strong>{content.common.goodToKnow}</strong>
               <p>{page.note}</p>
             </div>
           ) : null}
@@ -50,11 +50,11 @@ export function FeaturePage({ content, page }: FeaturePageProps) {
 
         {isLocation ? (
           <MapReveal
-            description={isItalian ? "Via Marconi 4, 84017 Positano. La mappa viene caricata solo quando lo scegli." : "Via Marconi 4, 84017 Positano. The map loads only when you choose to open it."}
+            description={`${siteIdentity.address.formatted}. ${content.common.mapLoadingNotice}`}
             directionsLabel={content.common.getDirections}
             image={page.heroImage}
             openLabel={content.common.openMap}
-            title={isItalian ? "Apri la mappa" : "Open the map"}
+            title={content.common.openMap}
           />
         ) : null}
 
@@ -70,7 +70,7 @@ export function FeaturePage({ content, page }: FeaturePageProps) {
           />
         ) : null}
 
-        <CtaSection locale={content.locale} />
+        <CtaSection content={content} />
       </main>
     </SiteShell>
   );

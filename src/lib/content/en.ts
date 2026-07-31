@@ -66,11 +66,13 @@ export const englishContent = {
     closeMenu: "Close menu",
     changeLanguage: "Change language",
     languageName: "English",
+    primaryNavigation: "Primary navigation",
     viewGallery: "View gallery",
     previousImage: "Previous image",
     nextImage: "Next image",
     closeGallery: "Close gallery",
     openMap: "Open interactive map",
+    mapLoadingNotice: "The interactive map loads only when you choose to open it.",
     getDirections: "Get directions",
     officialWebsite: "Official website",
     email: "Email",
@@ -78,6 +80,7 @@ export const englishContent = {
     address: "Address",
     vatNumber: "VAT number",
     followUs: "Follow us",
+    goodToKnow: "Good to know",
   },
   navigation: {
     primary: {
@@ -102,6 +105,17 @@ export const englishContent = {
     exploreTitle: "Explore",
     legalTitle: "Legal",
     photographyCredit: "Photography by Tim Evancook",
+  },
+  availabilityCta: {
+    eyebrow: "Your stay",
+    title: "Begin with a simple request.",
+    text: "Share your dates and number of guests. La Fenice will reply directly with availability and details.",
+    label: "Request availability",
+  },
+  notFound: {
+    title: "This path does not reach the sea.",
+    text: "The page may have moved. Return to La Fenice and continue from there.",
+    button: "Back home",
   },
   pages: {
     home: {
@@ -137,6 +151,26 @@ export const englishContent = {
         ],
         image: homeImages.view,
       },
+      proof: {
+        ariaLabel: "At a glance",
+        items: [
+          { value: "3", label: "hectares of terraced land" },
+          { value: "01", label: "seawater swimming pool" },
+          { value: "01", label: "private access to the sea" },
+        ],
+      },
+      storyHeading: {
+        eyebrow: "From the hillside to the sea",
+        title: "Four chapters, one landscape.",
+      },
+      accessibilityNoteLabel: "An important note about access",
+      locationTeaser: {
+        eyebrow: "Location",
+        title: "Between the coastal road and the sea",
+        linkLabel: "Explore the location",
+        badge: "Via Marconi 4",
+        scrollLabel: "Scroll",
+      },
       stories: [
         {
           id: "garden",
@@ -171,6 +205,42 @@ export const englishContent = {
           cta: { label: "Discover the beach", route: "privateBeach" },
         },
       ],
+      experiences: {
+        eyebrow: "Experiences",
+        title: "Three ways to meet the coast",
+        lead:
+          "Discover the landscape around La Fenice through the sea, local traditions and the scent of lemons. Each experience is arranged on request and subject to confirmation.",
+        requestLabel: "Request by email",
+        items: [
+          {
+            id: "fishing",
+            title: "Fishing on the coast",
+            text: "Ask about a fishing experience in the waters around Positano, with details confirmed according to season and sea conditions.",
+            image: beachGallery[1],
+            emailSubject: "Fishing experience request",
+            emailBody:
+              "Hello La Fenice,\n\nI would like information about the fishing experience.\n\nPreferred date:\nNumber of guests:\nName:\n\nThank you.",
+          },
+          {
+            id: "boatTrip",
+            title: "A day by boat",
+            text: "Request current options for discovering the coast from the water, with route and embarkation details agreed directly.",
+            image: beachGallery[0],
+            emailSubject: "Boat trip request",
+            emailBody:
+              "Hello La Fenice,\n\nI would like information about a boat trip.\n\nPreferred date:\nNumber of guests:\nName:\n\nThank you.",
+          },
+          {
+            id: "lemonGrove",
+            title: "Among the lemon trees",
+            text: "Discover the terraced garden and the role that lemons and seasonal cultivation play in the life of La Fenice.",
+            image: homeImages.garden,
+            emailSubject: "Lemon grove experience request",
+            emailBody:
+              "Hello La Fenice,\n\nI would like information about the lemon grove experience.\n\nPreferred date:\nNumber of guests:\nName:\n\nThank you.",
+          },
+        ],
+      },
       stepsNotice: {
         title: "A place shaped by steps",
         text: "La Fenice follows the natural slope of the Amalfi Coast. Moving between the road, rooms, gardens, pool and beach involves many steps, so the property may not suit every mobility need. Please contact us before requesting a stay if you would like to discuss access.",
@@ -490,6 +560,7 @@ export const englishContent = {
           href: "https://www.alilauro.it/en/",
         },
       ],
+      transferTitle: "Private transfer",
       transferNote:
         "If you would like help arranging a private transfer, contact La Fenice before travelling so current options and prices can be confirmed.",
     },
@@ -511,6 +582,7 @@ export const englishContent = {
       form: {
         title: "Your request",
         requiredHint: "Fields marked with * are required.",
+        honeypotLabel: "Website",
         fields: {
           name: { label: "Name *", placeholder: "Your full name" },
           email: { label: "Email *", placeholder: "you@example.com" },
@@ -540,6 +612,10 @@ export const englishContent = {
         errorTitle: "We could not send your request",
         errorMessage:
           "Please try again or contact us using the email address or phone number below.",
+        emailFallback: {
+          subject: "Availability request",
+          body: "Name:\nPhone:\nGuests:\nCheck-in:\nCheck-out:\nRequest:",
+        },
         validation: {
           required: "Please complete this required field.",
           invalidEmail: "Enter a valid email address.",

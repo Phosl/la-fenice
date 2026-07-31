@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { supportedLocales } from "@/lib/content/routes";
 
-export const inquiryLocales = ["en", "it"] as const;
+export const inquiryLocales = supportedLocales;
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

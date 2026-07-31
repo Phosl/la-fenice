@@ -53,12 +53,12 @@ export function GettingHerePage({ content }: GettingHerePageProps) {
               ))}
             </div>
             <div className="review-notice">
-              <strong>{content.locale === "it" ? "Transfer privato" : "Private transfer"}</strong>
+              <strong>{page.transferTitle}</strong>
               <p>{page.transferNote}</p>
             </div>
           </section>
         </PageBodyLayout>
-        <CtaSection locale={content.locale} />
+        <CtaSection content={content} />
       </main>
     </SiteShell>
   );

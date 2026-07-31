@@ -24,6 +24,22 @@ async function expectHydrated(page: Page) {
   }
 }
 
+async function switchLanguage(page: Page, languageName: string) {
+  const desktopSwitcher = page.getByRole("button", {
+    name: /change language|cambia lingua|sprache wechseln|выбрать язык/i,
+  });
+
+  if (await desktopSwitcher.isVisible()) {
+    await desktopSwitcher.click();
+    await page.getByRole("menuitem", { name: languageName }).click();
+  } else {
+    await page.getByRole("button", {
+      name: /open menu|apri menu|menü öffnen|открыть меню/i,
+    }).click();
+    await page.getByRole("link", { name: languageName }).click();
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.sessionStorage.setItem("la-fenice-intro-seen", "true");
@@ -36,15 +52,41 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
   await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://www.lafenicepositano.com");
 
-  let languageLink = page.locator('header a[hreflang="it"]:visible').first();
-  if ((await languageLink.count()) === 0) {
-    await page.getByRole("button", { name: /open menu/i }).click();
-    languageLink = page.locator('.mobile-nav a[hreflang="it"]:visible').first();
-  }
-  await languageLink.click();
+  await switchLanguage(page, "Italiano");
   await expect(page).toHaveURL(/\/it$/);
   await expect(page.getByRole("heading", { level: 1, name: "Dal giardino al mare" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "it");
+});
+
+test("keeps the equivalent page when switching to German and Russian", async ({ page }) => {
+  await page.goto("/rooms");
+  await expectHydrated(page);
+
+  await switchLanguage(page, "Deutsch");
+  await expect(page).toHaveURL(/\/de\/zimmer$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  await expect(page.getByRole("heading", { level: 1, name: /Zimmer im Licht von Positano/ })).toBeVisible();
+
+  await switchLanguage(page, "Русский");
+  await expect(page).toHaveURL(/\/ru\/nomera$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("heading", { level: 1, name: /Номера, наполненные светом/ })).toBeVisible();
+});
+
+test("language menu supports keyboard focus and Escape", async ({ page }) => {
+  test.skip((page.viewportSize()?.width ?? 0) < 1081, "Desktop language menu");
+
+  await page.goto("/");
+  await expectHydrated(page);
+  const switcher = page.getByRole("button", { name: "Change language" });
+  await switcher.focus();
+  await page.keyboard.press("ArrowDown");
+
+  const currentLanguage = page.getByRole("menuitem", { name: /English EN/ });
+  await expect(currentLanguage).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toBeHidden();
+  await expect(switcher).toBeFocused();
 });
 
 test("opens and closes the room gallery lightbox", async ({ page }) => {
@@ -66,6 +108,50 @@ test("availability form exposes the complete request contract", async ({ page })
   await expect(page.getByLabel("Check-in *")).toHaveAttribute("type", "date");
   await expect(page.getByLabel("Check-out *")).toHaveAttribute("type", "date");
   await expect(page.getByRole("button", { name: /send request/i })).toBeVisible();
+});
+
+test("German and Russian forms expose localised email-only contracts", async ({ page }) => {
+  await page.goto("/de/verfuegbarkeit");
+  await expect(page.getByLabel("Name *")).toBeVisible();
+  await expect(page.locator('input[name="locale"]')).toHaveValue("de");
+  await expect(page.getByRole("button", { name: /Anfrage senden/i })).toBeVisible();
+
+  await page.goto("/ru/zapros-nalichiya");
+  await expect(page.getByLabel("Имя и фамилия *")).toBeVisible();
+  await expect(page.locator('input[name="locale"]')).toHaveValue("ru");
+  await expect(page.getByRole("button", { name: /Отправить запрос/i })).toBeVisible();
+});
+
+test("German and Cyrillic pages fit the active viewport", async ({ page }) => {
+  for (const [path, heading] of [
+    ["/de", "Vom Garten bis zum Meer"],
+    ["/ru", "От сада к морю"],
+  ] as const) {
+    await page.goto(path);
+    await expectHydrated(page);
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  }
+});
+
+test("advertises all experiences with direct email requests", async ({ page }) => {
+  await page.goto("/it");
+  await expectHydrated(page);
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Tre modi per incontrare la costa" }),
+  ).toBeVisible();
+
+  const requests = page.getByRole("link", { name: "Richiedi via email" });
+  await expect(requests).toHaveCount(3);
+  for (const link of await requests.all()) {
+    await expect(link).toHaveAttribute(
+      "href",
+      /^mailto:info@lafenicepositano\.com\?subject=.+&body=.+$/,
+    );
+  }
 });
 
 test("legacy PHP paths return a permanent redirect", async ({ request }) => {

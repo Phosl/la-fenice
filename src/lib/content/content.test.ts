@@ -48,7 +48,7 @@ const collectImages = (value: unknown, images: GalleryImage[] = []) => {
 };
 
 describe("localized content contract", () => {
-  it("covers every route in both locales with unique metadata", () => {
+  it("covers every route in all locales with unique metadata", () => {
     for (const locale of supportedLocales) {
       const content = getContent(locale);
       const titles = routeKeys.map((route) => content.pages[route].metadata.title);
@@ -73,6 +73,24 @@ describe("localized content contract", () => {
     expect(getContent("it").pages.home.hero.title).toBe(
       "Dal giardino al mare",
     );
+  });
+
+  it("publishes the three email-request experiences in every locale", () => {
+    for (const locale of supportedLocales) {
+      const experiences = getContent(locale).pages.home.experiences;
+
+      expect(experiences.items.map(({ id }) => id)).toEqual([
+        "fishing",
+        "boatTrip",
+        "lemonGrove",
+      ]);
+      for (const experience of experiences.items) {
+        expect(experience.title.length).toBeGreaterThan(5);
+        expect(experience.text.length).toBeGreaterThan(30);
+        expect(experience.emailSubject.length).toBeGreaterThan(5);
+        expect(experience.emailBody.length).toBeGreaterThan(30);
+      }
+    }
   });
 
   it("provides meaningful alt text and resolvable local fallback images", () => {
@@ -121,5 +139,7 @@ describe("localized navigation", () => {
   it("switches between reciprocal localized paths", () => {
     expect(switchLocalePath("/rooms", "it")).toBe("/it/camere");
     expect(switchLocalePath("/it/orto-e-sapori", "en")).toBe("/garden-table");
+    expect(switchLocalePath("/de/zimmer", "ru")).toBe("/ru/nomera");
+    expect(switchLocalePath("/ru/kak-dobratsya", "de")).toBe("/de/anreise");
   });
 });

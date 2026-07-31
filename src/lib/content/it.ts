@@ -66,11 +66,13 @@ export const italianContent = {
     closeMenu: "Chiudi menu",
     changeLanguage: "Cambia lingua",
     languageName: "Italiano",
+    primaryNavigation: "Navigazione principale",
     viewGallery: "Apri galleria",
     previousImage: "Immagine precedente",
     nextImage: "Immagine successiva",
     closeGallery: "Chiudi galleria",
     openMap: "Apri la mappa interattiva",
+    mapLoadingNotice: "La mappa interattiva viene caricata solo quando scegli di aprirla.",
     getDirections: "Ottieni indicazioni",
     officialWebsite: "Sito ufficiale",
     email: "Email",
@@ -78,6 +80,7 @@ export const italianContent = {
     address: "Indirizzo",
     vatNumber: "Partita IVA",
     followUs: "Seguici",
+    goodToKnow: "Da sapere",
   },
   navigation: {
     primary: {
@@ -102,6 +105,17 @@ export const italianContent = {
     exploreTitle: "Esplora",
     legalTitle: "Informazioni legali",
     photographyCredit: "Fotografie di Tim Evancook",
+  },
+  availabilityCta: {
+    eyebrow: "Il tuo soggiorno",
+    title: "Inizia da una richiesta, con calma.",
+    text: "Indica le date e il numero di ospiti. La Fenice risponderà direttamente con disponibilità e dettagli.",
+    label: "Richiedi disponibilità",
+  },
+  notFound: {
+    title: "Questo sentiero non arriva al mare.",
+    text: "La pagina potrebbe essere stata spostata. Torna a La Fenice e riparti da lì.",
+    button: "Torna alla home",
   },
   pages: {
     home: {
@@ -137,6 +151,26 @@ export const italianContent = {
         ],
         image: homeImages.view,
       },
+      proof: {
+        ariaLabel: "In breve",
+        items: [
+          { value: "3", label: "ettari di terrazzamenti" },
+          { value: "01", label: "piscina con acqua di mare" },
+          { value: "01", label: "accesso privato al mare" },
+        ],
+      },
+      storyHeading: {
+        eyebrow: "Dall'alto verso il mare",
+        title: "Quattro capitoli, un solo paesaggio.",
+      },
+      accessibilityNoteLabel: "Una nota importante sull'accessibilità",
+      locationTeaser: {
+        eyebrow: "Posizione",
+        title: "Tra la strada costiera e il mare",
+        linkLabel: "Scopri la posizione",
+        badge: "Via Marconi 4",
+        scrollLabel: "Scorri",
+      },
       stories: [
         {
           id: "garden",
@@ -171,6 +205,42 @@ export const italianContent = {
           cta: { label: "Scopri la spiaggia", route: "privateBeach" },
         },
       ],
+      experiences: {
+        eyebrow: "Esperienze",
+        title: "Tre modi per incontrare la costa",
+        lead:
+          "Scopri il paesaggio intorno a La Fenice attraverso il mare, le tradizioni locali e il profumo dei limoni. Ogni esperienza è organizzata su richiesta e soggetta a conferma.",
+        requestLabel: "Richiedi via email",
+        items: [
+          {
+            id: "fishing",
+            title: "Pesca lungo la costa",
+            text: "Richiedi informazioni per un'esperienza di pesca nelle acque intorno a Positano, con dettagli confermati in base alla stagione e alle condizioni del mare.",
+            image: beachGallery[1],
+            emailSubject: "Richiesta esperienza di pesca",
+            emailBody:
+              "Buongiorno La Fenice,\n\nvorrei ricevere informazioni sull'esperienza di pesca.\n\nData preferita:\nNumero di ospiti:\nNome:\n\nGrazie.",
+          },
+          {
+            id: "boatTrip",
+            title: "Una giornata in barca",
+            text: "Richiedi le opzioni disponibili per scoprire la costa dal mare, concordando direttamente itinerario e dettagli di imbarco.",
+            image: beachGallery[0],
+            emailSubject: "Richiesta gita in barca",
+            emailBody:
+              "Buongiorno La Fenice,\n\nvorrei ricevere informazioni su una gita in barca.\n\nData preferita:\nNumero di ospiti:\nNome:\n\nGrazie.",
+          },
+          {
+            id: "lemonGrove",
+            title: "Tra i limoni",
+            text: "Scopri l'orto terrazzato e il ruolo dei limoni e delle coltivazioni stagionali nella vita de La Fenice.",
+            image: homeImages.garden,
+            emailSubject: "Richiesta esperienza nella limonaia",
+            emailBody:
+              "Buongiorno La Fenice,\n\nvorrei ricevere informazioni sull'esperienza nella limonaia.\n\nData preferita:\nNumero di ospiti:\nNome:\n\nGrazie.",
+          },
+        ],
+      },
       stepsNotice: {
         title: "Un luogo fatto di gradini",
         text: "La Fenice segue il pendio naturale della Costiera Amalfitana. Per spostarsi tra strada, camere, giardini, piscina e spiaggia occorrono molti gradini: la struttura potrebbe non rispondere a tutte le esigenze di mobilità. Contattaci prima della richiesta per parlare dell'accessibilità.",
@@ -490,6 +560,7 @@ export const italianContent = {
           href: "https://www.alilauro.it/it/",
         },
       ],
+      transferTitle: "Transfer privato",
       transferNote:
         "Se desideri assistenza per organizzare un trasferimento privato, contatta La Fenice prima del viaggio per verificare opzioni e prezzi aggiornati.",
     },
@@ -511,6 +582,7 @@ export const italianContent = {
       form: {
         title: "La tua richiesta",
         requiredHint: "I campi contrassegnati con * sono obbligatori.",
+        honeypotLabel: "Sito web",
         fields: {
           name: { label: "Nome *", placeholder: "Nome e cognome" },
           email: { label: "Email *", placeholder: "tu@esempio.it" },
@@ -540,6 +612,10 @@ export const italianContent = {
         errorTitle: "Non è stato possibile inviare la richiesta",
         errorMessage:
           "Riprova oppure contattaci tramite l'indirizzo email o il numero di telefono qui sotto.",
+        emailFallback: {
+          subject: "Richiesta disponibilità",
+          body: "Nome:\nTelefono:\nOspiti:\nArrivo:\nPartenza:\nRichiesta:",
+        },
         validation: {
           required: "Compila questo campo obbligatorio.",
           invalidEmail: "Inserisci un indirizzo email valido.",

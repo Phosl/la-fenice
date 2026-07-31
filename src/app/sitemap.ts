@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
 
-import { getLocalizedPath, routeKeys } from "../lib/content/routes";
+import {
+  getLanguageAlternates,
+  getLocalizedPath,
+  routeKeys,
+  supportedLocales,
+} from "../lib/content/routes";
+import type { RouteKey } from "../lib/content/types";
 import { getAbsoluteUrl } from "../lib/site-url";
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
@@ -10,18 +16,13 @@ const indexableRouteKeys = routeKeys.filter(
 );
 
 function getPageSettings(
-  pathname: string,
+  routeKey: RouteKey,
 ): Pick<SitemapEntry, "changeFrequency" | "priority"> {
-  if (pathname === "/" || pathname === "/it") {
+  if (routeKey === "home") {
     return { changeFrequency: "monthly", priority: 1 };
   }
 
-  if (
-    pathname.endsWith("/rooms") ||
-    pathname.endsWith("/camere") ||
-    pathname.endsWith("/availability") ||
-    pathname.endsWith("/disponibilita")
-  ) {
+  if (routeKey === "rooms" || routeKey === "availability") {
     return { changeFrequency: "monthly", priority: 0.9 };
   }
 
@@ -30,18 +31,20 @@ function getPageSettings(
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return indexableRouteKeys.flatMap((routeKey) => {
-    const englishPath = getLocalizedPath(routeKey, "en");
-    const italianPath = getLocalizedPath(routeKey, "it");
-    const languages = {
-      en: getAbsoluteUrl(englishPath),
-      it: getAbsoluteUrl(italianPath),
-      "x-default": getAbsoluteUrl(englishPath),
-    };
+    const languages = Object.fromEntries(
+      Object.entries(getLanguageAlternates(routeKey)).map(
+        ([locale, pathname]) => [locale, getAbsoluteUrl(pathname)],
+      ),
+    );
 
-    return [englishPath, italianPath].map((pathname) => ({
-      url: getAbsoluteUrl(pathname),
-      alternates: { languages },
-      ...getPageSettings(pathname),
-    }));
+    return supportedLocales.map((locale) => {
+      const pathname = getLocalizedPath(routeKey, locale);
+
+      return {
+        url: getAbsoluteUrl(pathname),
+        alternates: { languages },
+        ...getPageSettings(routeKey),
+      };
+    });
   });
 }

@@ -39,12 +39,8 @@ export function AvailabilityForm({ locale, page }: AvailabilityFormProps) {
   }, [state.status]);
 
   const issue = (field: string) => localizedIssue(field, state.issues?.[field as keyof typeof state.issues], page);
-  const mailtoBody = encodeURIComponent(
-    locale === "it"
-      ? "Nome:\nTelefono:\nOspiti:\nArrivo:\nPartenza:\nRichiesta:"
-      : "Name:\nPhone:\nGuests:\nCheck-in:\nCheck-out:\nRequest:",
-  );
-  const mailtoSubject = encodeURIComponent(locale === "it" ? "Richiesta disponibilità" : "Availability request");
+  const mailtoBody = encodeURIComponent(page.form.emailFallback.body);
+  const mailtoSubject = encodeURIComponent(page.form.emailFallback.subject);
 
   return (
     <div className="availability-layout">
@@ -61,7 +57,7 @@ export function AvailabilityForm({ locale, page }: AvailabilityFormProps) {
       <form action={action} className="availability-form" noValidate ref={formRef}>
         <input name="locale" type="hidden" value={locale} />
         <div className="honeypot" aria-hidden="true">
-          <label htmlFor="website">Website</label>
+          <label htmlFor="website">{page.form.honeypotLabel}</label>
           <input autoComplete="off" id="website" name="website" tabIndex={-1} type="text" />
         </div>
 

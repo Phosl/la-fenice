@@ -80,4 +80,14 @@ describe("parseAvailabilityRequest", () => {
     ).toBe(true);
     expect(hasFilledInquiryHoneypot(validSubmission)).toBe(false);
   });
+
+  it.each(["en", "it", "de", "ru"] as const)(
+    "accepts the supported %s locale",
+    (locale) => {
+      const result = parseAvailabilityRequest({ ...validSubmission, locale });
+
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.locale).toBe(locale);
+    },
+  );
 });

@@ -82,30 +82,52 @@ function buildMessage(request: AvailabilityRequest): {
   text: string;
   html: string;
 } {
-  const labels =
-    request.locale === "it"
-      ? {
-          subject: "Nuova richiesta di disponibilità",
-          name: "Nome",
-          email: "Email",
-          phone: "Telefono",
-          guests: "Ospiti",
-          checkIn: "Arrivo",
-          checkOut: "Partenza",
-          message: "Messaggio",
-          locale: "Lingua",
-        }
-      : {
-          subject: "New availability request",
-          name: "Name",
-          email: "Email",
-          phone: "Phone",
-          guests: "Guests",
-          checkIn: "Check-in",
-          checkOut: "Check-out",
-          message: "Message",
-          locale: "Language",
-        };
+  const labels = {
+    en: {
+      subject: "New availability request",
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      guests: "Guests",
+      checkIn: "Check-in",
+      checkOut: "Check-out",
+      message: "Message",
+      locale: "Language",
+    },
+    it: {
+      subject: "Nuova richiesta di disponibilità",
+      name: "Nome",
+      email: "Email",
+      phone: "Telefono",
+      guests: "Ospiti",
+      checkIn: "Arrivo",
+      checkOut: "Partenza",
+      message: "Messaggio",
+      locale: "Lingua",
+    },
+    de: {
+      subject: "Neue Verfügbarkeitsanfrage",
+      name: "Name",
+      email: "E-Mail",
+      phone: "Telefon",
+      guests: "Gäste",
+      checkIn: "Anreise",
+      checkOut: "Abreise",
+      message: "Nachricht",
+      locale: "Sprache",
+    },
+    ru: {
+      subject: "Новый запрос наличия",
+      name: "Имя",
+      email: "Электронная почта",
+      phone: "Телефон",
+      guests: "Гости",
+      checkIn: "Заезд",
+      checkOut: "Выезд",
+      message: "Сообщение",
+      locale: "Язык",
+    },
+  }[request.locale];
 
   const rows = [
     line(labels.name, request.name),

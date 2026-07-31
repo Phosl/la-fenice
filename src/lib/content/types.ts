@@ -1,4 +1,4 @@
-export type Locale = "en" | "it";
+export type Locale = "en" | "it" | "de" | "ru";
 
 export type RouteKey =
   | "home"
@@ -73,6 +73,17 @@ export interface HomeStory {
   cta: RouteCallToAction;
 }
 
+export type ExperienceId = "fishing" | "boatTrip" | "lemonGrove";
+
+export interface HomeExperience {
+  id: ExperienceId;
+  title: string;
+  text: string;
+  image: GalleryImage;
+  emailSubject: string;
+  emailBody: string;
+}
+
 export interface HomePageContent {
   route: "home";
   metadata: PageMetadata;
@@ -85,7 +96,33 @@ export interface HomePageContent {
     secondaryCta: RouteCallToAction;
   };
   introduction: ContentSection;
+  proof: {
+    ariaLabel: string;
+    items: readonly {
+      value: string;
+      label: string;
+    }[];
+  };
+  storyHeading: {
+    eyebrow: string;
+    title: string;
+  };
+  accessibilityNoteLabel: string;
+  locationTeaser: {
+    eyebrow: string;
+    title: string;
+    linkLabel: string;
+    badge: string;
+    scrollLabel: string;
+  };
   stories: readonly HomeStory[];
+  experiences: {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    requestLabel: string;
+    items: readonly HomeExperience[];
+  };
   stepsNotice: {
     title: string;
     text: string;
@@ -122,6 +159,7 @@ export interface GettingHerePageContent {
   modes: readonly TravelMode[];
   officialResourcesTitle: string;
   officialResources: readonly ExternalResource[];
+  transferTitle: string;
   transferNote: string;
 }
 
@@ -143,6 +181,7 @@ export interface FormFieldCopy {
 export interface AvailabilityFormCopy {
   title: string;
   requiredHint: string;
+  honeypotLabel: string;
   fields: Record<AvailabilityField, FormFieldCopy>;
   consent: {
     prefix: string;
@@ -155,6 +194,10 @@ export interface AvailabilityFormCopy {
   successMessage: string;
   errorTitle: string;
   errorMessage: string;
+  emailFallback: {
+    subject: string;
+    body: string;
+  };
   validation: {
     required: string;
     invalidEmail: string;
@@ -212,11 +255,13 @@ export interface CommonCopy {
   closeMenu: string;
   changeLanguage: string;
   languageName: string;
+  primaryNavigation: string;
   viewGallery: string;
   previousImage: string;
   nextImage: string;
   closeGallery: string;
   openMap: string;
+  mapLoadingNotice: string;
   getDirections: string;
   officialWebsite: string;
   email: string;
@@ -224,6 +269,20 @@ export interface CommonCopy {
   address: string;
   vatNumber: string;
   followUs: string;
+  goodToKnow: string;
+}
+
+export interface AvailabilityCallToActionCopy {
+  eyebrow: string;
+  title: string;
+  text: string;
+  label: string;
+}
+
+export interface NotFoundCopy {
+  title: string;
+  text: string;
+  button: string;
 }
 
 export interface FooterCopy {
@@ -239,6 +298,8 @@ export interface SiteContent {
   common: CommonCopy;
   navigation: NavigationLabels;
   footer: FooterCopy;
+  availabilityCta: AvailabilityCallToActionCopy;
+  notFound: NotFoundCopy;
   pages: {
     home: HomePageContent;
     rooms: FeaturePageContent;

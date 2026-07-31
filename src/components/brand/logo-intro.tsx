@@ -6,7 +6,7 @@ import { LogoLockup } from "./logo-lockup";
 const INTRO_KEY = "la-fenice-intro-seen";
 const INTRO_DURATION_MS = 1650;
 
-export function LogoIntro() {
+export function LogoIntro({ skipLabel }: { skipLabel: string }) {
   const dismiss = useCallback(() => {
     try {
       window.sessionStorage.setItem(INTRO_KEY, "true");
@@ -30,7 +30,7 @@ export function LogoIntro() {
       <div className="logo-intro__halo" />
       <LogoLockup />
       <button className="logo-intro__skip" onClick={dismiss} type="button">
-        Salta / Skip
+        {skipLabel}
       </button>
     </div>
   );
