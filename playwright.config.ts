@@ -18,7 +18,7 @@ export default defineConfig({
   projects: [
     {
       name: "mobile-360",
-      use: { ...devices["iPhone 13"], viewport: { width: 360, height: 800 } },
+      use: { ...devices["Pixel 7"], viewport: { width: 360, height: 800 } },
     },
     {
       name: "tablet-768",

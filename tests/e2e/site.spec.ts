@@ -11,10 +11,10 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
   await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://www.lafenicepositano.com");
 
-  let languageLink = page.locator('a[hreflang="it"]:visible');
+  let languageLink = page.locator('header a[hreflang="it"]:visible').first();
   if ((await languageLink.count()) === 0) {
     await page.getByRole("button", { name: /open menu/i }).click();
-    languageLink = page.locator('a[hreflang="it"]:visible');
+    languageLink = page.locator('.mobile-nav a[hreflang="it"]:visible').first();
   }
   await languageLink.click();
   await expect(page).toHaveURL(/\/it$/);
@@ -24,11 +24,12 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
 
 test("opens and closes the room gallery lightbox", async ({ page }) => {
   await page.goto("/rooms");
-  const firstImage = page.getByRole("button", { name: /view gallery/i }).first();
+  const firstImage = page.getByRole("button", { name: /^view gallery:/i }).first();
   await firstImage.click();
-  await expect(page.getByRole("dialog", { name: /view gallery/i })).toBeVisible();
+  const lightbox = page.locator("dialog.lightbox[open]");
+  await expect(lightbox).toBeVisible();
   await page.getByRole("button", { name: /close gallery/i }).click();
-  await expect(page.getByRole("dialog", { name: /view gallery/i })).not.toBeVisible();
+  await expect(lightbox).not.toBeVisible();
 });
 
 test("availability form exposes the complete request contract", async ({ page }) => {
@@ -51,9 +52,9 @@ test("intro can be skipped and stays dismissed for the session", async ({ browse
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("/");
-  const intro = page.getByRole("status", { name: "La Fenice Positano" });
+  const intro = page.locator(".logo-intro");
   if (await intro.isVisible()) {
-    await page.getByRole("button", { name: /salta \/ skip/i }).click();
+    await page.locator(".logo-intro__skip").click();
   }
   await expect(intro).not.toBeVisible();
   await page.reload();
