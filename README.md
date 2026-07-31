@@ -1,8 +1,8 @@
 # La Fenice Positano
 
-Rifacimento responsive e bilingue del sito di La Fenice Positano, realizzato con Next.js App Router, TypeScript e Tailwind CSS.
+Rifacimento responsive e multilingue (inglese, italiano, tedesco e russo) del sito di La Fenice Positano, realizzato con Next.js App Router, TypeScript e Tailwind CSS.
 
-Include l'intro animata con fenice SVG, navigazione accessibile, gallerie con lightbox, mappa caricata su richiesta, modulo disponibilità, SEO multilingua e redirect HTTP 301 dagli URL PHP precedenti. Il modulo non è un booking engine: non conferma camere, pagamenti o disponibilità in tempo reale.
+Include l'intro animata con fenice SVG, selettore lingua accessibile, gallerie con lightbox, mappa caricata su richiesta, modulo disponibilità, esperienze richiedibili via email, SEO multilingua e redirect HTTP 301 dagli URL PHP precedenti. Il modulo non è un booking engine: non conferma camere, pagamenti o disponibilità in tempo reale.
 
 ## Requisiti e avvio
 
@@ -34,20 +34,20 @@ Per il primo test end-to-end installare Chromium con `npx playwright install chr
 
 ## Route
 
-L'inglese usa gli URL principali; l'italiano è sotto `/it`. Il cambio lingua è manuale, senza redirect basati sul browser.
+L'inglese usa gli URL principali; italiano, tedesco e russo sono rispettivamente sotto `/it`, `/de` e `/ru`. Il cambio lingua è manuale, conserva la pagina equivalente e non usa redirect basati sul browser.
 
-| Contenuto | EN | IT |
-| --- | --- | --- |
-| Home | `/` | `/it` |
-| Camere | `/rooms` | `/it/camere` |
-| Piscina | `/pool` | `/it/piscina` |
-| Spiaggia privata | `/private-beach` | `/it/spiaggia-privata` |
-| Orto e sapori | `/garden-table` | `/it/orto-e-sapori` |
-| Posizione | `/location` | `/it/posizione` |
-| Come arrivare | `/getting-here` | `/it/come-arrivare` |
-| Disponibilità | `/availability` | `/it/disponibilita` |
-| Privacy | `/privacy` | `/it/privacy` |
-| Condizioni | `/terms` | `/it/condizioni` |
+| Contenuto | EN | IT | DE | RU |
+| --- | --- | --- | --- | --- |
+| Home | `/` | `/it` | `/de` | `/ru` |
+| Camere | `/rooms` | `/it/camere` | `/de/zimmer` | `/ru/nomera` |
+| Piscina | `/pool` | `/it/piscina` | `/de/pool` | `/ru/basseyn` |
+| Spiaggia privata | `/private-beach` | `/it/spiaggia-privata` | `/de/privatstrand` | `/ru/chastnyy-plyazh` |
+| Orto e sapori | `/garden-table` | `/it/orto-e-sapori` | `/de/garten-und-genuss` | `/ru/sad-i-vkusy` |
+| Posizione | `/location` | `/it/posizione` | `/de/lage` | `/ru/raspolozhenie` |
+| Come arrivare | `/getting-here` | `/it/come-arrivare` | `/de/anreise` | `/ru/kak-dobratsya` |
+| Disponibilità | `/availability` | `/it/disponibilita` | `/de/verfuegbarkeit` | `/ru/zapros-nalichiya` |
+| Privacy | `/privacy` | `/it/privacy` | `/de/datenschutz` | `/ru/konfidentsialnost` |
+| Condizioni | `/terms` | `/it/condizioni` | `/de/bedingungen` | `/ru/usloviya` |
 
 ## Variabili d'ambiente
 
@@ -73,7 +73,7 @@ La Server Action valida le richieste, applica un honeypot anti-spam e invia l'em
 
 ## Supabase — seconda fase
 
-Lo schema per richieste, contenuti, media, ruoli e RLS è predisposto ma non viene applicato automaticamente. Procedura, policy, fallback e ordine di rollout sono documentati in [SUPABASE.md](./SUPABASE.md).
+Lo schema per richieste, contenuti, media, ruoli e RLS è predisposto ma non viene applicato automaticamente. In questa fase Supabase resta disattivato e il sito usa i quattro dizionari statici. La migrazione esistente supporta ancora soltanto `en` e `it`: l'estensione database a `de` e `ru` verrà progettata nella seconda fase. Procedura, policy, fallback e ordine di rollout sono documentati in [SUPABASE.md](./SUPABASE.md).
 
 ## Deploy su Vercel
 

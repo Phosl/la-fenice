@@ -4,6 +4,11 @@ The website works in email-only mode when Supabase variables are absent. The
 timestamped migration adds inquiry persistence, managed bilingual content and a
 private media bucket; it has **not** been applied to any remote project.
 
+The public website now ships static `en`, `it`, `de` and `ru` dictionaries. The
+existing migration deliberately still accepts only `en` and `it`; it was not
+changed during the four-language rollout. Add German and Russian database
+constraints, policies and migration tests only in the later Supabase phase.
+
 ## Deploy order
 
 1. Configure and verify the Resend sending domain, then set

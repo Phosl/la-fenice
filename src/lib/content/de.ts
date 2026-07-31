@@ -1,8 +1,6 @@
 import { media } from "./media";
 import type { GalleryImage, ImageAsset, SiteContent } from "./types";
 
-type GermanSiteContent = Omit<SiteContent, "locale"> & { locale: "de" };
-
 const withCopy = (
   asset: ImageAsset,
   alt: string,
@@ -666,4 +664,4 @@ export const germanContent = {
       },
     },
   },
-} as const satisfies GermanSiteContent;
+} as const satisfies SiteContent;
