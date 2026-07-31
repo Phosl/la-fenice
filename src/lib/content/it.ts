@@ -114,7 +114,7 @@ export const italianContent = {
       },
       hero: {
         eyebrow: "Positano · Costiera Amalfitana",
-        title: "Dall'orto al mare",
+        title: "Dal giardino al mare",
         lead:
           "Un rifugio della tradizione disteso sul pendio di Positano, tra limoni, bouganville e vedute sul Mar Tirreno.",
         image: homeImages.panorama,
