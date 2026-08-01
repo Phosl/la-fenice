@@ -177,6 +177,14 @@ describe("localized content contract", () => {
 });
 
 describe("audited site identity", () => {
+  it("publishes the official Instagram profile", () => {
+    expect(siteIdentity.social).toContainEqual({
+      platform: "instagram",
+      label: "Instagram",
+      href: "https://www.instagram.com/lafenicepositano/",
+    });
+  });
+
   it("uses the verified La Fenice address and Google Maps listing", () => {
     expect(siteIdentity.address.street).toBe("Via Guglielmo Marconi 4");
     expect(siteIdentity.address.formatted).toBe(

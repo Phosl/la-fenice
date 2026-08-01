@@ -74,8 +74,8 @@ test("compact mobile navigation keeps fixed layers from overlapping", async ({ p
   expect(openGeometry.navigationWidth).toBe(360);
   expect(openGeometry.navigationHeight).toBe(800);
   expect(openGeometry.headerLayer).toBeGreaterThan(openGeometry.navigationLayer);
-  expect(openGeometry.navigationLayer).toBeGreaterThan(openGeometry.accentLayer);
-  expect(openGeometry.accentLayer).toBeGreaterThan(openGeometry.ctaLayer);
+  expect(openGeometry.navigationLayer).toBeGreaterThan(openGeometry.ctaLayer);
+  expect(openGeometry.ctaLayer).toBeGreaterThan(openGeometry.accentLayer);
   expect(openGeometry.stickyCtaAtBottom).toBe(false);
 
   await page.keyboard.press("Escape");

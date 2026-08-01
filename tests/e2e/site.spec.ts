@@ -52,6 +52,20 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
   await expect(page.locator(".proof-strip")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://www.lafenicepositano.com");
+  const instagramLink = page.getByRole("link", { name: "Instagram @lafenicepositano" });
+  await expect(instagramLink).toHaveAttribute(
+    "href",
+    "https://www.instagram.com/lafenicepositano/",
+  );
+  await expect(instagramLink).toHaveAttribute("target", "_blank");
+  await instagramLink.scrollIntoViewIfNeeded();
+  const instagramBounds = await instagramLink.boundingBox();
+  const viewport = page.viewportSize();
+  expect(instagramBounds).not.toBeNull();
+  if (instagramBounds && viewport) {
+    expect(instagramBounds.x).toBeGreaterThanOrEqual(0);
+    expect(instagramBounds.x + instagramBounds.width).toBeLessThanOrEqual(viewport.width);
+  }
 
   await switchLanguage(page, "Italiano");
   await expect(page).toHaveURL(/\/it$/);
@@ -256,6 +270,18 @@ test("replays the content transition on internal navigation and history", async 
     "animation-name",
     "page-content-enter",
   );
+  const accentAnimations = {
+    horizon: await transition.evaluate(
+      (element) => getComputedStyle(element, "::before").animationName,
+    ),
+    seaLight: await page.locator(".page-hero__media").evaluate(
+      (element) => getComputedStyle(element, "::before").animationName,
+    ),
+  };
+  expect(accentAnimations).toEqual({
+    horizon: "page-horizon",
+    seaLight: "page-sea-light",
+  });
   await expect(page.locator(".page-hero__media")).toHaveCSS(
     "animation-name",
     "page-media-enter",
@@ -268,7 +294,7 @@ test("replays the content transition on internal navigation and history", async 
   await page.waitForTimeout(850);
   await expect(transition.locator(":scope > main")).toHaveCSS("transform", "none");
   await expect(page.locator(".page-hero__media")).toHaveCSS("transform", "none");
-  await expect(page.locator(".page-hero__media")).toHaveCSS("clip-path", "none");
+  await expect(page.locator(".page-hero__media")).toHaveCSS("clip-path", "inset(0px)");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
@@ -293,6 +319,15 @@ test("removes page animation when reduced motion is requested", async ({ baseURL
   await expect(page.locator(".page-transition > main")).toHaveCSS("animation-name", "none");
   await expect(page.locator(".home-hero__media")).toHaveCSS("animation-name", "none");
   await expect(page.locator(".home-hero__content h1")).toHaveCSS("animation-name", "none");
+  const accentAnimations = {
+    horizon: await page.locator(".page-transition").evaluate(
+      (element) => getComputedStyle(element, "::before").animationName,
+    ),
+    seaLight: await page.locator(".home-hero__media").evaluate(
+      (element) => getComputedStyle(element, "::before").animationName,
+    ),
+  };
+  expect(accentAnimations).toEqual({ horizon: "none", seaLight: "none" });
   await context.close();
 });
 

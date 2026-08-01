@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoLockup } from "@/components/brand/logo-lockup";
+import { InstagramIcon } from "@/components/ui/icons";
 import { siteIdentity } from "@/lib/content/site";
 import type { SiteContent } from "@/lib/content/types";
 import type { NavigationModel } from "@/lib/content/navigation";
@@ -11,6 +12,9 @@ type SiteFooterProps = {
 
 export function SiteFooter({ content, navigation }: SiteFooterProps) {
   const year = new Date().getFullYear();
+  const instagram = siteIdentity.social.find(
+    (item) => item.platform === "instagram",
+  );
 
   return (
     <footer className="site-footer">
@@ -19,6 +23,18 @@ export function SiteFooter({ content, navigation }: SiteFooterProps) {
           <div className="site-footer__brand">
             <LogoLockup inverse />
             <p>{content.footer.description}</p>
+            {instagram ? (
+              <a
+                className="site-footer__instagram"
+                href={instagram.href}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <InstagramIcon />
+                <span>{instagram.label}</span>
+                <small>@lafenicepositano</small>
+              </a>
+            ) : null}
           </div>
 
           <div className="site-footer__columns">
@@ -51,11 +67,13 @@ export function SiteFooter({ content, navigation }: SiteFooterProps) {
                 {item.label}
               </Link>
             ))}
-            {siteIdentity.social.map((item) => (
-              <a href={item.href} key={item.platform} rel="noopener noreferrer" target="_blank">
-                {item.label}
-              </a>
-            ))}
+            {siteIdentity.social
+              .filter((item) => item.platform !== "instagram")
+              .map((item) => (
+                <a href={item.href} key={item.platform} rel="noopener noreferrer" target="_blank">
+                  {item.label}
+                </a>
+              ))}
           </span>
         </div>
       </div>

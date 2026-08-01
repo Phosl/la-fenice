@@ -20,8 +20,8 @@
   --font-body: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
   --container: min(1220px, calc(100vw - 40px));
   --header-height: 72px;
+  --layer-page-accent: 40;
   --layer-mobile-cta: 50;
-  --layer-page-accent: 60;
   --layer-mobile-nav: 70;
   --layer-header: 80;
   --layer-intro: 100;
@@ -106,66 +106,94 @@ img {
 
 /* Page transitions */
 .page-transition {
-  animation: page-enter 320ms ease-out both;
+  animation: page-enter 260ms ease-out both;
   min-width: 0;
   position: relative;
 }
 
 .page-transition > main {
-  animation: page-content-enter 460ms var(--ease-editorial) backwards;
+  animation: page-content-enter 560ms var(--ease-editorial) backwards;
 }
 
 .page-transition[data-accent="true"]::before {
-  animation: page-accent 680ms var(--ease-editorial) both;
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  z-index: var(--layer-page-accent);
+}
+
+.page-transition[data-accent="true"]::before {
+  animation: page-horizon 860ms var(--ease-editorial) both;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--cobalt) 28%,
-    var(--sea) 72%,
+    rgb(111 141 215 / 16%) 20%,
+    var(--sea) 44%,
+    var(--cobalt) 50%,
+    var(--sea) 56%,
+    rgb(111 141 215 / 16%) 80%,
     transparent 100%
   );
-  content: "";
   height: 1px;
   left: 0;
   opacity: 0;
-  pointer-events: none;
-  position: fixed;
   right: 0;
   top: calc(var(--header-height) - 1px);
-  transform: scaleX(0);
-  transform-origin: left;
-  z-index: var(--layer-page-accent);
+  transform: scaleX(.06);
+  transform-origin: center;
+}
+
+.page-transition[data-accent="true"] .home-hero__media::before,
+.page-transition[data-accent="true"] .page-hero__media::before {
+  animation: page-sea-light 960ms cubic-bezier(.2, .7, .2, 1) both;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 34%,
+    rgb(255 255 255 / 30%) 47%,
+    rgb(111 141 215 / 8%) 52%,
+    rgb(255 255 255 / 8%) 59%,
+    transparent 100%
+  );
+  content: "";
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transform: translate3d(-55%, 0, 0);
+  z-index: 1;
 }
 
 .page-transition .home-hero__media,
 .page-transition .page-hero__media {
-  animation: page-media-enter 800ms var(--ease-editorial) backwards;
+  animation: page-media-enter 920ms var(--ease-editorial) backwards;
+  clip-path: inset(0);
   transform-origin: center;
 }
 
 .page-transition .home-hero__content > *,
 .page-transition .page-hero__content > * {
-  animation: page-copy-enter 520ms var(--ease-editorial) backwards;
+  animation: page-copy-enter 600ms var(--ease-editorial) backwards;
 }
 
 .page-transition .home-hero__content > :nth-child(1),
 .page-transition .page-hero__content > :nth-child(1) {
-  animation-delay: 40ms;
+  animation-delay: 70ms;
 }
 
 .page-transition .home-hero__content > :nth-child(2),
 .page-transition .page-hero__content > :nth-child(2) {
-  animation-delay: 80ms;
+  animation-delay: 130ms;
 }
 
 .page-transition .home-hero__content > :nth-child(3),
 .page-transition .page-hero__content > :nth-child(3) {
-  animation-delay: 120ms;
+  animation-delay: 190ms;
 }
 
 @keyframes page-enter {
   from {
-    opacity: 0;
+    opacity: .92;
   }
   to {
     opacity: 1;
@@ -174,7 +202,7 @@ img {
 
 @keyframes page-content-enter {
   from {
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     transform: none;
@@ -183,12 +211,12 @@ img {
 
 @keyframes page-media-enter {
   from {
-    clip-path: inset(0 0 3% 0);
-    opacity: .86;
-    transform: scale(1.015);
+    clip-path: inset(0 0 1.25% 0);
+    opacity: .9;
+    transform: scale(1.01);
   }
   to {
-    clip-path: none;
+    clip-path: inset(0);
     opacity: 1;
     transform: none;
   }
@@ -197,7 +225,7 @@ img {
 @keyframes page-copy-enter {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -205,21 +233,35 @@ img {
   }
 }
 
-@keyframes page-accent {
+@keyframes page-horizon {
   0% {
     opacity: 0;
-    transform: scaleX(0);
+    transform: scaleX(.06);
   }
-  32% {
-    opacity: .58;
+  30% {
+    opacity: .42;
   }
-  76% {
-    opacity: .32;
+  74% {
+    opacity: .24;
     transform: scaleX(1);
   }
   100% {
     opacity: 0;
     transform: scaleX(1);
+  }
+}
+
+@keyframes page-sea-light {
+  0% {
+    opacity: 0;
+    transform: translate3d(-55%, 0, 0);
+  }
+  34% {
+    opacity: .54;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(55%, 0, 0);
   }
 }
 
@@ -742,6 +784,7 @@ img {
 .page-hero__media {
   inset: 0;
   position: absolute;
+  z-index: 0;
 }
 
 .home-hero__media img,
@@ -749,6 +792,7 @@ img {
   height: 100%;
   object-fit: cover;
   width: 100%;
+  z-index: 0;
 }
 
 .home-hero__media::after {
@@ -758,6 +802,7 @@ img {
   content: "";
   inset: 0;
   position: absolute;
+  z-index: 2;
 }
 
 .home-hero__content {
@@ -1111,6 +1156,7 @@ img {
   content: "";
   inset: 0;
   position: absolute;
+  z-index: 2;
 }
 
 .page-hero__content {
@@ -1815,6 +1861,40 @@ img {
   margin: 0;
 }
 
+.site-footer__instagram {
+  align-items: center;
+  border-bottom: 1px solid rgb(255 255 255 / 35%);
+  color: white;
+  display: flex;
+  gap: 11px;
+  padding: 4px 0 10px;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.site-footer__instagram svg {
+  flex: 0 0 auto;
+  height: 19px;
+  width: 19px;
+}
+
+.site-footer__instagram span {
+  font-size: .76rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.site-footer__instagram small {
+  color: rgb(255 255 255 / 68%);
+  font-size: .73rem;
+}
+
+.site-footer__instagram:hover,
+.site-footer__instagram:focus-visible {
+  border-color: white;
+}
+
 .site-footer__columns {
   display: grid;
   gap: 35px;
@@ -2039,7 +2119,9 @@ img {
   .page-transition::before,
   .page-transition > main,
   .page-transition .home-hero__media,
+  .page-transition .home-hero__media::before,
   .page-transition .page-hero__media,
+  .page-transition .page-hero__media::before,
   .page-transition .home-hero__content > *,
   .page-transition .page-hero__content > * {
     animation: none !important;

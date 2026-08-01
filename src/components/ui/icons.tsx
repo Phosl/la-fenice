@@ -49,3 +49,21 @@ export function ExpandIcon(props: IconProps) {
     </IconBase>
   );
 }
+
+export function InstagramIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <rect
+        height="18"
+        rx="5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        width="18"
+        x="3"
+        y="3"
+      />
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="17.4" cy="6.6" fill="currentColor" r="1" />
+    </IconBase>
+  );
+}
