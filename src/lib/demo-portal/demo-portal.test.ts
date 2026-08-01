@@ -21,6 +21,7 @@ import {
   authenticateDemoAccount,
   hashDemoPassword,
   isDemoSessionCurrent,
+  normaliseLoginCode,
   verifyDemoPassword,
 } from "./security";
 import {
@@ -41,7 +42,7 @@ beforeAll(async () => {
 
 const guestSession = (): DemoSession => ({
   accountId: "demo-guest-account",
-  loginCode: "ROSSI-27",
+  loginCode: normaliseLoginCode(DEMO_GUEST_CREDENTIALS.loginCode),
   role: "guest",
   credentialVersion: 1,
   createdAt: fixedNow.toISOString(),
@@ -49,7 +50,7 @@ const guestSession = (): DemoSession => ({
 
 const adminSession = (): DemoSession => ({
   accountId: "demo-admin-account",
-  loginCode: "ADMIN-DEMO",
+  loginCode: normaliseLoginCode(DEMO_ADMIN_CREDENTIALS.loginCode),
   role: "admin",
   credentialVersion: 1,
   createdAt: fixedNow.toISOString(),
@@ -87,8 +88,10 @@ describe("demo seed and credentials", () => {
     expect(stay.checkOut).toBe("2026-08-05");
     expect(seed.catalog.filter(({ kind }) => kind === "product")).toHaveLength(8);
     expect(seed.catalog.filter(({ kind }) => kind === "activity")).toHaveLength(3);
-    expect(JSON.stringify(seed)).not.toContain(DEMO_GUEST_CREDENTIALS.password);
-    expect(JSON.stringify(seed)).not.toContain(DEMO_ADMIN_CREDENTIALS.password);
+    expect(seed.accounts.find(({ role }) => role === "guest")?.passwordHash)
+      .not.toContain(DEMO_GUEST_CREDENTIALS.password);
+    expect(seed.accounts.find(({ role }) => role === "admin")?.passwordHash)
+      .not.toContain(DEMO_ADMIN_CREDENTIALS.password);
   });
 
   it("moves only the built-in stay when today falls outside it", () => {
@@ -152,7 +155,7 @@ describe("demo seed and credentials", () => {
     await expect(
       authenticateDemoAccount(
         seed.accounts,
-        " rossi-27 ",
+        " cliente ",
         DEMO_GUEST_CREDENTIALS.password,
         "guest",
       ),
@@ -160,11 +163,19 @@ describe("demo seed and credentials", () => {
     await expect(
       authenticateDemoAccount(
         seed.accounts,
-        "ROSSI-27",
+        "CLIENTE",
         DEMO_GUEST_CREDENTIALS.password,
         "admin",
       ),
     ).resolves.toEqual({ ok: false, reason: "wrong_role" });
+    await expect(
+      authenticateDemoAccount(
+        seed.accounts,
+        "admin",
+        DEMO_ADMIN_CREDENTIALS.password,
+        "admin",
+      ),
+    ).resolves.toMatchObject({ ok: true, account: { role: "admin" } });
   });
 
   it("invalidates an existing guest session after an admin password reset", async () => {

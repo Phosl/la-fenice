@@ -54,7 +54,7 @@ export async function hashDemoPassword(
   password: string,
   saltHex = randomHex(),
 ): Promise<string> {
-  if (password.length < 8) throw new Error("Demo passwords need at least 8 characters.");
+  if (!password) throw new Error("Demo passwords cannot be empty.");
   const digest = await derivePasswordHash(password, saltHex, HASH_ITERATIONS);
   return `pbkdf2-sha256:${HASH_ITERATIONS}:${saltHex}:${digest}`;
 }

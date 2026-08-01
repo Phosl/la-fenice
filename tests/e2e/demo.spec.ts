@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const GUEST_CODE = "ROSSI-27";
-const GUEST_PASSWORD = "Fenice2026!";
-const ADMIN_CODE = "ADMIN-DEMO";
-const ADMIN_PASSWORD = "FeniceAdmin2026!";
+const GUEST_CODE = "cliente";
+const GUEST_PASSWORD = "cliente";
+const ADMIN_CODE = "admin";
+const ADMIN_PASSWORD = "admin";
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {
@@ -45,7 +45,7 @@ async function expectDialogIsTopmost(page: Page, accessibleName: string | RegExp
 
 async function loginAsGuest(page: Page) {
   await page.goto("/demo/login");
-  await page.getByLabel("Codice soggiorno").fill(GUEST_CODE);
+  await page.getByLabel("Utente", { exact: true }).fill(GUEST_CODE);
   await page.getByLabel("Password").fill(GUEST_PASSWORD);
   await page.getByRole("button", { name: "Entra nel soggiorno" }).click();
   await expect(page).toHaveURL(/\/demo\/stay$/);
@@ -87,7 +87,7 @@ async function createFishingRequest(page: Page) {
 
 async function loginAsAdmin(page: Page) {
   await page.goto("/demo/admin/login");
-  await page.getByLabel("Codice amministratore").fill(ADMIN_CODE);
+  await page.getByLabel("Utente", { exact: true }).fill(ADMIN_CODE);
   await page.getByLabel("Password").fill(ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Entra nel pannello" }).click();
   await expect(page).toHaveURL(/\/demo\/admin$/);
@@ -107,7 +107,7 @@ test("guest login, stay calendar, order persistence, cancellation and guard work
   ).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
-  await page.getByLabel("Codice soggiorno").fill(GUEST_CODE);
+  await page.getByLabel("Utente", { exact: true }).fill(GUEST_CODE);
   await page.getByLabel("Password").fill("password-errata");
   await page.getByRole("button", { name: "Entra nel soggiorno" }).click();
   await expect(
@@ -162,7 +162,7 @@ test("guest language follows the selected Russian locale", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "Добро пожаловать в La Fenice" }),
   ).toBeVisible();
-  await page.getByLabel("Код проживания").fill(GUEST_CODE);
+  await page.getByLabel("Пользователь").fill(GUEST_CODE);
   await page.getByLabel("Пароль").fill(GUEST_PASSWORD);
   await page.getByRole("button", { name: "Открыть проживание" }).click();
   await expect(page).toHaveURL(/\/demo\/stay$/);

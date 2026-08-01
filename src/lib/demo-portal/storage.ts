@@ -1,8 +1,8 @@
 import type { DemoPortalState, DemoSession } from "./types";
 import { DEMO_PORTAL_VERSION } from "./types";
 
-export const DEMO_STATE_STORAGE_KEY = "la-fenice:demo-portal:v2";
-export const DEMO_SESSION_STORAGE_KEY = "la-fenice:demo-session:v2";
+export const DEMO_STATE_STORAGE_KEY = "la-fenice:demo-portal:v3";
+export const DEMO_SESSION_STORAGE_KEY = "la-fenice:demo-session:v3";
 const DEMO_CHANGE_EVENT = "la-fenice:demo-portal-change";
 
 export function isDemoPortalState(value: unknown): value is DemoPortalState {

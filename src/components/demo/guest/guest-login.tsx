@@ -4,13 +4,12 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import type { Locale } from "@/lib/content/types";
-import { useDemoPortal } from "@/lib/demo-portal";
+import { DEMO_GUEST_CREDENTIALS, useDemoPortal } from "@/lib/demo-portal";
 
 import { guestDemoCopy, guestDemoLocales, isGuestDemoLocale } from "./copy";
 import styles from "./guest.module.css";
 
-const DEMO_CODE = "ROSSI-27";
-const DEMO_PASSWORD = "Fenice2026!";
+const { loginCode: DEMO_CODE, password: DEMO_PASSWORD } = DEMO_GUEST_CREDENTIALS;
 
 type CopiedField = "code" | "password" | null;
 

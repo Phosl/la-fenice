@@ -1,5 +1,5 @@
 import { addDemoDays, getRomeToday, isDateWithinStay } from "./dates";
-import { hashDemoPassword } from "./security";
+import { hashDemoPassword, normaliseLoginCode } from "./security";
 import type {
   DemoCatalogItem,
   DemoLocalizedLabel,
@@ -8,13 +8,13 @@ import type {
 import { DEMO_PORTAL_VERSION } from "./types";
 
 export const DEMO_GUEST_CREDENTIALS = {
-  loginCode: "ROSSI-27",
-  password: "Fenice2026!",
+  loginCode: "cliente",
+  password: "cliente",
 } as const;
 
 export const DEMO_ADMIN_CREDENTIALS = {
-  loginCode: "ADMIN-DEMO",
-  password: "FeniceAdmin2026!",
+  loginCode: "admin",
+  password: "admin",
 } as const;
 
 const labels = (
@@ -56,7 +56,7 @@ export async function createDemoPortalSeed(now = new Date()): Promise<DemoPortal
     accounts: [
       {
         id: "demo-guest-account",
-        loginCode: DEMO_GUEST_CREDENTIALS.loginCode,
+        loginCode: normaliseLoginCode(DEMO_GUEST_CREDENTIALS.loginCode),
         passwordHash: guestPasswordHash,
         credentialVersion: 1,
         role: "guest",
@@ -67,7 +67,7 @@ export async function createDemoPortalSeed(now = new Date()): Promise<DemoPortal
       },
       {
         id: "demo-admin-account",
-        loginCode: DEMO_ADMIN_CREDENTIALS.loginCode,
+        loginCode: normaliseLoginCode(DEMO_ADMIN_CREDENTIALS.loginCode),
         passwordHash: adminPasswordHash,
         credentialVersion: 1,
         role: "admin",

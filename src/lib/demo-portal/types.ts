@@ -1,4 +1,4 @@
-export const DEMO_PORTAL_VERSION = 2 as const;
+export const DEMO_PORTAL_VERSION = 3 as const;
 
 export const DEMO_LOCALES = ["en", "it", "de", "ru"] as const;
 export type DemoLocale = (typeof DEMO_LOCALES)[number];

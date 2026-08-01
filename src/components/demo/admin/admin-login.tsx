@@ -77,7 +77,7 @@ export function AdminLogin() {
 
         <form className={styles.form} noValidate onSubmit={handleSubmit}>
           <div className={styles.field}>
-            <label htmlFor="admin-login-code">Codice amministratore</label>
+            <label htmlFor="admin-login-code">Utente</label>
             <input
               autoCapitalize="characters"
               autoComplete="username"

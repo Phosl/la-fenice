@@ -80,7 +80,7 @@ describe("resilient demo browser storage", () => {
     expect(
       saveDemoSession({
         accountId: "demo-guest-account",
-        loginCode: "ROSSI-27",
+        loginCode: "CLIENTE",
         role: "guest",
         credentialVersion: 1,
         createdAt: "2026-08-01T10:00:00.000Z",
@@ -104,7 +104,7 @@ describe("resilient demo browser storage", () => {
   it("drops legacy sessions without a credential version", () => {
     const legacySession: Omit<DemoSession, "credentialVersion"> = {
       accountId: "demo-guest-account",
-      loginCode: "ROSSI-27",
+      loginCode: "CLIENTE",
       role: "guest",
       createdAt: "2026-08-01T10:00:00.000Z",
     };
