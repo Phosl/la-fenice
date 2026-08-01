@@ -373,17 +373,113 @@ test("legacy PHP paths return a permanent redirect", async ({ request }) => {
   expect(response.headers().location).toBe("/rooms");
 });
 
-test("intro can be skipped and stays dismissed for the session", async ({ baseURL, browser }) => {
-  const context = await browser.newContext({ baseURL });
+test("intro is ethereal, keyboard accessible and dismissed for the session", async ({ baseURL, browser }, testInfo) => {
+  const viewport = {
+    "mobile-360": { width: 360, height: 800 },
+    "tablet-768": { width: 768, height: 1024 },
+    "desktop-1440": { width: 1440, height: 1000 },
+  }[testInfo.project.name] ?? { width: 1280, height: 800 };
+  const context = await browser.newContext({ baseURL, viewport });
   const page = await context.newPage();
   await page.goto("/");
   await expectHydrated(page);
   const intro = page.locator(".logo-intro");
-  if (await intro.isVisible()) {
-    await page.locator(".logo-intro__skip").click();
+  await expect(intro).toBeVisible();
+  await expect(intro).toHaveCSS("animation-name", "intro-shell");
+  await expect(page.locator(".logo-intro__mark")).toHaveCSS(
+    "animation-name",
+    "intro-mark-reveal",
+  );
+  await expect(page.locator(".logo-intro__halo")).toHaveCount(0);
+
+  const logoBounds = await page.locator(".logo-intro .logo-lockup").boundingBox();
+  expect(logoBounds).not.toBeNull();
+  if (logoBounds) {
+    expect(logoBounds.width).toBeLessThanOrEqual(361);
+    expect(Math.abs(logoBounds.x + logoBounds.width / 2 - viewport.width / 2)).toBeLessThan(2);
   }
+
+  await page.mouse.wheel(0, 600);
+  await page.waitForTimeout(50);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".logo-intro__skip")).toBeFocused();
+  await page.keyboard.press(testInfo.project.name === "mobile-360" ? "Escape" : "Enter");
   await expect(intro).not.toBeVisible();
+  await expect(page.locator("#main-content")).toBeFocused();
+  await expect(page.locator(".logo-intro__atmosphere")).toHaveCount(0);
   await page.reload();
   await expect(intro).not.toBeVisible();
+  await page.goto("/it");
+  await expect(page.locator(".logo-intro")).toHaveCount(0);
+  expect(await page.pageErrors()).toEqual([]);
+  await context.close();
+});
+
+test("intro dismisses automatically and supports reduced motion", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One timing and reduced-motion check is sufficient");
+
+  const regularContext = await browser.newContext({ baseURL });
+  const regularPage = await regularContext.newPage();
+  await regularPage.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(regularPage.locator(".logo-intro")).toBeVisible();
+  await expect(regularPage.locator(".logo-intro")).not.toBeVisible({ timeout: 3_000 });
+  await expect.poll(
+    () => regularPage.evaluate(() => sessionStorage.getItem("la-fenice-intro-seen")),
+  ).toBe("true");
+  await expect(regularPage.locator(".logo-intro__atmosphere")).toHaveCount(0);
+  await expect(regularPage.locator(".home-hero__media")).toHaveCSS("transform", "none");
+  await regularContext.close();
+
+  const reducedContext = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+  const reducedPage = await reducedContext.newPage();
+  await reducedPage.goto("/");
+  await expect(reducedPage.locator(".logo-intro")).not.toBeVisible({ timeout: 1_000 });
+  await expect(reducedPage.locator(".logo-intro__atmosphere")).toHaveCount(0);
+  await reducedContext.close();
+});
+
+test("intro keeps its CSS fallback when WebGL is unavailable", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One WebGL fallback check is sufficient");
+
+  const context = await browser.newContext({ baseURL });
+  await context.addInitScript(() => {
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+      configurable: true,
+      value(type: string, ...args: unknown[]) {
+        const state = window as Window & { __introWebglAttempts?: number };
+        if (type === "webgl") {
+          state.__introWebglAttempts = (state.__introWebglAttempts ?? 0) + 1;
+          return null;
+        }
+        return Reflect.apply(originalGetContext, this, [type, ...args]);
+      },
+    });
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator(".logo-intro")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __introWebglAttempts?: number }).__introWebglAttempts,
+    ),
+  ).toBeGreaterThan(0);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".logo-intro")).not.toBeVisible();
+  expect(await page.pageErrors()).toEqual([]);
+  await context.close();
+});
+
+test("intro never blocks the site when JavaScript is unavailable", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One no-JavaScript fallback check is sufficient");
+
+  const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".logo-intro")).toBeVisible();
+  await expect(page.locator(".logo-intro")).not.toBeVisible({ timeout: 3_000 });
+  await page.locator('.desktop-nav__link[href="/rooms"]').click();
+  await expect(page).toHaveURL(/\/rooms$/);
   await context.close();
 });

@@ -4,6 +4,7 @@ type LogoLockupProps = {
   adaptive?: boolean;
   compact?: boolean;
   inverse?: boolean;
+  priority?: boolean;
 };
 
 const BLUE_LOGO = "/logo-la-fenice.svg";
@@ -13,6 +14,7 @@ export function LogoLockup({
   adaptive = false,
   compact = false,
   inverse = false,
+  priority = false,
 }: LogoLockupProps) {
   const className = [
     "logo-lockup",
@@ -30,6 +32,7 @@ export function LogoLockup({
         aria-hidden="true"
         className="logo-lockup__asset logo-lockup__asset--blue"
         height={972}
+        priority={priority}
         sizes={compact ? "120px" : "240px"}
         src={inverse ? WHITE_LOGO : BLUE_LOGO}
         unoptimized
@@ -41,7 +44,7 @@ export function LogoLockup({
           aria-hidden="true"
           className="logo-lockup__asset logo-lockup__asset--white"
           height={972}
-          priority
+          priority={priority || adaptive}
           sizes="120px"
           src={WHITE_LOGO}
           unoptimized
