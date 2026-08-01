@@ -82,8 +82,13 @@ export function RequestsSection() {
     <section aria-labelledby="requests-title" className={styles.panel}>
       <div className={styles.sectionHeader}>
         <div>
-          <h2 className={styles.sectionHeading} id="requests-title">Richieste</h2>
-          <p className={styles.sectionIntro}>Ordini e attività inviati dagli ospiti, tutti in un’unica coda.</p>
+          <div className={styles.headingWithMeta}>
+            <h2 className={styles.sectionHeading} id="requests-title">Richieste</h2>
+            <span className={styles.sectionMeta}>
+              {requests.length} {requests.length === 1 ? "risultato" : "risultati"}
+            </span>
+          </div>
+          <p className={styles.sectionIntro}>Ordini ed esperienze, in un’unica coda.</p>
         </div>
       </div>
 

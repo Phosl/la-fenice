@@ -55,7 +55,7 @@ export function AdminLogin() {
           <h1 className={styles.loginHeading} id="admin-login-title">Accesso staff</h1>
         </div>
         <p className={styles.loginCopy}>
-          Accedi al pannello dimostrativo per gestire soggiorni, richieste e catalogo.
+          Gestisci richieste, soggiorni, Shop e attività da un unico pannello.
           I dati restano esclusivamente in questo browser.
         </p>
 

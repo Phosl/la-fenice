@@ -30,6 +30,19 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(overflow.amount, JSON.stringify(overflow.offenders)).toBeLessThanOrEqual(1);
 }
 
+async function expectDialogIsTopmost(page: Page, accessibleName: string | RegExp) {
+  const dialog = page.getByRole("dialog", { name: accessibleName });
+  await expect(dialog).toBeVisible();
+  const isTopmost = await dialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const centerX = Math.max(0, Math.min(window.innerWidth - 1, rect.left + rect.width / 2));
+    const centerY = Math.max(0, Math.min(window.innerHeight - 1, rect.top + rect.height / 2));
+    const topmost = document.elementFromPoint(centerX, centerY);
+    return topmost !== null && element.contains(topmost);
+  });
+  expect(isTopmost).toBe(true);
+}
+
 async function loginAsGuest(page: Page) {
   await page.goto("/demo/login");
   await page.getByLabel("Codice soggiorno").fill(GUEST_CODE);
@@ -112,6 +125,14 @@ test("guest login, stay calendar, order persistence, cancellation and guard work
   await expect(today).toHaveCount(1);
   await expect(today).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: /Check-out/ })).toBeDisabled();
+  await expect(page.getByRole("tab", { name: "Shop" })).toHaveAttribute("aria-selected", "true");
+  const shopFilters = page.getByRole("group", {
+    name: "Filtra i prodotti dello shop per categoria",
+  });
+  await shopFilters.getByRole("button", { name: /Bevande/ }).click();
+  await expect(page.getByText("Panino caprese", { exact: true })).toHaveCount(0);
+  await shopFilters.getByRole("button", { name: /Tutto/ }).click();
+  await expect(page.getByText("Panino caprese", { exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   let request = await createCapreseOrder(page);
@@ -189,6 +210,7 @@ test("staff creates credentials, resets a password and adds a catalog item", asy
   await page.getByRole("button", { name: "Nuovo soggiorno" }).click();
 
   const stayDialog = page.getByRole("dialog", { name: "Nuovo soggiorno" });
+  await expectDialogIsTopmost(page, "Nuovo soggiorno");
   await stayDialog.getByLabel("Cognome").fill("Bianchi");
   await stayDialog.getByLabel("Nome visualizzato").fill("Famiglia Bianchi");
   await stayDialog.getByLabel("Camera").fill("Camera demo");
@@ -209,16 +231,22 @@ test("staff creates credentials, resets a password and adds a catalog item", asy
   await expect(resetDialog).toContainText("Password temporanea");
   await resetDialog.getByRole("button", { name: "Ho copiato, chiudi" }).click();
 
-  await page.getByRole("tab", { name: "Catalogo" }).click();
-  await page.getByRole("button", { name: "Nuovo prodotto" }).click();
+  await page.getByRole("tab", { name: "Shop" }).click();
+  await expect(page.getByRole("tab", { name: "Attività" })).toBeVisible();
+  await page.getByRole("button", { name: "Aggiungi prodotto" }).click();
   const productDialog = page.getByRole("dialog", { name: "Nuovo prodotto" });
-  await productDialog.getByLabel("IT", { exact: true }).fill("Aperitivo della casa");
-  await productDialog.getByLabel("EN", { exact: true }).fill("House aperitivo");
-  await productDialog.getByLabel("DE", { exact: true }).fill("Aperitif des Hauses");
-  await productDialog.getByLabel("RU", { exact: true }).fill("Домашний аперитив");
-  await productDialog.getByLabel("Prezzo EUR (opzionale)").fill("18.50");
-  await productDialog.getByRole("button", { name: "Aggiungi al catalogo" }).click();
+  await expectDialogIsTopmost(page, "Nuovo prodotto");
+  await productDialog.getByLabel("Italiano", { exact: true }).fill("Aperitivo della casa");
+  await productDialog.getByLabel("English", { exact: true }).fill("House aperitivo");
+  await productDialog.getByLabel("Deutsch", { exact: true }).fill("Aperitif des Hauses");
+  await productDialog.getByLabel("Русский", { exact: true }).fill("Домашний аперитив");
+  await productDialog.getByLabel("Prezzo (€)").fill("18.50");
+  await productDialog.getByRole("button", { name: "Aggiungi allo Shop" }).click();
   await expect(page.getByRole("heading", { level: 3, name: "Aperitivo della casa" })).toBeVisible();
   await expect(page.getByText(/18,50\s*€/).first()).toBeVisible();
   await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("main").getByRole("button", { name: "Esci" }).click();
+  await loginAsGuest(page);
+  await expect(page.getByText("Aperitivo della casa", { exact: true })).toBeVisible();
 });

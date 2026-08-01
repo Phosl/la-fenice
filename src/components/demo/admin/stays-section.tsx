@@ -57,8 +57,13 @@ export function StaysSection() {
     <section aria-labelledby="stays-title" className={styles.panel}>
       <div className={styles.sectionHeader}>
         <div>
-          <h2 className={styles.sectionHeading} id="stays-title">Soggiorni</h2>
-          <p className={styles.sectionIntro}>Crea l’accesso ospite e gestisci date, camera e preferenze.</p>
+          <div className={styles.headingWithMeta}>
+            <h2 className={styles.sectionHeading} id="stays-title">Soggiorni</h2>
+            <span className={styles.sectionMeta}>
+              {stays.length} {stays.length === 1 ? "soggiorno" : "soggiorni"}
+            </span>
+          </div>
+          <p className={styles.sectionIntro}>Accessi, date e camere degli ospiti.</p>
         </div>
         <button className={styles.buttonPrimary} onClick={() => setCreating(true)} type="button">
           Nuovo soggiorno

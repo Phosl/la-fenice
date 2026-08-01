@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/content/types";
+import type { DemoProductCategory } from "@/lib/demo-portal";
 
 export const guestDemoLocales = ["en", "it", "de", "ru"] as const satisfies readonly Locale[];
 
@@ -10,6 +11,7 @@ export type GuestRequestStatus =
   | "cancelled";
 
 export type GuestServiceLocation = "room" | "pool" | "beach";
+export type GuestShopCategory = "all" | DemoProductCategory;
 
 export type GuestCopy = {
   languageName: string;
@@ -70,9 +72,13 @@ export type GuestCopy = {
     readOnlyCheckout: string;
   };
   order: {
+    shopEyebrow: string;
     title: string;
     lead: string;
+    categoryLabel: string;
+    categories: Record<GuestShopCategory, string>;
     emptyCatalog: string;
+    emptyCategory: string;
     quantityDecrease: string;
     quantityIncrease: string;
     quantityFor: string;
@@ -177,16 +183,27 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
     },
     day: {
       title: "Plan this day",
-      orderTab: "Order",
+      orderTab: "Shop",
       activityTab: "Activities",
       readOnlyTitle: "This day is read-only",
       readOnlyPast: "Requests for past days are closed. You can still review the requests already sent below.",
       readOnlyCheckout: "Requests are not available on check-out day. Please contact the team if you need assistance.",
     },
     order: {
-      title: "What would you like?",
-      lead: "Select one or more items and tell us where and when you would prefer them.",
+      shopEyebrow: "La Fenice Shop",
+      title: "Your stay shop",
+      lead: "Browse by category, choose quantities and send your selection for the day shown above.",
+      categoryLabel: "Filter shop products by category",
+      categories: {
+        all: "All",
+        food: "Food",
+        "classic-drink": "Classic drinks",
+        wine: "Wines",
+        champagne: "Champagne",
+        "raw-fish": "Raw fish",
+      },
       emptyCatalog: "There are no items available right now.",
+      emptyCategory: "There are no products in this category right now.",
       quantityDecrease: "Decrease quantity",
       quantityIncrease: "Increase quantity",
       quantityFor: "Quantity for",
@@ -295,16 +312,27 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
     },
     day: {
       title: "Organizza questa giornata",
-      orderTab: "Ordina",
+      orderTab: "Shop",
       activityTab: "Attività",
       readOnlyTitle: "Questa giornata è in sola lettura",
       readOnlyPast: "Le richieste per i giorni passati sono chiuse. Puoi comunque consultare sotto quelle già inviate.",
       readOnlyCheckout: "Il giorno del check-out non accetta richieste. Se ti serve aiuto, contatta lo staff.",
     },
     order: {
-      title: "Cosa desideri?",
-      lead: "Scegli uno o più prodotti e indicaci dove e quando preferisci riceverli.",
+      shopEyebrow: "La Fenice Shop",
+      title: "Lo shop del soggiorno",
+      lead: "Esplora le categorie, scegli le quantità e invia la selezione per il giorno indicato sopra.",
+      categoryLabel: "Filtra i prodotti dello shop per categoria",
+      categories: {
+        all: "Tutto",
+        food: "Cucina",
+        "classic-drink": "Bevande",
+        wine: "Vini",
+        champagne: "Champagne",
+        "raw-fish": "Crudo di pesce",
+      },
       emptyCatalog: "Al momento non ci sono prodotti disponibili.",
+      emptyCategory: "Al momento non ci sono prodotti in questa categoria.",
       quantityDecrease: "Diminuisci quantità",
       quantityIncrease: "Aumenta quantità",
       quantityFor: "Quantità per",
@@ -413,16 +441,27 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
     },
     day: {
       title: "Diesen Tag planen",
-      orderTab: "Bestellen",
+      orderTab: "Shop",
       activityTab: "Aktivitäten",
       readOnlyTitle: "Dieser Tag ist schreibgeschützt",
       readOnlyPast: "Anfragen für vergangene Tage sind geschlossen. Bereits gesendete Anfragen können Sie unten weiterhin ansehen.",
       readOnlyCheckout: "Am Check-out-Tag sind keine Anfragen möglich. Wenden Sie sich bitte an das Team, wenn Sie Hilfe benötigen.",
     },
     order: {
-      title: "Was wünschen Sie?",
-      lead: "Wählen Sie einen oder mehrere Artikel und teilen Sie uns mit, wo und wann Sie sie wünschen.",
+      shopEyebrow: "La Fenice Shop",
+      title: "Ihr Shop für den Aufenthalt",
+      lead: "Durchsuchen Sie die Kategorien, wählen Sie Mengen und senden Sie Ihre Auswahl für den oben angezeigten Tag.",
+      categoryLabel: "Shop-Produkte nach Kategorie filtern",
+      categories: {
+        all: "Alle",
+        food: "Speisen",
+        "classic-drink": "Getränke",
+        wine: "Weine",
+        champagne: "Champagner",
+        "raw-fish": "Roher Fisch",
+      },
       emptyCatalog: "Derzeit sind keine Artikel verfügbar.",
+      emptyCategory: "Derzeit sind in dieser Kategorie keine Produkte verfügbar.",
       quantityDecrease: "Menge verringern",
       quantityIncrease: "Menge erhöhen",
       quantityFor: "Menge für",
@@ -531,16 +570,27 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
     },
     day: {
       title: "Спланируйте этот день",
-      orderTab: "Заказ",
+      orderTab: "Магазин",
       activityTab: "Активности",
       readOnlyTitle: "Этот день доступен только для просмотра",
       readOnlyPast: "Запросы на прошедшие дни закрыты. Ниже по-прежнему можно посмотреть уже отправленные запросы.",
       readOnlyCheckout: "В день выезда запросы недоступны. Если вам нужна помощь, обратитесь к команде.",
     },
     order: {
-      title: "Что вы желаете?",
-      lead: "Выберите один или несколько вариантов и укажите, где и когда вам их подать.",
+      shopEyebrow: "La Fenice Shop",
+      title: "Магазин для вашего отдыха",
+      lead: "Выберите категорию и количество, затем отправьте заказ на указанный выше день.",
+      categoryLabel: "Фильтр товаров магазина по категории",
+      categories: {
+        all: "Все",
+        food: "Еда",
+        "classic-drink": "Напитки",
+        wine: "Вина",
+        champagne: "Шампанское",
+        "raw-fish": "Сырая рыба",
+      },
       emptyCatalog: "Сейчас нет доступных позиций.",
+      emptyCategory: "Сейчас в этой категории нет товаров.",
       quantityDecrease: "Уменьшить количество",
       quantityIncrease: "Увеличить количество",
       quantityFor: "Количество для",

@@ -554,6 +554,66 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
 }
 
+.shopEyebrow {
+  color: var(--sea-deep);
+  display: inline-block;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .15em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.shopCategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  max-width: 100%;
+}
+
+.shopCategory {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cobalt);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: .67rem;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 39px;
+  padding: 7px 12px;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.shopCategory small {
+  align-items: center;
+  background: var(--ivory-deep);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  display: inline-flex;
+  font-size: .6rem;
+  height: 21px;
+  justify-content: center;
+  min-width: 21px;
+  padding-inline: 4px;
+}
+
+.shopCategory:hover,
+.shopCategory[aria-pressed="true"] {
+  background: var(--cobalt);
+  border-color: var(--cobalt);
+  color: white;
+}
+
+.shopCategory[aria-pressed="true"] small {
+  background: rgb(255 255 255 / 16%);
+  color: var(--lemon);
+}
+
 .catalogGrid {
   display: grid;
   gap: 10px;
@@ -681,6 +741,28 @@
   font-size: 1.3rem;
   font-weight: 500;
   margin: 0;
+}
+
+.summaryHeading {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.cartCount {
+  align-items: center;
+  background: var(--cobalt);
+  border-radius: 50%;
+  color: white;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: .7rem;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  min-width: 30px;
+  padding-inline: 5px;
 }
 
 .summaryList {
@@ -962,7 +1044,8 @@
   }
 
   .primaryButton,
-  .dayButton {
+  .dayButton,
+  .shopCategory {
     transition: none;
   }
 }

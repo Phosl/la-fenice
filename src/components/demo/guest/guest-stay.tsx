@@ -16,11 +16,11 @@ import { ActivityPanel } from "./activity-panel";
 import { guestDemoCopy, guestDemoLocales, isGuestDemoLocale } from "./copy";
 import { countStayNights, formatGuestDate } from "./format";
 import styles from "./guest.module.css";
-import { OrderPanel } from "./order-panel";
 import { RequestsList } from "./requests-list";
+import { ShopPanel } from "./shop-panel";
 import { StayCalendar } from "./stay-calendar";
 
-type PlannerTab = "order" | "activity";
+type PlannerTab = "shop" | "activity";
 
 export function GuestStay() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export function GuestStay() {
     today,
   } = useDemoPortal();
   const [selectedDate, setSelectedDate] = useState<DemoDate>(today);
-  const [activeTab, setActiveTab] = useState<PlannerTab>("order");
+  const [activeTab, setActiveTab] = useState<PlannerTab>("shop");
 
   const authenticated =
     ready &&
@@ -100,7 +100,7 @@ export function GuestStay() {
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const nextTab: PlannerTab = activeTab === "order" ? "activity" : "order";
+    const nextTab: PlannerTab = activeTab === "shop" ? "activity" : "shop";
     setActiveTab(nextTab);
     document.getElementById(`guest-${nextTab}-tab`)?.focus();
   }
@@ -182,14 +182,14 @@ export function GuestStay() {
           {orderable ? (
             <div aria-label={copy.day.title} className={styles.tabs} role="tablist">
               <button
-                aria-controls="guest-order-panel"
-                aria-selected={activeTab === "order"}
+                aria-controls="guest-shop-panel"
+                aria-selected={activeTab === "shop"}
                 className={styles.tab}
-                id="guest-order-tab"
-                onClick={() => setActiveTab("order")}
+                id="guest-shop-tab"
+                onClick={() => setActiveTab("shop")}
                 onKeyDown={handleTabKeyDown}
                 role="tab"
-                tabIndex={activeTab === "order" ? 0 : -1}
+                tabIndex={activeTab === "shop" ? 0 : -1}
                 type="button"
               >
                 {copy.day.orderTab}
@@ -214,16 +214,16 @@ export function GuestStay() {
         {orderable ? (
           <>
             <div
-              aria-labelledby="guest-order-tab"
+              aria-labelledby="guest-shop-tab"
               className={styles.tabPanel}
-              hidden={activeTab !== "order"}
-              id="guest-order-panel"
+              hidden={activeTab !== "shop"}
+              id="guest-shop-panel"
               role="tabpanel"
             >
-              <OrderPanel
+              <ShopPanel
                 copy={copy}
                 createOrder={createOrder}
-                key={`order-${effectiveSelectedDate}`}
+                key={`shop-${effectiveSelectedDate}`}
                 locale={locale}
                 products={products}
                 selectedDate={effectiveSelectedDate}

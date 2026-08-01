@@ -9,13 +9,7 @@ import { RequestsSection } from "./requests-section";
 import { StaysSection } from "./stays-section";
 import styles from "./admin.module.css";
 
-type AdminTab = "requests" | "stays" | "catalog";
-
-const tabs: Array<{ id: AdminTab; label: string }> = [
-  { id: "requests", label: "Richieste" },
-  { id: "stays", label: "Soggiorni" },
-  { id: "catalog", label: "Catalogo" },
-];
+type AdminTab = "requests" | "stays" | "shop" | "activities";
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -46,7 +40,14 @@ export function AdminDashboard() {
   ].length;
   const todayOrders = state.orders.filter((order) => order.serviceDate === today).length;
   const activeStays = state.stays.filter((stay) => stay.active).length;
-  const activeCatalog = state.catalog.filter((item) => item.active).length;
+  const activeProducts = state.catalog.filter((item) => item.kind === "product" && item.active).length;
+  const activeActivities = state.catalog.filter((item) => item.kind === "activity" && item.active).length;
+  const tabs: Array<{ count: number; id: AdminTab; label: string }> = [
+    { count: pendingRequests, id: "requests", label: "Richieste" },
+    { count: activeStays, id: "stays", label: "Soggiorni" },
+    { count: activeProducts, id: "shop", label: "Shop" },
+    { count: activeActivities, id: "activities", label: "Attività" },
+  ];
 
   async function handleReset() {
     if (resetting) return;
@@ -72,16 +73,18 @@ export function AdminDashboard() {
   return (
     <div className={styles.dashboard}>
       <header className={styles.dashboardHeader}>
-        <div>
+        <div className={styles.dashboardIntro}>
           <span className="eyebrow">La Fenice · Demo staff</span>
           <h1 className={styles.dashboardTitle}>Gestione ospiti</h1>
+          <p className={styles.dashboardLead}>
+            {pendingRequests > 0
+              ? `${pendingRequests} ${pendingRequests === 1 ? "richiesta da gestire" : "richieste da gestire"}.`
+              : "Tutte le richieste sono aggiornate."}
+          </p>
         </div>
-        <div className={styles.dashboardActions}>
+        <div aria-label="Azioni pannello" className={styles.dashboardActions}>
           <button className={styles.buttonGhost} onClick={() => setShowInfo(true)} type="button">
-            Come funziona
-          </button>
-          <button className={styles.buttonDanger} onClick={() => setShowReset(true)} type="button">
-            Ripristina demo
+            Guida
           </button>
           <button
             className={styles.button}
@@ -93,14 +96,16 @@ export function AdminDashboard() {
           >
             Esci
           </button>
+          <button className={styles.buttonDanger} onClick={() => setShowReset(true)} type="button">
+            Ripristina demo
+          </button>
         </div>
       </header>
 
       <div aria-label="Riepilogo" className={styles.statsGrid}>
-        <Stat label="Da gestire" value={pendingRequests} />
-        <Stat label="Ordini di oggi" value={todayOrders} />
-        <Stat label="Soggiorni attivi" value={activeStays} />
-        <Stat label="Voci disponibili" value={activeCatalog} />
+        <Stat label="Da gestire" onSelect={() => setTab("requests")} value={pendingRequests} />
+        <Stat label="Ordini di oggi" onSelect={() => setTab("requests")} value={todayOrders} />
+        <Stat label="Soggiorni attivi" onSelect={() => setTab("stays")} value={activeStays} />
       </div>
 
       <div aria-label="Sezioni amministrazione" className={styles.tabs} role="tablist">
@@ -117,7 +122,8 @@ export function AdminDashboard() {
             tabIndex={tab === item.id ? 0 : -1}
             type="button"
           >
-            {item.label}
+            <span>{item.label}</span>
+            <span aria-hidden="true" className={styles.tabCount}>{item.count}</span>
           </button>
         ))}
       </div>
@@ -130,13 +136,14 @@ export function AdminDashboard() {
       >
         {tab === "requests" ? <RequestsSection /> : null}
         {tab === "stays" ? <StaysSection /> : null}
-        {tab === "catalog" ? <CatalogSection /> : null}
+        {tab === "shop" ? <CatalogSection kind="product" /> : null}
+        {tab === "activities" ? <CatalogSection kind="activity" /> : null}
       </div>
 
       {showReset ? (
         <ConfirmModal
           confirmLabel={resetting ? "Ripristino…" : "Ripristina tutti i dati"}
-          description="Soggiorni, richieste e modifiche al catalogo saranno sostituiti dai dati iniziali. L’operazione non è annullabile."
+          description="Soggiorni, richieste, Shop e attività torneranno ai dati iniziali. L’operazione non è annullabile."
           onCancel={() => {
             if (!resetting) setShowReset(false);
           }}
@@ -166,11 +173,20 @@ export function AdminDashboard() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  onSelect,
+  value,
+}: {
+  label: string;
+  onSelect: () => void;
+  value: number;
+}) {
   return (
-    <div className={styles.statCard}>
+    <button className={styles.statCard} onClick={onSelect} type="button">
       <span className={styles.statValue}>{String(value).padStart(2, "0")}</span>
       <span className={styles.statLabel}>{label}</span>
-    </div>
+      <span aria-hidden="true" className={styles.statAction}>Apri →</span>
+    </button>
   );
 }

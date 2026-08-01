@@ -26,54 +26,76 @@ const activityCategories: Array<{ value: DemoActivityCategory; label: string }> 
   { value: "other", label: "Altra attività" },
 ];
 
-export function CatalogSection() {
+type CatalogSectionProps = {
+  kind: DemoCatalogItem["kind"];
+};
+
+const sectionCopy = {
+  product: {
+    add: "Aggiungi prodotto",
+    empty: "Aggiungi il primo prodotto disponibile per gli ospiti.",
+    emptyTitle: "Shop vuoto",
+    intro: "Cibi e bevande ordinabili durante il soggiorno.",
+    modalTitle: "Nuovo prodotto",
+    plural: "prodotti visibili",
+    reactivate: "Mostra nello Shop",
+    submitCreate: "Aggiungi allo Shop",
+    submitEdit: "Salva prodotto",
+    title: "Shop",
+    toggleOff: "Nascondi dallo Shop",
+    visibility: "Visibile nello Shop",
+  },
+  activity: {
+    add: "Aggiungi attività",
+    empty: "Aggiungi la prima esperienza prenotabile dagli ospiti.",
+    emptyTitle: "Nessuna attività",
+    intro: "Esperienze che gli ospiti possono richiedere dal calendario.",
+    modalTitle: "Nuova attività",
+    plural: "attività visibili",
+    reactivate: "Mostra agli ospiti",
+    submitCreate: "Aggiungi attività",
+    submitEdit: "Salva attività",
+    title: "Attività",
+    toggleOff: "Nascondi agli ospiti",
+    visibility: "Disponibile agli ospiti",
+  },
+} as const;
+
+const localeLabels = {
+  de: "Deutsch",
+  en: "English",
+  it: "Italiano",
+  ru: "Русский",
+} as const;
+
+export function CatalogSection({ kind }: CatalogSectionProps) {
   const { saveCatalogItem, state, toggleCatalogItem } = useDemoPortal();
-  const [kindFilter, setKindFilter] = useState<"all" | DemoCatalogItem["kind"]>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [creating, setCreating] = useState<DemoCatalogItem["kind"] | null>(null);
+  const [creating, setCreating] = useState(false);
+  const copy = sectionCopy[kind];
 
   const catalog = useMemo(
     () => [...(state?.catalog ?? [])]
-      .filter((item) => kindFilter === "all" || item.kind === kindFilter)
+      .filter((item) => item.kind === kind)
       .sort((a, b) => a.sortOrder - b.sortOrder),
-    [kindFilter, state?.catalog],
+    [kind, state?.catalog],
   );
   const selected = catalog.find((item) => item.id === selectedId) ?? catalog[0];
+  const activeCount = catalog.filter((item) => item.active).length;
 
   return (
-    <section aria-labelledby="catalog-title" className={styles.panel}>
+    <section aria-labelledby={`${kind}-catalog-title`} className={styles.panel}>
       <div className={styles.sectionHeader}>
         <div>
-          <h2 className={styles.sectionHeading} id="catalog-title">Catalogo</h2>
-          <p className={styles.sectionIntro}>Prodotti e attività disponibili nell’area ospite.</p>
+          <div className={styles.headingWithMeta}>
+            <h2 className={styles.sectionHeading} id={`${kind}-catalog-title`}>{copy.title}</h2>
+            <span className={styles.sectionMeta}>{activeCount} {copy.plural}</span>
+          </div>
+          <p className={styles.sectionIntro}>{copy.intro}</p>
         </div>
-        <div className={styles.dashboardActions}>
-          <button className={styles.buttonPrimary} onClick={() => setCreating("product")} type="button">
-            Nuovo prodotto
-          </button>
-          <button className={styles.button} onClick={() => setCreating("activity")} type="button">
-            Nuova attività
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.filterBar}>
-        <div className={styles.filterGroup}>
-          <label htmlFor="catalog-kind-filter">Visualizza</label>
-          <select
-            className={styles.filterSelect}
-            id="catalog-kind-filter"
-            onChange={(event) => {
-              setKindFilter(event.target.value as typeof kindFilter);
-              setSelectedId(null);
-            }}
-            value={kindFilter}
-          >
-            <option value="all">Tutto il catalogo</option>
-            <option value="product">Prodotti</option>
-            <option value="activity">Attività</option>
-          </select>
-        </div>
+        <button className={styles.buttonPrimary} onClick={() => setCreating(true)} type="button">
+          {copy.add}
+        </button>
       </div>
 
       {catalog.length && selected ? (
@@ -89,7 +111,7 @@ export function CatalogSection() {
                     type="button"
                   >
                     <span className={styles.cardTopline}>
-                      <span className={styles.requestKind}>{item.kind === "product" ? "Prodotto" : "Attività"}</span>
+                      <span className={styles.requestKind}>{categoryLabel(item)}</span>
                       <span className={item.active ? styles.activeBadge : styles.inactiveBadge}>
                         {item.active ? "Attivo" : "Nascosto"}
                       </span>
@@ -98,7 +120,6 @@ export function CatalogSection() {
                       <strong className={styles.cardTitle}>{item.labels.it}</strong>
                       <span className={styles.price}>{formatPrice(item.priceCents)}</span>
                     </span>
-                    <span className={styles.cardMeta}>{categoryLabel(item)}</span>
                   </button>
                 </li>
               ))}
@@ -108,7 +129,7 @@ export function CatalogSection() {
           <article className={styles.detailPanel}>
             <div className={styles.detailTopline}>
               <div>
-                <span className="eyebrow">{selected.kind === "product" ? "Prodotto" : "Attività"}</span>
+                <span className="eyebrow">{categoryLabel(selected)}</span>
                 <h3 className={styles.detailHeading}>{selected.labels.it}</h3>
               </div>
               <span className={selected.active ? styles.activeBadge : styles.inactiveBadge}>
@@ -118,6 +139,7 @@ export function CatalogSection() {
             <CatalogForm
               initial={selected}
               key={selected.id}
+              labels={copy}
               onSubmit={(input) => {
                 saveCatalogItem(input);
               }}
@@ -127,34 +149,34 @@ export function CatalogSection() {
               onClick={() => toggleCatalogItem(selected.id, !selected.active)}
               type="button"
             >
-              {selected.active ? "Nascondi dal catalogo" : "Riattiva nel catalogo"}
+              {selected.active ? copy.toggleOff : copy.reactivate}
             </button>
           </article>
         </div>
       ) : (
         <div className={styles.emptyState}>
-          <strong>Nessun elemento</strong>
-          <p>Aggiungi un prodotto o un’attività al catalogo demo.</p>
+          <strong>{copy.emptyTitle}</strong>
+          <p>{copy.empty}</p>
         </div>
       )}
 
       {creating ? (
         <AdminModal
-          description="Inserisci il nome in tutte le lingue disponibili."
-          onClose={() => setCreating(null)}
-          title={creating === "product" ? "Nuovo prodotto" : "Nuova attività"}
+          description="Inserisci il nome per le quattro lingue dell’area ospite."
+          onClose={() => setCreating(false)}
+          title={copy.modalTitle}
         >
           <CatalogForm
             initial={{
-              kind: creating,
-              category: creating === "product" ? "food" : "other",
+              kind,
+              category: kind === "product" ? "food" : "other",
               labels: { en: "", it: "", de: "", ru: "" },
               active: true,
             }}
+            labels={copy}
             onSubmit={(input) => {
               const item = saveCatalogItem(input);
-              setCreating(null);
-              setKindFilter("all");
+              setCreating(false);
               setSelectedId(item.id);
             }}
           />
@@ -178,11 +200,11 @@ type CatalogFormInitial = Pick<DemoCatalogItemInput, "kind" | "category" | "labe
 
 type CatalogFormProps = {
   initial: CatalogFormInitial;
+  labels: (typeof sectionCopy)[DemoCatalogItem["kind"]];
   onSubmit: (input: DemoCatalogItemInput) => void;
 };
 
-function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
-  const [kind, setKind] = useState(initial.kind);
+function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
   const [category, setCategory] = useState(initial.category);
   const [labels, setLabels] = useState(initial.labels);
   const [price, setPrice] = useState(
@@ -190,13 +212,7 @@ function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
   );
   const [active, setActive] = useState(initial.active);
   const [notice, setNotice] = useState<"saved" | "error" | null>(null);
-  const categories = kind === "product" ? productCategories : activityCategories;
-
-  function changeKind(nextKind: DemoCatalogItem["kind"]) {
-    setKind(nextKind);
-    setCategory(nextKind === "product" ? "food" : "other");
-    setNotice(null);
-  }
+  const categories = initial.kind === "product" ? productCategories : activityCategories;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -209,7 +225,7 @@ function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
     try {
       onSubmit({
         id: initial.id,
-        kind,
+        kind: initial.kind,
         category,
         labels,
         priceCents: parsedPrice,
@@ -226,17 +242,6 @@ function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.formGrid}>
         <div className={styles.field}>
-          <label htmlFor={`catalog-kind-${initial.id ?? "new"}`}>Tipo</label>
-          <select
-            id={`catalog-kind-${initial.id ?? "new"}`}
-            onChange={(event) => changeKind(event.target.value as DemoCatalogItem["kind"])}
-            value={kind}
-          >
-            <option value="product">Prodotto</option>
-            <option value="activity">Attività</option>
-          </select>
-        </div>
-        <div className={styles.field}>
           <label htmlFor={`catalog-category-${initial.id ?? "new"}`}>Categoria</label>
           <select
             id={`catalog-category-${initial.id ?? "new"}`}
@@ -246,14 +251,32 @@ function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
             {categories.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
           </select>
         </div>
+        <div className={styles.field}>
+          <label htmlFor={`catalog-price-${initial.id ?? "new"}`}>Prezzo (€)</label>
+          <input
+            id={`catalog-price-${initial.id ?? "new"}`}
+            inputMode="decimal"
+            min="0"
+            onChange={(event) => {
+              setPrice(event.target.value);
+              setNotice(null);
+            }}
+            placeholder="Su richiesta"
+            step="0.01"
+            type="number"
+            value={price}
+          />
+        </div>
       </div>
 
       <fieldset className={styles.fieldset}>
-        <legend>Nomi tradotti</legend>
+        <legend>Nome mostrato agli ospiti</legend>
         <div className={styles.localeGrid}>
           {(["it", "en", "de", "ru"] as const).map((locale) => (
             <div className={styles.field} key={locale}>
-              <label htmlFor={`catalog-${locale}-${initial.id ?? "new"}`}>{locale.toUpperCase()}</label>
+              <label htmlFor={`catalog-${locale}-${initial.id ?? "new"}`}>
+                {localeLabels[locale]}
+              </label>
               <input
                 id={`catalog-${locale}-${initial.id ?? "new"}`}
                 maxLength={120}
@@ -269,33 +292,15 @@ function CatalogForm({ initial, onSubmit }: CatalogFormProps) {
         </div>
       </fieldset>
 
-      <div className={styles.formGrid}>
-        <div className={styles.field}>
-          <label htmlFor={`catalog-price-${initial.id ?? "new"}`}>Prezzo EUR (opzionale)</label>
-          <input
-            id={`catalog-price-${initial.id ?? "new"}`}
-            inputMode="decimal"
-            min="0"
-            onChange={(event) => {
-              setPrice(event.target.value);
-              setNotice(null);
-            }}
-            placeholder="Su richiesta"
-            step="0.01"
-            type="number"
-            value={price}
-          />
-        </div>
-        <label className={styles.switchField}>
-          <input checked={active} onChange={(event) => setActive(event.target.checked)} type="checkbox" />
-          <span>Disponibile agli ospiti</span>
-        </label>
-      </div>
+      <label className={styles.switchField}>
+        <input checked={active} onChange={(event) => setActive(event.target.checked)} type="checkbox" />
+        <span>{copy.visibility}</span>
+      </label>
 
       {notice === "saved" && initial.id ? <div className={styles.successNotice} role="status">Elemento aggiornato.</div> : null}
       {notice === "error" ? <div className={styles.errorNotice} role="alert">Controlla categoria, traduzioni e prezzo.</div> : null}
       <button className={styles.buttonPrimary} type="submit">
-        {initial.id ? "Salva elemento" : "Aggiungi al catalogo"}
+        {initial.id ? copy.submitEdit : copy.submitCreate}
       </button>
     </form>
   );
