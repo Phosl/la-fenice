@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { getContent } from "@/lib/content";
+import { siteIdentity } from "@/lib/content/site";
 import type { Locale } from "@/lib/content/types";
+import { getSiteUrl } from "@/lib/site-url";
 
 export function buildBaseMetadata(locale: Locale): Metadata {
   const homeMetadata = getContent(locale).pages.home.metadata;
 
   return {
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.lafenicepositano.com",
-    ),
+    metadataBase: getSiteUrl(),
+    applicationName: siteIdentity.name,
+    creator: siteIdentity.name,
+    publisher: siteIdentity.name,
     title: {
       default: homeMetadata.title,
       template: "%s | La Fenice Positano",

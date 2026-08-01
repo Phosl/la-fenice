@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { JsonLd } from "@/components/seo/json-ld";
+import { HomeStructuredData } from "@/components/seo/home-structured-data";
 import { ArrowIcon } from "@/components/ui/icons";
 import { getImageFocusStyle } from "@/lib/content/image-focus";
 import { getLocalizedPath } from "@/lib/content/routes";
-import { siteIdentity } from "@/lib/content/site";
 import type { SiteContent } from "@/lib/content/types";
 import { CtaSection } from "./cta-section";
 import { HomeExperiences } from "./home-experiences";
@@ -17,34 +16,9 @@ type HomePageProps = {
 export function HomePage({ content }: HomePageProps) {
   const page = content.pages.home;
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "BedAndBreakfast",
-    name: siteIdentity.name,
-    url: siteIdentity.siteUrl,
-    email: siteIdentity.email,
-    telephone: siteIdentity.phone.display,
-    logo: `${siteIdentity.siteUrl}/logo-la-fenice.svg`,
-    image: `${siteIdentity.siteUrl}${page.hero.image.src}`,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: siteIdentity.address.street,
-      postalCode: siteIdentity.address.postalCode,
-      addressLocality: siteIdentity.address.locality,
-      addressRegion: siteIdentity.address.region,
-      addressCountry: siteIdentity.address.countryCode,
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: siteIdentity.coordinates.latitude,
-      longitude: siteIdentity.coordinates.longitude,
-    },
-    sameAs: siteIdentity.social.map((item) => item.href),
-  } as const;
-
   return (
     <SiteShell content={content}>
-      <JsonLd data={structuredData} id="la-fenice-structured-data" />
+      <HomeStructuredData content={content} />
       <main id="main-content">
         <section className="home-hero">
           <div className="home-hero__media">

@@ -3,13 +3,7 @@ import { getAbsoluteUrl } from "@/lib/site-url";
 import { getContent } from "@/lib/content";
 import { getLanguageAlternates, getLocalizedPath } from "@/lib/content/routes";
 import type { Locale, RouteKey } from "@/lib/content/types";
-
-const openGraphLocales = {
-  en: "en_GB",
-  it: "it_IT",
-  de: "de_DE",
-  ru: "ru_RU",
-} as const satisfies Record<Locale, string>;
+import { openGraphLocales } from "@/lib/seo-locales";
 
 export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
   const page = getContent(locale).pages[route];
@@ -18,7 +12,7 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
   const canonicalPath = getLocalizedPath(route, locale);
 
   return {
-    title: metadata.title,
+    title: { absolute: metadata.title },
     description: metadata.description,
     alternates: {
       canonical: canonicalPath,
@@ -27,7 +21,17 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
     robots:
       metadata.robots === "noindex"
         ? { index: false, follow: true }
-        : { index: true, follow: true },
+        : {
+            index: true,
+            follow: true,
+            googleBot: {
+              index: true,
+              follow: true,
+              "max-image-preview": "large",
+              "max-snippet": -1,
+              "max-video-preview": -1,
+            },
+          },
     openGraph: {
       type: "website",
       locale: openGraphLocales[locale],
@@ -44,6 +48,19 @@ export function buildMetadata(locale: Locale, route: RouteKey): Metadata {
               url: getAbsoluteUrl(metadata.openGraphImage.src),
               width: metadata.openGraphImage.width,
               height: metadata.openGraphImage.height,
+              alt: metadata.openGraphImage.alt,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: metadata.title,
+      description: metadata.description,
+      images: metadata.openGraphImage
+        ? [
+            {
+              url: getAbsoluteUrl(metadata.openGraphImage.src),
               alt: metadata.openGraphImage.alt,
             },
           ]

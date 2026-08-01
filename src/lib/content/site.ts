@@ -1,4 +1,5 @@
 import type { SiteIdentity } from "./types";
+import { CANONICAL_SITE_URL } from "../site-url";
 
 const latitude = 40.6277721;
 const longitude = 14.4937307;
@@ -13,7 +14,7 @@ export const siteIdentity = {
   name: "La Fenice Positano",
   legalName: "La Fenice Bed and Breakfast",
   lodgingType: "BedAndBreakfast",
-  siteUrl: "https://www.lafenicepositano.com",
+  siteUrl: CANONICAL_SITE_URL,
   email: "info@lafenicepositano.com",
   phone: {
     display: "+39 089 875513",

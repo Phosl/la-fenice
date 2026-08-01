@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import nextConfig from "../../next.config";
+import { getContent } from "../lib/content";
 import {
   getLanguageAlternates,
   getLocalizedPath,
@@ -10,8 +11,8 @@ import {
   routeKeys,
   supportedLocales,
 } from "../lib/content/routes";
-import type { Locale } from "../lib/content/types";
 import { buildMetadata } from "../lib/page-metadata";
+import { openGraphLocales } from "../lib/seo-locales";
 import robots from "./robots";
 import sitemap from "./sitemap";
 
@@ -158,17 +159,14 @@ describe("metadata routes", () => {
 
   it("builds canonical, Open Graph and hreflang metadata for all locales", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://preview.example.com";
-    const openGraphLocales = {
-      en: "en_GB",
-      it: "it_IT",
-      de: "de_DE",
-      ru: "ru_RU",
-    } as const satisfies Record<Locale, string>;
 
     for (const locale of supportedLocales) {
       const canonicalPath = getLocalizedPath("rooms", locale);
       const metadata = buildMetadata(locale, "rooms");
 
+      expect(metadata.title).toEqual({
+        absolute: getContent(locale).pages.rooms.metadata.title,
+      });
       expect(metadata.alternates).toEqual({
         canonical: canonicalPath,
         languages: getLanguageAlternates("rooms"),
@@ -179,6 +177,19 @@ describe("metadata routes", () => {
           .filter(([candidate]) => candidate !== locale)
           .map(([, openGraphLocale]) => openGraphLocale),
         url: `https://preview.example.com${canonicalPath}`,
+      });
+      expect(metadata.twitter).toMatchObject({
+        card: "summary_large_image",
+        title: getContent(locale).pages.rooms.metadata.title,
+      });
+      expect(metadata.robots).toMatchObject({
+        index: true,
+        follow: true,
+        googleBot: {
+          "max-image-preview": "large",
+          "max-snippet": -1,
+          "max-video-preview": -1,
+        },
       });
     }
   });
@@ -198,14 +209,14 @@ describe("metadata routes", () => {
     });
   });
 
-  it("advertises a canonical sitemap and keeps private surfaces out of crawlers", () => {
+  it("advertises a canonical sitemap and lets crawlers read page-level noindex", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://preview.example.com";
 
     expect(robots()).toEqual({
       rules: {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/", "/demo/"],
+        disallow: ["/api/"],
       },
       sitemap: "https://preview.example.com/sitemap.xml",
       host: "https://preview.example.com",

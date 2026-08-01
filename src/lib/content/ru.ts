@@ -140,7 +140,7 @@ export const russianContent = {
         eyebrow: "Наш дом",
         title: "Простой дом у моря",
         paragraphs: [
-          "La Fenice — наш дом: номера и сады расположены на террасах среди лимонов, винограда и бугенвиллей.",
+          "La Fenice — наш дом и B&B: номера и сады расположены на террасах среди лимонов, винограда и бугенвиллей.",
         ],
         image: homeImages.view,
       },
@@ -186,7 +186,7 @@ export const russianContent = {
           title: "К морю",
           text: "Из сада к частному выходу к морю ведёт лестница.",
           image: beachGallery[0],
-          cta: { label: "Пляж", route: "privateBeach" },
+          cta: { label: "Частный пляж", route: "privateBeach" },
         },
       ],
       experiences: {
@@ -499,9 +499,9 @@ export const russianContent = {
     availability: {
       route: "availability",
       metadata: {
-        title: "Запрос наличия | La Fenice Positano",
+        title: "Наличие номеров в Позитано | La Fenice",
         description:
-          "Отправьте в La Fenice запрос о наличии на время вашего отдыха в Позитано.",
+          "Узнайте о наличии номеров в La Fenice в Позитано. Укажите даты и количество гостей — мы ответим вам лично.",
         openGraphImage: availabilityImage,
       },
       intro: {

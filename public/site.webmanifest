@@ -4,7 +4,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f4efe5",
-  "theme_color": "#153d68",
+  "theme_color": "#142c83",
   "icons": [
     {
       "src": "/logo-la-fenice.svg",

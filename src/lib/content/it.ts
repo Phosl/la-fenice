@@ -140,7 +140,7 @@ export const italianContent = {
         eyebrow: "Casa nostra",
         title: "Un luogo semplice, sul mare",
         paragraphs: [
-          "La Fenice è la nostra casa: camere e giardini seguono i terrazzamenti tra limoni, viti e bouganville.",
+          "La Fenice è la nostra casa e il nostro bed and breakfast: camere e giardini seguono i terrazzamenti tra limoni, viti e bouganville.",
         ],
         image: homeImages.view,
       },
@@ -186,7 +186,7 @@ export const italianContent = {
           title: "Verso il mare",
           text: "Dal giardino, una scalinata porta all'accesso privato al mare.",
           image: beachGallery[0],
-          cta: { label: "Spiaggia", route: "privateBeach" },
+          cta: { label: "Spiaggia privata", route: "privateBeach" },
         },
       ],
       experiences: {
@@ -499,9 +499,9 @@ export const italianContent = {
     availability: {
       route: "availability",
       metadata: {
-        title: "Richiedi disponibilità | La Fenice Positano",
+        title: "Disponibilità camere a Positano | La Fenice",
         description:
-          "Invia una richiesta di disponibilità a La Fenice per il tuo soggiorno a Positano.",
+          "Richiedi la disponibilità delle camere a La Fenice, Positano. Indica date e numero di ospiti: ti risponderemo personalmente.",
         openGraphImage: availabilityImage,
       },
       intro: {

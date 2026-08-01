@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = "https://www.lafenicepositano.com";
+export const CANONICAL_SITE_URL = "https://www.lafenicepositano.com";
 
 /**
  * Returns the public, canonical origin used by metadata routes and structured data.
@@ -9,15 +9,15 @@ export function getSiteUrl(): URL {
   const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   try {
-    const url = new URL(configuredUrl || DEFAULT_SITE_URL);
+    const url = new URL(configuredUrl || CANONICAL_SITE_URL);
 
     if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return new URL(DEFAULT_SITE_URL);
+      return new URL(CANONICAL_SITE_URL);
     }
 
     return new URL(url.origin);
   } catch {
-    return new URL(DEFAULT_SITE_URL);
+    return new URL(CANONICAL_SITE_URL);
   }
 }
 

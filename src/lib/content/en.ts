@@ -140,7 +140,7 @@ export const englishContent = {
         eyebrow: "Our home",
         title: "A simple place by the sea",
         paragraphs: [
-          "La Fenice is our home: rooms and gardens follow the terraces among lemons, vines and bougainvillea.",
+          "La Fenice is our home and bed and breakfast: rooms and gardens follow the terraces among lemons, vines and bougainvillea.",
         ],
         image: homeImages.view,
       },
@@ -186,7 +186,7 @@ export const englishContent = {
           title: "Down to the sea",
           text: "Garden steps lead to our private access to the sea.",
           image: beachGallery[0],
-          cta: { label: "Beach", route: "privateBeach" },
+          cta: { label: "Private beach", route: "privateBeach" },
         },
       ],
       experiences: {
@@ -499,9 +499,9 @@ export const englishContent = {
     availability: {
       route: "availability",
       metadata: {
-        title: "Request availability | La Fenice Positano",
+        title: "Room availability in Positano | La Fenice",
         description:
-          "Send La Fenice an availability request for your stay in Positano.",
+          "Request room availability at La Fenice in Positano. Send your dates and number of guests; we will reply personally.",
         openGraphImage: availabilityImage,
       },
       intro: {

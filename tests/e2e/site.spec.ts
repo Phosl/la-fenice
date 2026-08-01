@@ -76,6 +76,7 @@ test("renders the English narrative and switches to Italian", async ({ page }) =
 test("keeps the equivalent page when switching to German and Russian", async ({ page }) => {
   await page.goto("/rooms");
   await expectHydrated(page);
+  await expect(page).toHaveTitle("Sea-view rooms in Positano | La Fenice");
 
   await switchLanguage(page, "Deutsch");
   await expect(page).toHaveURL(/\/de\/zimmer$/);
