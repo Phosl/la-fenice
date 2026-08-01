@@ -78,6 +78,10 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
       window.clearTimeout(atmosphereTimerRef.current);
       atmosphereTimerRef.current = null;
     }
+    if (finishTimerRef.current !== null) {
+      window.clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
     setAtmosphereActive(false);
     setClosing(true);
     finishTimerRef.current = window.setTimeout(

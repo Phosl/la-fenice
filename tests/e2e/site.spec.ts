@@ -382,9 +382,15 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
   }[testInfo.project.name] ?? { width: 1280, height: 800 };
   const context = await browser.newContext({ baseURL, viewport });
   const page = await context.newPage();
-  await page.goto("/");
-  await expectHydrated(page);
+  const clockTime = Date.now();
+  await page.clock.install({ time: clockTime });
+  await page.clock.pauseAt(clockTime);
+  await page.goto("/", { waitUntil: "commit" });
   const intro = page.locator(".logo-intro");
+  await intro.evaluate((element) => {
+    element.getAnimations({ subtree: true }).forEach((animation) => animation.pause());
+  });
+  await expectHydrated(page);
   await expect(intro).toBeVisible();
   await expect(intro).toHaveCSS("animation-name", "intro-shell");
   await expect(page.locator(".logo-intro__mark")).toHaveCSS(
@@ -406,9 +412,15 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
   await page.keyboard.press("Tab");
   await expect(page.locator(".logo-intro__skip")).toBeFocused();
   await page.keyboard.press(testInfo.project.name === "mobile-360" ? "Escape" : "Enter");
+  await page.clock.runFor(400);
   await expect(intro).not.toBeVisible();
   await expect(page.locator("#main-content")).toBeFocused();
   await expect(page.locator(".logo-intro__atmosphere")).toHaveCount(0);
+  const skipLink = page.locator(".skip-link");
+  await skipLink.focus();
+  await page.clock.runFor(1_300);
+  await expect(skipLink).toBeFocused();
+  await page.clock.resume();
   await page.reload();
   await expect(intro).not.toBeVisible();
   await page.goto("/it");
