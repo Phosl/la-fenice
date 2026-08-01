@@ -13,8 +13,10 @@ export function CtaSection({ content }: CtaSectionProps) {
   return (
     <section className="cta-section">
       <div className="container cta-section__inner">
-        <span className="eyebrow">{copy.eyebrow}</span>
-        <h2 className="section-title">{copy.title}</h2>
+        <div className="cta-section__copy">
+          <span className="eyebrow">{copy.eyebrow}</span>
+          <h2 className="section-title">{copy.title}</h2>
+        </div>
         <p>{copy.text}</p>
         <Link className="button-primary" href={getLocalizedPath("availability", content.locale)}>
           {copy.label}

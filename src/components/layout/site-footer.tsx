@@ -26,7 +26,7 @@ export function SiteFooter({ content, navigation }: SiteFooterProps) {
               <span className="footer-column__title">{content.footer.contactTitle}</span>
               <a href={`mailto:${siteIdentity.email}`}>{siteIdentity.email}</a>
               <a href={siteIdentity.phone.href}>{siteIdentity.phone.display}</a>
-              <a href={siteIdentity.maps.directions} rel="noopener noreferrer" target="_blank">
+              <a href={siteIdentity.maps.place} rel="noopener noreferrer" target="_blank">
                 {siteIdentity.address.formatted}
               </a>
             </div>
@@ -43,7 +43,7 @@ export function SiteFooter({ content, navigation }: SiteFooterProps) {
 
         <div className="site-footer__bottom">
           <span>
-            © {year} {siteIdentity.legalName} · P.IVA {siteIdentity.vatNumber} · {content.footer.photographyCredit}
+            © {year} {siteIdentity.legalName} · {content.common.vatNumber} {siteIdentity.vatNumber} · {content.footer.photographyCredit}
           </span>
           <span className="site-footer__legal">
             {navigation.utility.map((item) => (

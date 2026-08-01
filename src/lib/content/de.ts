@@ -28,7 +28,7 @@ const roomsGallery = [
 ] as const;
 
 const poolGallery = [
-  withCopy(media.pool[0], "Der geschwungene Meerwasserpool und die Sonnenterrasse"),
+  withCopy(media.pool[0], "Zwei Ansichten des geschwungenen Meerwasserpools"),
   withCopy(
     media.pool[1],
     "Der Pool des La Fenice mit Wasserfall und Whirlpoolbereich",
@@ -41,15 +41,15 @@ const beachGallery = [
 ] as const;
 
 const gardenGallery = [
-  withCopy(media.gardenTable[0], "Saisonale Erzeugnisse aus dem Garten des La Fenice"),
-  withCopy(media.gardenTable[1], "Eine Ernte aus dem Garten des La Fenice"),
-  withCopy(media.gardenTable[2], "Oliven und Gemüse von den Terrassenfeldern"),
-  withCopy(media.gardenTable[3], "Feigen, die in der Sonne Positanos reifen"),
+  withCopy(media.gardenTable[0], "Zitronen, Caprese und Feigen im La Fenice"),
+  withCopy(media.gardenTable[1], "Bougainvilleen und Blüten im Garten des La Fenice"),
+  withCopy(media.gardenTable[2], "Kartoffelernte auf den Terrassen"),
+  withCopy(media.gardenTable[3], "Kaktusfeigen und saisonale Konserven"),
 ] as const;
 
 const locationImage = withCopy(
   media.location,
-  "Das La Fenice am grünen Hang über dem Tyrrhenischen Meer",
+  "Blick vom La Fenice auf Küste und Meer, mit einem Pflanzgefäß am Balkon",
 );
 
 const availabilityImage = withCopy(
@@ -99,17 +99,16 @@ export const germanContent = {
     availability: "Verfügbarkeit anfragen",
   },
   footer: {
-    description:
-      "Ein traditionsreiches Bed & Breakfast am Hang von Positano – vom Garten bis zum Meer.",
+    description: "Zwischen Garten und Meer.",
     contactTitle: "Kontakt",
-    exploreTitle: "Entdecken",
+    exploreTitle: "Seiten",
     legalTitle: "Rechtliches",
     photographyCredit: "Fotografie von Tim Evancook",
   },
   availabilityCta: {
-    eyebrow: "Ihr Aufenthalt",
-    title: "Beginnen Sie mit einer unverbindlichen Anfrage.",
-    text: "Teilen Sie uns Ihre Reisedaten und die Anzahl der Gäste mit. La Fenice antwortet Ihnen direkt mit Verfügbarkeit und Einzelheiten.",
+    eyebrow: "Aufenthalt",
+    title: "Bei uns wohnen",
+    text: "Senden Sie uns Ihre Reisedaten. Wir antworten Ihnen persönlich.",
     label: "Verfügbarkeit anfragen",
   },
   notFound: {
@@ -123,91 +122,83 @@ export const germanContent = {
       metadata: {
         title: "La Fenice Positano | Bed & Breakfast an der Amalfiküste",
         description:
-          "Entdecken Sie La Fenice, ein Bed & Breakfast am Hang von Positano mit Zimmern mit Meerblick, Meerwasserpool, Privatstrand und saisonalem Garten.",
+          "La Fenice ist ein Bed & Breakfast in Positano mit Zimmern mit Meerblick, Meerwasserpool, Privatstrand und saisonalem Garten.",
         openGraphImage: homeImages.panorama,
       },
       hero: {
         eyebrow: "Positano · Amalfiküste",
         title: "Vom Garten bis zum Meer",
-        lead:
-          "Ein traditionsreicher Rückzugsort am Hang von Positano, zwischen Zitronenbäumen, Bougainvilleen und dem Blick auf das Tyrrhenische Meer.",
+        lead: "Unser Zuhause am Hang von Positano, zwischen Garten und Meer.",
         image: homeImages.panorama,
         primaryCta: {
           label: "Verfügbarkeit anfragen",
           route: "availability",
         },
-        secondaryCta: {
-          label: "La Fenice entdecken",
-          route: "rooms",
-        },
       },
       introduction: {
         id: "welcome",
-        eyebrow: "La Fenice",
-        title: "Ein Zuhause am Hang von Positano",
+        eyebrow: "Unser Zuhause",
+        title: "Ein schlichter Ort am Meer",
         paragraphs: [
-          "La Fenice ist ein Bed & Breakfast auf einem rund drei Hektar großen Anwesen an der Amalfiküste. Villen und kleine Häuser ziehen sich durch terrassierte Gärten mit Bougainvilleen, Zitronenbäumen und Weinreben hinunter zum Meer.",
-          "Hier prägt der Charakter der Küste jeden Aufenthalt: Meerblick, Gartenwege, ein in den Fels eingebetteter Pool und der Privatstrand unterhalb des Anwesens.",
+          "La Fenice ist unser Zuhause: Zimmer und Gärten folgen den Terrassen zwischen Zitronen, Weinreben und Bougainvilleen.",
         ],
         image: homeImages.view,
       },
       storyHeading: {
-        eyebrow: "Vom Hang bis zum Meer",
-        title: "Vier Kapitel, eine Landschaft.",
+        eyebrow: "Das Haus",
+        title: "Vier Orte",
       },
-      accessibilityNoteLabel: "Ein wichtiger Hinweis zur Zugänglichkeit",
       locationTeaser: {
         eyebrow: "Lage",
-        title: "Zwischen Küstenstraße und Meer",
-        linkLabel: "Lage entdecken",
-        badge: "Via Marconi 4",
-        scrollLabel: "Scrollen",
+        title: "Via Guglielmo Marconi 4, Positano",
+        text: "Nahe der Haltestelle Sponda, zwischen Küstenstraße und Meer.",
+        linkLabel: "Lage und Karte",
+        scrollLabel: "Weiter",
       },
       stories: [
         {
           id: "garden",
           eyebrow: "Der Garten",
-          title: "Was die Jahreszeit schenkt",
-          text: "Obst, Gemüse, Trauben, Oliven und Zitronen wachsen auf dem terrassierten Land und gehören seit jeher zur Küche der Familie.",
+          title: "Im Rhythmus der Jahreszeiten",
+          text: "Obst, Gemüse und Zitronen wachsen auf unseren Terrassen.",
           image: homeImages.garden,
-          cta: { label: "Vom Garten auf den Tisch", route: "gardenTable" },
+          cta: { label: "Garten & Genuss", route: "gardenTable" },
         },
         {
           id: "rooms",
           eyebrow: "Die Zimmer",
-          title: "Licht, Meer und die Farben von Vietri",
-          text: "Die meisten Zimmer blicken auf das Meer und öffnen sich zu einem privaten Balkon oder einer Terrasse. Gewölbedecken und handbemalte Vietri-Fliesen prägen ihren Charakter.",
+          title: "Licht und Vietri",
+          text: "Weiße Zimmer mit Balkon, Terrasse und Vietri-Fliesen.",
           image: homeImages.room,
-          cta: { label: "Zimmer entdecken", route: "rooms" },
+          cta: { label: "Zimmer", route: "rooms" },
         },
         {
           id: "pool",
           eyebrow: "Der Pool",
-          title: "In den Hang eingebettet",
-          text: "Ein geschwungener Meerwasserpool mit Wasserfall und Whirlpoolbereich liegt zwischen Sonnenterrassen und schattenspendenden Blütenpflanzen.",
+          title: "Meerwasser",
+          text: "Ein geschwungener Pool, umgeben von Grün.",
           image: poolGallery[0],
-          cta: { label: "Pool entdecken", route: "pool" },
+          cta: { label: "Pool", route: "pool" },
         },
         {
           id: "beach",
           eyebrow: "Das Meer",
-          title: "Hinunter zum Privatstrand",
-          text: "Gartenstufen führen vom Anwesen zu einem eigenen, ruhigen Zugang zum klaren Wasser unterhalb.",
+          title: "Hinunter zum Meer",
+          text: "Vom Garten führt eine Treppe zu unserem privaten Meerzugang.",
           image: beachGallery[0],
-          cta: { label: "Strand entdecken", route: "privateBeach" },
+          cta: { label: "Strand", route: "privateBeach" },
         },
       ],
       experiences: {
         eyebrow: "Erlebnisse",
-        title: "Drei Wege, die Küste kennenzulernen",
-        lead:
-          "Entdecken Sie die Landschaft rund um La Fenice vom Meer aus, durch lokale Traditionen und den Duft der Zitronen. Jedes Erlebnis wird auf Anfrage organisiert und bedarf einer Bestätigung.",
-        requestLabel: "Per E-Mail anfragen",
+        title: "An der Küste",
+        lead: "Fischen, Bootsfahrt und Zitronengarten – je nach Saison und Verfügbarkeit.",
+        requestLabel: "Informationen anfragen",
         items: [
           {
             id: "fishing",
-            title: "Fischen vor der Küste",
-            text: "Fragen Sie nach einem Fischerlebnis in den Gewässern rund um Positano. Die Einzelheiten werden je nach Saison und Meeresbedingungen bestätigt.",
+            title: "Fischen",
+            text: "Ein Vormittag auf dem Meer, wenn die Bedingungen es erlauben.",
             image: beachGallery[1],
             emailSubject: "Anfrage zum Fischerlebnis",
             emailBody:
@@ -215,8 +206,8 @@ export const germanContent = {
           },
           {
             id: "boatTrip",
-            title: "Ein Tag mit dem Boot",
-            text: "Fragen Sie nach den aktuellen Möglichkeiten, die Küste vom Wasser aus zu entdecken. Route und Einzelheiten zur Einschiffung werden direkt vereinbart.",
+            title: "Mit dem Boot",
+            text: "Eine gemeinsam abgestimmte Route entlang der Küste.",
             image: beachGallery[0],
             emailSubject: "Anfrage zu einem Bootsausflug",
             emailBody:
@@ -225,7 +216,7 @@ export const germanContent = {
           {
             id: "lemonGrove",
             title: "Unter Zitronenbäumen",
-            text: "Entdecken Sie den Terrassengarten und die Rolle, die Zitronen und der saisonale Anbau im Leben des La Fenice spielen.",
+            text: "Ein Besuch auf den bewirtschafteten Terrassen des Hauses.",
             image: homeImages.garden,
             emailSubject: "Anfrage zum Erlebnis im Zitronengarten",
             emailBody:
@@ -234,8 +225,8 @@ export const germanContent = {
         ],
       },
       stepsNotice: {
-        title: "Ein Ort, der von Stufen geprägt ist",
-        text: "La Fenice folgt dem natürlichen Hang der Amalfiküste. Zwischen Straße, Zimmern, Gärten, Pool und Strand liegen viele Stufen, weshalb das Anwesen nicht für jede Mobilitätsanforderung geeignet ist. Kontaktieren Sie uns vor Ihrer Anfrage, wenn Sie Fragen zur Zugänglichkeit haben.",
+        title: "Barrierefreiheit",
+        text: "Viele Stufen verbinden Straße, Zimmer, Gärten und Meer. Schreiben Sie uns vor Ihrem Aufenthalt bei besonderen Mobilitätsbedürfnissen.",
       },
     },
     rooms: {
@@ -249,24 +240,21 @@ export const germanContent = {
       intro: {
         eyebrow: "Aufenthalt",
         title: "Zimmer im Licht von Positano",
-        lead:
-          "Schlichte mediterrane Innenräume, traditionelle Details und eine offene Verbindung zum Meer.",
+        lead: "Schlichte Räume, oft zum Meer hin geöffnet.",
       },
       heroImage: roomsGallery[0],
       sections: [
         {
           id: "character",
-          title: "Für die Küste geschaffen",
+          title: "Die Zimmer",
           paragraphs: [
-            "Die meisten Zimmer blicken auf das Meer und verfügen über einen privaten Balkon oder eine Terrasse.",
-            "Weiße Wände, Gewölbedecken und große Fenster treffen auf Böden aus handbemalten Vietri-Fliesen.",
+            "Weiße Wände, Gewölbedecken und Vietri-Fliesen; viele Zimmer haben einen Balkon oder eine Terrasse mit Meerblick.",
           ],
           image: roomsGallery[1],
         },
       ],
       gallery: roomsGallery,
-      note:
-        "Die derzeitigen Informationen beschreiben die Zimmer als Gesamtheit und nicht als einzelne Zimmerkategorien. Fragen Sie die Verfügbarkeit an, um Einzelheiten zu dem für Ihre Reisedaten angebotenen Zimmer zu erhalten.",
+      note: "Schreiben Sie uns, welches Zimmer für Ihre Reisedaten verfügbar ist.",
     },
     pool: {
       route: "pool",
@@ -278,32 +266,22 @@ export const germanContent = {
       },
       intro: {
         eyebrow: "Pool",
-        title: "Vom Fels umschlossenes Wasser",
-        lead:
-          "Ein geschwungener Pool und eine blühende Terrasse, eingebettet in die natürliche Form des Hangs.",
+        title: "Meerwasser zwischen den Terrassen",
+        lead: "Der geschwungene Pool blickt ins Grüne.",
       },
       heroImage: poolGallery[0],
       sections: [
         {
           id: "water-and-shade",
-          title: "Sonne, Schatten und Meerwasser",
+          title: "Sonne und Schatten",
           paragraphs: [
-            "Der Meerwasserpool verfügt über einen Wasserfall und einen Whirlpoolbereich.",
-            "Auf der sonnigen Terrasse finden sich unter Bougainvilleen und Jacaranda auch schattige Plätze.",
+            "Meerwasser, Wasserfall und Whirlpoolbereich zwischen Bougainvilleen und Jacaranda.",
           ],
           image: poolGallery[1],
         },
-        {
-          id: "season",
-          eyebrow: "Saisonale Öffnung",
-          title: "Anfang Juni bis Mitte Oktober",
-          paragraphs: [
-            "Der veröffentlichte Öffnungszeitraum reicht von Anfang Juni bis Mitte Oktober, sofern Wetter- und Meeresbedingungen es zulassen. Bitte bestätigen Sie die aktuellen Öffnungszeiten bei Ihrer Verfügbarkeitsanfrage.",
-          ],
-        },
       ],
       gallery: poolGallery,
-      note: "Die Öffnungszeiten des Pools sind saisonabhängig und müssen für jeden Aufenthalt bestätigt werden.",
+      note: "In der Regel von Juni bis Mitte Oktober geöffnet, je nach Wetter und Meeresbedingungen. Bitte bestätigen Sie Ihre Reisedaten.",
     },
     privateBeach: {
       route: "privateBeach",
@@ -315,33 +293,22 @@ export const germanContent = {
       },
       intro: {
         eyebrow: "Privatstrand",
-        title: "Ein Weg durch den Garten zum Meer",
-        lead:
-          "Unterhalb der Villen und Terrassen führen schattige Stufen hinunter zum Privatstrand des La Fenice.",
+        title: "Das Meer am Ende des Gartens",
+        lead: "Eine Treppe im Grünen führt zu unserem privaten Meerzugang.",
       },
       heroImage: beachGallery[0],
       sections: [
         {
           id: "descent",
-          title: "Die Küste in ihrer natürlichsten Form",
+          title: "Zum Wasser",
           paragraphs: [
-            "Gäste erreichen das Wasser über die von Bäumen gesäumten Stufen, die vom Anwesen hinabführen.",
-            "Der lange Abstieg ist Teil der Landschaft und sollte von Gästen mit eingeschränkter Mobilität berücksichtigt werden.",
+            "Der Weg führt durch den Terrassengarten.",
           ],
           image: beachGallery[1],
         },
-        {
-          id: "boat-outings",
-          title: "Unterwegs auf dem Wasser",
-          paragraphs: [
-            "Fragen Sie uns nach aktuellen Möglichkeiten für Bootsausflüge entlang der Küste, darunter Fahrten in Richtung Capri, Blaue Grotte, Amalfi und Li Galli. Verfügbarkeit und Bedingungen für die Einschiffung müssen direkt bestätigt werden.",
-          ],
-          image: beachGallery[0],
-        },
       ],
       gallery: beachGallery,
-      note:
-        "Der Zugang zum Strand führt über viele Stufen im Freien. Der Zugang zum Meer und Bootsausflüge hängen von den Wetter- und Meeresbedingungen ab.",
+      note: "Der Zugang umfasst viele Stufen und hängt von den Meeresbedingungen ab.",
     },
     gardenTable: {
       route: "gardenTable",
@@ -353,62 +320,49 @@ export const germanContent = {
       },
       intro: {
         eyebrow: "Garten & Genuss",
-        title: "Ein Garten im Rhythmus der Jahreszeiten",
-        lead:
-          "Das terrassierte Land liefert Obst, Gemüse und Kräuter, die seit Langem die Küche der Familie inspirieren.",
+        title: "Der Garten folgt den Jahreszeiten",
+        lead: "Wir bauen an, was später auf unseren Tisch kommt.",
       },
       heroImage: gardenGallery[0],
       sections: [
         {
           id: "summer-winter",
-          title: "Von Sommerfarben bis Wintergemüse",
+          title: "Die Ernte",
           paragraphs: [
-            "Im Sommer wachsen im Garten Tomaten, Auberginen, Paprika, Aprikosen, Feigen, Pflaumen und Pfirsiche.",
-            "Der Winter bringt Kartoffeln, Zwiebeln, verschiedene Brokkolisorten, Fenchel, Spinat und Mangold.",
+            "Obst und Gemüse wechseln mit den Monaten; Trauben, Oliven, Nüsse und Zitronen begleiten das Jahr.",
           ],
           image: gardenGallery[1],
         },
-        {
-          id: "harvest",
-          title: "Trauben, Oliven und Zitronen",
-          paragraphs: [
-            "Die Weinlese findet traditionell im September statt, gefolgt von der Oliven- und Nussernte im Oktober. Die Zitronenbäume tragen das ganze Jahr über Früchte.",
-            "Was reif und saisonal ist, wird für die Küche geerntet.",
-          ],
-          image: gardenGallery[3],
-        },
       ],
       gallery: gardenGallery,
+      note: "Jede Jahreszeit bringt eine andere Ernte.",
     },
     location: {
       route: "location",
       metadata: {
         title: "Lage in Positano | La Fenice",
         description:
-          "Sie finden La Fenice in der Via Marconi 4 in Positano. Öffnen Sie die Wegbeschreibung zum Bed & Breakfast an der Amalfiküste.",
+          "Sie finden La Fenice in der Via Guglielmo Marconi 4 in Positano. Öffnen Sie die Wegbeschreibung zum Bed & Breakfast an der Amalfiküste.",
         openGraphImage: locationImage,
       },
       intro: {
         eyebrow: "Lage",
-        title: "Am Hang von Positano",
-        lead:
-          "La Fenice liegt zwischen der Küstenstraße und dem Meer. Seine terrassierten Gärten ziehen sich den Hang hinunter.",
+        title: "Zwischen Straße und Meer",
+        lead: "Nur wenige Schritte von der Haltestelle Sponda entfernt.",
       },
       heroImage: locationImage,
       sections: [
         {
           id: "address",
-          title: "Via Marconi 4",
+          title: "Via Guglielmo Marconi 4",
           paragraphs: [
-            "Das Bed & Breakfast befindet sich in der Via Marconi 4, 84017 Positano (SA), Italien.",
-            "Nach den bestehenden Hinweisen sind es von der Bushaltestelle Sponda etwa 200 Meter zu Fuß in Richtung Amalfi. Nutzen Sie die Karte für den letzten Abschnitt und kontaktieren Sie uns, wenn Sie Hinweise zum Zugang benötigen.",
+            "Von der Haltestelle Sponda sind es etwa 200 Meter in Richtung Amalfi.",
           ],
-          cta: { label: "Anreise planen", route: "gettingHere" },
+          cta: { label: "Anreise", route: "gettingHere" },
         },
       ],
       gallery: [locationImage],
-      note:
-        "Straßenverhältnisse und Fahrpläne des öffentlichen Verkehrs können sich ändern, besonders in der Hochsaison. Prüfen Sie vor der Anreise die aktuellen Informationen.",
+      note: "Prüfen Sie in der Hochsaison Verkehr und Fahrpläne vor der Anreise.",
     },
     gettingHere: {
       route: "gettingHere",
@@ -420,13 +374,11 @@ export const germanContent = {
       },
       intro: {
         eyebrow: "Anreise",
-        title: "Ihr Weg nach Positano",
-        lead:
-          "Der letzte Teil der Reise führt entlang der Küste. Wählen Sie Ihre Route und prüfen Sie vor der Abfahrt stets die aktuellen Fahrpläne.",
+        title: "Nach Positano kommen",
+        lead: "Wählen Sie das Verkehrsmittel und prüfen Sie die offiziellen Fahrpläne.",
       },
       heroImage: locationImage,
-      travelNotice:
-        "Fahrzeiten, Routen und saisonale Verbindungen ändern sich. Die folgenden Hinweise verzichten bewusst auf feste Abfahrtszeiten; aktuelle Informationen finden Sie bei den verlinkten offiziellen Anbietern.",
+      travelNotice: "Die Verbindungen ändern sich mit der Saison.",
       modes: [
         {
           id: "car",
@@ -436,18 +388,14 @@ export const germanContent = {
               id: "car-north",
               title: "Aus dem Norden",
               steps: [
-                "Folgen Sie der Autobahn in Richtung Castellammare di Stabia.",
-                "Fahren Sie auf der SS145 in Richtung Sorrentinische Halbinsel weiter und nehmen Sie anschließend die SS163 nach Positano.",
-                "Italienische Autobahnen sind mautpflichtig. Prüfen Sie vor der Abfahrt die aktuelle Navigation und die geltenden Verkehrsregeln an der Küste.",
+                "Ausfahrt Castellammare di Stabia, dann SS145 und SS163 nach Positano.",
               ],
             },
             {
               id: "car-south",
               title: "Aus dem Süden",
               steps: [
-                "Verlassen Sie die Autobahn bei Vietri sul Mare.",
-                "Folgen Sie der SS163 entlang der Amalfiküste in Richtung Positano.",
-                "Planen Sie für die schmale Küstenstraße und den saisonalen Verkehr zusätzliche Zeit ein.",
+                "Ausfahrt Vietri sul Mare, dann SS163 nach Positano.",
               ],
             },
           ],
@@ -460,18 +408,14 @@ export const germanContent = {
               id: "train-naples",
               title: "Über Neapel",
               steps: [
-                "Fahren Sie ab Napoli Centrale mit der EAV Circumvesuviana nach Sorrent.",
-                "Steigen Sie in Sorrent in einen Bus von SITA Sud nach Positano um und bitten Sie um die Haltestelle Sponda.",
-                "Nach den bestehenden Hinweisen sind es von Sponda etwa 200 Meter zu Fuß in Richtung Amalfi.",
+                "Napoli Centrale → EAV nach Sorrent → SITA Sud nach Positano Sponda.",
               ],
             },
             {
               id: "train-salerno",
               title: "Über Salerno",
               steps: [
-                "Nehmen Sie am Bahnhof Salerno einen Bus von SITA Sud nach Amalfi.",
-                "Steigen Sie in Amalfi in die Verbindung nach Positano um und an der Haltestelle Sponda aus.",
-                "Saisonale Schiffsverbindungen können Salerno ebenfalls mit Positano verbinden. Informieren Sie sich vor der Reise beim jeweiligen Anbieter.",
+                "Salerno → SITA Sud nach Amalfi → Anschluss nach Positano Sponda.",
               ],
             },
           ],
@@ -484,16 +428,14 @@ export const germanContent = {
               id: "plane-naples",
               title: "Ab Flughafen Neapel-Capodichino",
               steps: [
-                "Nutzen Sie eine offizielle Flughafenverbindung nach Napoli Centrale und folgen Sie der Route über Sorrent, oder nehmen Sie den Curreri-Flughafenshuttle nach Sorrent.",
-                "Fahren Sie von Sorrent mit einem Bus von SITA Sud bis Positano Sponda weiter.",
+                "Napoli Centrale → EAV nach Sorrent oder Curreri direkt nach Sorrent; dann SITA Sud nach Positano Sponda.",
               ],
             },
             {
               id: "plane-rome",
               title: "Ab Flughafen Rom-Fiumicino",
               steps: [
-                "Nehmen Sie den Flughafenzug nach Roma Termini.",
-                "Fahren Sie mit einem Fernzug nach Neapel oder Salerno weiter und folgen Sie anschließend der jeweiligen Route oben.",
+                "Roma Termini → Neapel oder Salerno; dann der Bahnroute folgen.",
               ],
             },
           ],
@@ -506,8 +448,7 @@ export const germanContent = {
               id: "sea-positano",
               title: "Fähren und Tragflügelboote",
               steps: [
-                "Saisonale Verbindungen führen von Häfen wie Neapel, Sorrent, Salerno und Amalfi nach Positano.",
-                "Die Routen hängen von der Jahreszeit und den Meeresbedingungen ab. Prüfen Sie vor der Reise den aktuellen Fahrplan und Abfahrtshafen beim Anbieter.",
+                "In der Saison verbinden Schiffe Positano mit Neapel, Sorrent, Salerno und Amalfi.",
               ],
             },
           ],
@@ -518,57 +459,55 @@ export const germanContent = {
         {
           id: "sita",
           label: "SITA Sud Campania",
-          description: "Buslinien an der Amalfiküste und aktuelle Fahrpläne",
+          description: "Busse an der Amalfiküste",
           href: "https://sitasudtrasporti.it/campania/orari/",
         },
         {
           id: "eav",
           label: "EAV",
-          description: "Bahninformationen und Betriebsmeldungen für Neapel–Sorrent",
+          description: "Züge Neapel–Sorrent",
           href: "https://www.eavsrl.it/orari-linee-ferroviarie/",
         },
         {
           id: "curreri",
           label: "Curreri Viaggi",
-          description: "Informationen zum Shuttle zwischen Flughafen Neapel und Sorrent",
+          description: "Shuttle Flughafen Neapel–Sorrent",
           href: "https://www.curreriviaggi.it/it/navetta-aeroporto-di-napoli",
         },
         {
           id: "trenitalia",
           label: "Trenitalia",
-          description: "Fernverkehrsplanung für Neapel, Salerno und Rom",
+          description: "Nationaler Bahnverkehr",
           href: "https://www.trenitalia.com/en.html",
         },
         {
           id: "naples-airport",
           label: "Internationaler Flughafen Neapel",
-          description: "Offizielle Informationen zum Bodentransport",
+          description: "Verbindungen ab Capodichino",
           href: "https://www.aeroportodinapoli.it/it/in-bus",
         },
         {
           id: "alilauro",
           label: "Alilauro",
-          description: "Offizielle Informationen zu saisonalen Fähren und Tragflügelbooten",
+          description: "Fähren und Tragflügelboote",
           href: "https://www.alilauro.it/en/",
         },
       ],
       transferTitle: "Privater Transfer",
-      transferNote:
-        "Wenn Sie Unterstützung bei der Organisation eines privaten Transfers wünschen, kontaktieren Sie La Fenice bitte vor der Anreise, damit aktuelle Möglichkeiten und Preise bestätigt werden können.",
+      transferNote: "Schreiben Sie uns für aktuelle Transfermöglichkeiten und Preise.",
     },
     availability: {
       route: "availability",
       metadata: {
         title: "Verfügbarkeit anfragen | La Fenice Positano",
         description:
-          "Senden Sie La Fenice eine Anfrage zur Zimmerverfügbarkeit in Positano. Ihre Anfrage wird persönlich beantwortet und ist keine Sofortbuchung.",
+          "Senden Sie La Fenice eine Verfügbarkeitsanfrage für Ihren Aufenthalt in Positano.",
         openGraphImage: availabilityImage,
       },
       intro: {
         eyebrow: "Ihr Aufenthalt",
         title: "Verfügbarkeit anfragen",
-        lead:
-          "Teilen Sie uns Ihre Reisedaten und die Anzahl der Reisenden mit. Wir antworten Ihnen persönlich mit Informationen zu dem verfügbaren Zimmer.",
+        lead: "Nennen Sie uns Reisedaten und Gästezahl. Wir antworten Ihnen direkt.",
       },
       heroImage: availabilityImage,
       form: {
@@ -599,8 +538,7 @@ export const germanContent = {
         submitLabel: "Anfrage senden",
         submittingLabel: "Wird gesendet…",
         successTitle: "Anfrage gesendet",
-        successMessage:
-          "Vielen Dank. Wir antworten Ihnen direkt per E-Mail. Ihre Anfrage ist noch keine bestätigte Reservierung.",
+        successMessage: "Danke. Wir antworten per E-Mail; dies ist noch keine bestätigte Buchung.",
         errorTitle: "Ihre Anfrage konnte nicht gesendet werden",
         errorMessage:
           "Bitte versuchen Sie es erneut oder kontaktieren Sie uns über die unten angegebene E-Mail-Adresse oder Telefonnummer.",
@@ -616,11 +554,10 @@ export const germanContent = {
           consentRequired: "Ihre Zustimmung ist erforderlich, um die Anfrage zu senden.",
         },
       },
-      responseTimeNote:
-        "Dieses Formular sendet eine Verfügbarkeitsanfrage und keine Sofortbuchung. La Fenice bestätigt Verfügbarkeit und Einzelheiten persönlich.",
+      responseTimeNote: "Diese Anfrage ist noch keine bestätigte Buchung.",
       fallback: {
         title: "Möchten Sie uns lieber direkt kontaktieren?",
-        text: "Schreiben Sie La Fenice eine E-Mail oder rufen Sie uns an und nennen Sie Ihre gewünschten Reisedaten sowie die Anzahl der Gäste.",
+        text: "Schreiben Sie uns oder rufen Sie uns direkt an.",
         emailLabel: "E-Mail an La Fenice",
         phoneLabel: "La Fenice anrufen",
       },

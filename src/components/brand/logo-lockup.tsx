@@ -41,6 +41,7 @@ export function LogoLockup({
           aria-hidden="true"
           className="logo-lockup__asset logo-lockup__asset--white"
           height={972}
+          priority
           sizes="120px"
           src={WHITE_LOGO}
           unoptimized

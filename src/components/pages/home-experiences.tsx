@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ArrowIcon } from "@/components/ui/icons";
+import { getImageFocusStyle } from "@/lib/content/image-focus";
 import { siteIdentity } from "@/lib/content/site";
 import type { HomePageContent } from "@/lib/content/types";
 
@@ -18,7 +19,7 @@ export function HomeExperiences({ page }: { page: HomePageContent }) {
         </div>
 
         <div className="home-experiences__grid">
-          {experiences.items.map((experience, index) => {
+          {experiences.items.map((experience) => {
             const href = `mailto:${siteIdentity.email}?subject=${encodeURIComponent(experience.emailSubject)}&body=${encodeURIComponent(experience.emailBody)}`;
 
             return (
@@ -26,13 +27,12 @@ export function HomeExperiences({ page }: { page: HomePageContent }) {
                 <div className="experience-card__media">
                   <Image
                     alt={experience.image.alt}
+                    className="editorial-image"
                     fill
                     sizes="(max-width: 820px) 100vw, 33vw"
                     src={experience.image.src}
+                    style={getImageFocusStyle(experience.image)}
                   />
-                  <span aria-hidden="true" className="experience-card__number">
-                    0{index + 1}
-                  </span>
                 </div>
                 <div className="experience-card__copy">
                   <h3>{experience.title}</h3>

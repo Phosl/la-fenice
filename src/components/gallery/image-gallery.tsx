@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowIcon, CloseIcon, ExpandIcon } from "@/components/ui/icons";
+import { getImageFocusStyle } from "@/lib/content/image-focus";
 import type { GalleryImage } from "@/lib/content/types";
 
 type GalleryLabels = {
@@ -99,9 +100,11 @@ export function ImageGallery({ images, labels }: ImageGalleryProps) {
                 <span className="gallery-item__image">
                   <Image
                     alt={image.alt}
+                    className="editorial-image"
                     height={image.height}
                     sizes="(max-width: 560px) calc(100vw - 44px), (max-width: 1000px) 86vw, 760px"
                     src={image.src}
+                    style={getImageFocusStyle(image)}
                     width={image.width}
                   />
                 </span>

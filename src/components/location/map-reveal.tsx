@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { ArrowIcon } from "@/components/ui/icons";
+import { getImageFocusStyle } from "@/lib/content/image-focus";
 import { siteIdentity } from "@/lib/content/site";
 import type { GalleryImage } from "@/lib/content/types";
 
@@ -16,8 +17,6 @@ type MapRevealProps = {
 
 export function MapReveal({ image, openLabel, directionsLabel, title, description }: MapRevealProps) {
   const [open, setOpen] = useState(false);
-  const { latitude, longitude } = siteIdentity.coordinates;
-  const embedUrl = `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
 
   return (
     <section aria-labelledby="map-title" className="map-section">
@@ -29,13 +28,20 @@ export function MapReveal({ image, openLabel, directionsLabel, title, descriptio
               aria-label={title}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src={embedUrl}
+              src={siteIdentity.maps.embed}
               title={title}
             />
           ) : (
             <>
               <div className="map-reveal__preview">
-                <Image alt="" fill sizes="(max-width: 820px) 100vw, 1220px" src={image.src} />
+                <Image
+                  alt=""
+                  className="editorial-image"
+                  fill
+                  sizes="(max-width: 820px) 100vw, 1220px"
+                  src={image.src}
+                  style={getImageFocusStyle(image)}
+                />
               </div>
               <div className="map-reveal__content">
                 <h2 id="map-title">{title}</h2>

@@ -1,4 +1,4 @@
-import type { ImageAsset } from "./types";
+import type { ImageAsset, ImageFocusPoint } from "./types";
 
 const legacyImage = (id: string, filename: string): ImageAsset => ({
   id,
@@ -7,37 +7,139 @@ const legacyImage = (id: string, filename: string): ImageAsset => ({
   height: 345,
 });
 
+const restoredImage = (
+  id: string,
+  filename: string,
+  width: number,
+  height: number,
+  desktop: ImageFocusPoint = { x: 50, y: 50 },
+  mobile: ImageFocusPoint = desktop,
+): ImageAsset => ({
+  id,
+  src: `/images/restored/${filename}`,
+  width,
+  height,
+  focus: { desktop, mobile },
+});
+
 /**
- * Existing 968 x 345 photographs, retained only as launch fallbacks until the
- * owner supplies high-resolution originals.
+ * Restored photographs lead the public pages. A few original 968 x 345
+ * collages remain as secondary gallery fallbacks until larger originals arrive.
  */
 export const media = {
   home: {
-    room: legacyImage("home-room", "stanza-da-letto-positano.jpg"),
-    garden: legacyImage("home-garden", "our-garden-positano.jpg"),
-    panorama: legacyImage("home-panorama", "panorama-positano.jpg"),
-    view: legacyImage("home-view", "amazing-view-positano.jpg"),
+    room: restoredImage(
+      "home-room",
+      "v1/room-green-shutters--v1.webp",
+      2100,
+      749,
+    ),
+    garden: restoredImage(
+      "home-garden",
+      "v1/garden-triptych--v1.webp",
+      2100,
+      749,
+      { x: 80, y: 50 },
+      { x: 84, y: 50 },
+    ),
+    panorama: restoredImage(
+      "home-panorama",
+      "v1/home-panorama--v1.webp",
+      2101,
+      748,
+      { x: 50, y: 50 },
+      { x: 22, y: 50 },
+    ),
+    view: restoredImage(
+      "home-view",
+      "v1/sea-view-vase--v1.webp",
+      2100,
+      749,
+      { x: 58, y: 50 },
+      { x: 76, y: 50 },
+    ),
   },
   rooms: [
-    legacyImage("rooms-balcony", "affitto-camera-positano.jpg"),
-    legacyImage("rooms-interior", "b-and-b-in-positano.jpg"),
+    restoredImage(
+      "rooms-balcony",
+      "v1/room-purple-bed--v1.webp",
+      2100,
+      749,
+      { x: 58, y: 50 },
+      { x: 60, y: 50 },
+    ),
+    restoredImage("rooms-interior", "room-iron-bed-restored.jpg", 1280, 1380),
     legacyImage("rooms-garden", "giardino-vista-mare-positano.jpg"),
     legacyImage("rooms-view", "romms-with-seaview-positano.jpg"),
   ],
   pool: [
-    legacyImage("pool-terrace", "apartment-with-pool-positano.jpg"),
-    legacyImage("pool-waterfall", "piscina-positano.jpg"),
+    restoredImage(
+      "pool-terrace",
+      "v1/pool-pair--v1.webp",
+      2100,
+      749,
+      { x: 25, y: 50 },
+      { x: 25, y: 50 },
+    ),
+    restoredImage("pool-waterfall", "pool-waterfall-restored.jpg", 1928, 1380),
   ],
   privateBeach: [
-    legacyImage("beach-sea", "private-beach-positano.jpg"),
-    legacyImage("beach-private", "spiaggia-privata-positano.jpg"),
+    restoredImage(
+      "beach-sea",
+      "v1/beach-clear-water--v1.webp",
+      2101,
+      748,
+      { x: 54, y: 50 },
+      { x: 58, y: 50 },
+    ),
+    restoredImage(
+      "beach-private",
+      "private-beach-cove-restored.jpg",
+      3872,
+      1380,
+      { x: 51, y: 50 },
+      { x: 60, y: 50 },
+    ),
   ],
   gardenTable: [
-    legacyImage("garden-produce", "prodotti-tipici-positano.jpg"),
-    legacyImage("garden-harvest", "typical-product-positano.jpg"),
-    legacyImage("garden-olives", "typical-product.jpg"),
+    restoredImage(
+      "garden-produce",
+      "v1/garden-table--v1.webp",
+      2098,
+      750,
+      { x: 50, y: 50 },
+      { x: 18, y: 50 },
+    ),
+    restoredImage(
+      "garden-harvest",
+      "v1/garden-triptych--v1.webp",
+      2100,
+      749,
+      { x: 50, y: 50 },
+      { x: 82, y: 50 },
+    ),
+    restoredImage(
+      "garden-potatoes",
+      "garden-potato-harvest-restored.jpg",
+      1280,
+      1380,
+    ),
     legacyImage("garden-figs", "prodotti-tipici-fichi.jpg"),
   ],
-  location: legacyImage("location-map-view", "dove-siamo.jpg"),
-  availability: legacyImage("availability-room", "richiesta.jpg"),
+  location: restoredImage(
+    "location-view",
+    "v1/sea-view-vase--v1.webp",
+    2100,
+    749,
+    { x: 58, y: 50 },
+    { x: 76, y: 50 },
+  ),
+  availability: restoredImage(
+    "availability-room",
+    "v1/room-purple-bed--v1.webp",
+    2100,
+    749,
+    { x: 58, y: 50 },
+    { x: 60, y: 50 },
+  ),
 } as const;

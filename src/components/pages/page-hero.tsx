@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getImageFocusStyle } from "@/lib/content/image-focus";
 import type { GalleryImage, PageIntro } from "@/lib/content/types";
 
 type PageHeroProps = {
@@ -12,10 +13,12 @@ export function PageHero({ image, intro }: PageHeroProps) {
       <div className="page-hero__media">
         <Image
           alt={image.alt}
+          className="editorial-image"
           fill
           priority
           sizes="100vw"
           src={image.src}
+          style={getImageFocusStyle(image)}
         />
       </div>
       <div className="container page-hero__content">

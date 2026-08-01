@@ -48,6 +48,7 @@ export const siteIdentity = {
   maps: {
     place: `https://www.google.com/maps?cid=${googleMapsCid}`,
     directions: `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`,
+    embed: `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`,
   },
   photographyCredit: "Tim Evancook",
 } as const satisfies SiteIdentity;

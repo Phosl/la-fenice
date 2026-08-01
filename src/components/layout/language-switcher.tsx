@@ -84,7 +84,7 @@ export function LanguageSwitcher({
         aria-controls="language-menu"
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={label}
+        aria-label={`${label}: ${activeLocale.toUpperCase()}`}
         className="language-switcher__button"
         onClick={() => setOpen((current) => !current)}
         onKeyDown={(event) => {

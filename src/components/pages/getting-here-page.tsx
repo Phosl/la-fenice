@@ -23,7 +23,6 @@ export function GettingHerePage({ content }: GettingHerePageProps) {
             {page.modes.map((mode, index) => (
               <details className="direction-card" key={mode.id} open={index === 0}>
                 <summary>
-                  <span className="direction-card__number">0{index + 1}</span>
                   <span className="direction-card__title">{mode.title}</span>
                   <span className="direction-card__chevron"><ChevronIcon /></span>
                 </summary>
@@ -43,15 +42,19 @@ export function GettingHerePage({ content }: GettingHerePageProps) {
 
           <section className="official-resources">
             <span className="eyebrow">{page.officialResourcesTitle}</span>
-            <div className="official-resources__grid">
+            <ul className="official-resources__list">
               {page.officialResources.map((resource) => (
-                <a href={resource.href} key={resource.id} rel="noopener noreferrer" target="_blank">
-                  <strong>{resource.label}</strong>
-                  <span>{resource.description}</span>
-                  <small>{officialLabel} ↗</small>
-                </a>
+                <li key={resource.id}>
+                  <a href={resource.href} rel="noopener noreferrer" target="_blank">
+                    <span>
+                      <strong>{resource.label}</strong>
+                      <small>{resource.description}</small>
+                    </span>
+                    <em>{officialLabel} ↗</em>
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
             <div className="review-notice">
               <strong>{page.transferTitle}</strong>
               <p>{page.transferNote}</p>

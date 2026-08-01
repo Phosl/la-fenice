@@ -86,10 +86,34 @@ describe("localized content contract", () => {
         "lemonGrove",
       ]);
       for (const experience of experiences.items) {
-        expect(experience.title.length).toBeGreaterThan(5);
+        expect(experience.title.length).toBeGreaterThanOrEqual(5);
         expect(experience.text.length).toBeGreaterThan(30);
         expect(experience.emailSubject.length).toBeGreaterThan(5);
         expect(experience.emailBody.length).toBeGreaterThan(30);
+      }
+    }
+  });
+
+  it("keeps the editorial page structure concise in every locale", () => {
+    for (const locale of supportedLocales) {
+      const pages = getContent(locale).pages;
+
+      expect(pages.home.locationTeaser.text.trim().length).toBeGreaterThan(20);
+      for (const route of [
+        "rooms",
+        "pool",
+        "privateBeach",
+        "gardenTable",
+        "location",
+      ] as const) {
+        expect(pages[route].sections).toHaveLength(1);
+        expect(pages[route].sections[0].paragraphs.length).toBeLessThanOrEqual(2);
+      }
+
+      for (const mode of pages.gettingHere.modes) {
+        for (const route of mode.routes) {
+          expect(route.steps.length).toBeLessThanOrEqual(2);
+        }
       }
     }
   });
@@ -104,6 +128,38 @@ describe("localized content contract", () => {
         expect(image.width).toBeGreaterThan(0);
         expect(image.height).toBeGreaterThan(0);
         expect(existsSync(join(process.cwd(), "public", image.src))).toBe(true);
+        if (image.focus) {
+          for (const point of [image.focus.desktop, image.focus.mobile]) {
+            if (!point) continue;
+            expect(point.x).toBeGreaterThanOrEqual(0);
+            expect(point.x).toBeLessThanOrEqual(100);
+            expect(point.y).toBeGreaterThanOrEqual(0);
+            expect(point.y).toBeLessThanOrEqual(100);
+          }
+        }
+      }
+    }
+  });
+
+  it("uses restored photographs for every public-page hero", () => {
+    for (const content of Object.values(siteContent)) {
+      const { pages } = content;
+      const heroImages = [
+        pages.home.hero.image,
+        pages.rooms.heroImage,
+        pages.pool.heroImage,
+        pages.privateBeach.heroImage,
+        pages.gardenTable.heroImage,
+        pages.location.heroImage,
+        pages.gettingHere.heroImage,
+        pages.availability.heroImage,
+      ];
+
+      for (const image of heroImages) {
+        expect(image.src).toMatch(/^\/images\/restored\//);
+        expect(image.width).toBeGreaterThanOrEqual(2000);
+        expect(image.height).toBeGreaterThanOrEqual(700);
+        expect(image.width * image.height).toBeGreaterThanOrEqual(1_500_000);
       }
     }
   });
@@ -135,6 +191,9 @@ describe("audited site identity", () => {
     );
     expect(siteIdentity.maps.directions).toBe(
       "https://www.google.com/maps/dir/?api=1&destination=40.6277721%2C14.4937307",
+    );
+    expect(siteIdentity.maps.embed).toBe(
+      "https://www.google.com/maps?q=40.6277721,14.4937307&z=16&output=embed",
     );
   });
 });

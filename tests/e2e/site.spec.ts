@@ -66,12 +66,12 @@ test("keeps the equivalent page when switching to German and Russian", async ({ 
   await switchLanguage(page, "Deutsch");
   await expect(page).toHaveURL(/\/de\/zimmer$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
-  await expect(page.getByRole("heading", { level: 1, name: /Zimmer im Licht von Positano/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Zimmer im Licht von Positano" })).toBeVisible();
 
   await switchLanguage(page, "Русский");
   await expect(page).toHaveURL(/\/ru\/nomera$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
-  await expect(page.getByRole("heading", { level: 1, name: /Номера, наполненные светом/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Номера в свете Позитано" })).toBeVisible();
 });
 
 test("language menu supports keyboard focus and Escape", async ({ page }) => {
@@ -201,7 +201,7 @@ test("location pages reveal the verified La Fenice map and directions", async ({
   const directionsUrl =
     "https://www.google.com/maps/dir/?api=1&destination=40.6277721%2C14.4937307";
   const embedUrl =
-    "https://www.google.com/maps?q=40.6277721,14.4937307&z=15&output=embed";
+    "https://www.google.com/maps?q=40.6277721,14.4937307&z=16&output=embed";
 
   await page.route("https://www.google.com/maps**", (route) => route.abort());
 
@@ -224,7 +224,10 @@ test("location pages reveal the verified La Fenice map and directions", async ({
       page.getByRole("link", {
         name: "Via Guglielmo Marconi 4, 84017 Positano (SA), Italy",
       }),
-    ).toHaveAttribute("href", directionsUrl);
+    ).toHaveAttribute(
+      "href",
+      "https://www.google.com/maps?cid=7908776521279981555",
+    );
 
     await page.getByRole("button", { name: openMapLabel }).click();
     await expect(iframe).toHaveAttribute("src", embedUrl);
@@ -254,7 +257,7 @@ test("replays the content transition on internal navigation and history", async 
 
   await page.goForward();
   await expect(page).toHaveURL(/\/rooms$/);
-  await expect(page.getByRole("heading", { level: 1, name: /Rooms filled with the light/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Rooms in the light of Positano" })).toBeVisible();
 });
 
 test("removes page animation when reduced motion is requested", async ({ baseURL, browser }, testInfo) => {
@@ -271,14 +274,14 @@ test("removes page animation when reduced motion is requested", async ({ baseURL
   await context.close();
 });
 
-test("advertises all experiences with direct email requests", async ({ page }) => {
+test("keeps direct email requests for all three experiences", async ({ page }) => {
   await page.goto("/it");
   await expectHydrated(page);
   await expect(
-    page.getByRole("heading", { level: 2, name: "Tre modi per incontrare la costa" }),
+    page.getByRole("heading", { level: 2, name: "Lungo la costa" }),
   ).toBeVisible();
 
-  const requests = page.getByRole("link", { name: "Richiedi via email" });
+  const requests = page.getByRole("link", { name: "Chiedi informazioni" });
   await expect(requests).toHaveCount(3);
   for (const link of await requests.all()) {
     await expect(link).toHaveAttribute(
@@ -286,6 +289,25 @@ test("advertises all experiences with direct email requests", async ({ page }) =
       /^mailto:info@lafenicepositano\.com\?subject=.+&body=.+$/,
     );
   }
+});
+
+test("uses the concise blue-and-white editorial homepage", async ({ page }) => {
+  await page.goto("/it");
+  await expectHydrated(page);
+
+  await expect(page.locator("main > section")).toHaveCount(6);
+  await expect(page.locator(".quote-section, .story-card__index, .location-tease__badge")).toHaveCount(0);
+  await expect(page.getByText("Un luogo semplice, sul mare", { exact: true })).toBeVisible();
+
+  const palette = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      cobalt: styles.getPropertyValue("--cobalt").trim(),
+      paper: styles.getPropertyValue("--paper").trim(),
+    };
+  });
+  expect(palette.cobalt).toBe("#142c83");
+  expect(["#fff", "#ffffff"]).toContain(palette.paper);
 });
 
 test("legacy PHP paths return a permanent redirect", async ({ request }) => {

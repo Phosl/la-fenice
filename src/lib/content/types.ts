@@ -17,6 +17,15 @@ export interface ImageAsset {
   src: string;
   width: number;
   height: number;
+  focus?: {
+    desktop: ImageFocusPoint;
+    mobile?: ImageFocusPoint;
+  };
+}
+
+export interface ImageFocusPoint {
+  x: number;
+  y: number;
 }
 
 export interface GalleryImage extends ImageAsset {
@@ -93,19 +102,17 @@ export interface HomePageContent {
     lead: string;
     image: GalleryImage;
     primaryCta: RouteCallToAction;
-    secondaryCta: RouteCallToAction;
   };
   introduction: ContentSection;
   storyHeading: {
     eyebrow: string;
     title: string;
   };
-  accessibilityNoteLabel: string;
   locationTeaser: {
     eyebrow: string;
     title: string;
+    text: string;
     linkLabel: string;
-    badge: string;
     scrollLabel: string;
   };
   stories: readonly HomeStory[];
@@ -339,6 +346,7 @@ export interface SiteIdentity {
   maps: {
     place: string;
     directions: string;
+    embed: string;
   };
   photographyCredit: string;
 }

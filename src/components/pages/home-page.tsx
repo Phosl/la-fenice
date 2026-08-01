@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ArrowIcon } from "@/components/ui/icons";
+import { getImageFocusStyle } from "@/lib/content/image-focus";
 import { getLocalizedPath } from "@/lib/content/routes";
 import { siteIdentity } from "@/lib/content/site";
 import type { SiteContent } from "@/lib/content/types";
@@ -47,14 +48,22 @@ export function HomePage({ content }: HomePageProps) {
       <main id="main-content">
         <section className="home-hero">
           <div className="home-hero__media">
-            <Image alt={page.hero.image.alt} fill priority sizes="100vw" src={page.hero.image.src} />
+            <Image
+              alt={page.hero.image.alt}
+              className="editorial-image"
+              fill
+              priority
+              sizes="100vw"
+              src={page.hero.image.src}
+              style={getImageFocusStyle(page.hero.image)}
+            />
           </div>
           <div className="container home-hero__content">
             <span className="eyebrow">{page.hero.eyebrow}</span>
             <h1 className="display-title">{page.hero.title}</h1>
             <div className="home-hero__intro">
               <p>{page.hero.lead}</p>
-              <Link className="button-secondary" href={getLocalizedPath(page.hero.primaryCta.route, content.locale)}>
+              <Link className="button-primary" href={getLocalizedPath(page.hero.primaryCta.route, content.locale)}>
                 {page.hero.primaryCta.label}
                 <ArrowIcon />
               </Link>
@@ -84,13 +93,19 @@ export function HomePage({ content }: HomePageProps) {
               </div>
             </div>
 
-            {page.stories.map((story, index) => (
+            {page.stories.map((story) => (
               <article className="story-card" key={story.id}>
                 <div className="story-card__media">
-                  <Image alt={story.image.alt} fill sizes="(max-width: 820px) 100vw, 58vw" src={story.image.src} />
+                  <Image
+                    alt={story.image.alt}
+                    className="editorial-image"
+                    fill
+                    sizes="(max-width: 820px) 100vw, 58vw"
+                    src={story.image.src}
+                    style={getImageFocusStyle(story.image)}
+                  />
                 </div>
                 <div className="story-card__copy">
-                  <span className="story-card__index">0{index + 1}</span>
                   <span className="eyebrow">{story.eyebrow}</span>
                   <h3 className="section-title">{story.title}</h3>
                   <p>{story.text}</p>
@@ -106,21 +121,16 @@ export function HomePage({ content }: HomePageProps) {
 
         <HomeExperiences page={page} />
 
-        <section className="quote-section">
-          <div className="container">
-            <blockquote>
-              {page.stepsNotice.title}
-              <cite>{page.accessibilityNoteLabel}</cite>
-            </blockquote>
-          </div>
-        </section>
-
         <section className="location-tease">
           <div className="container location-tease__grid">
             <div className="location-tease__copy">
               <span className="eyebrow">{page.locationTeaser.eyebrow}</span>
               <h2 className="section-title">{page.locationTeaser.title}</h2>
-              <p>{page.stepsNotice.text}</p>
+              <p>{page.locationTeaser.text}</p>
+              <aside className="location-tease__accessibility">
+                <strong>{page.stepsNotice.title}</strong>
+                <p>{page.stepsNotice.text}</p>
+              </aside>
               <Link className="button-link" href={getLocalizedPath("location", content.locale)}>
                 {page.locationTeaser.linkLabel}
                 <ArrowIcon />
@@ -129,11 +139,12 @@ export function HomePage({ content }: HomePageProps) {
             <div className="location-tease__media">
               <Image
                 alt={page.introduction.image?.alt ?? "La Fenice Positano"}
+                className="editorial-image"
                 fill
                 sizes="(max-width: 820px) 100vw, 58vw"
                 src={page.introduction.image?.src ?? page.hero.image.src}
+                style={getImageFocusStyle(page.introduction.image ?? page.hero.image)}
               />
-              <span className="location-tease__badge">{page.locationTeaser.badge}</span>
             </div>
           </div>
         </section>
