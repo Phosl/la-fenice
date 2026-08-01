@@ -96,13 +96,6 @@ export interface HomePageContent {
     secondaryCta: RouteCallToAction;
   };
   introduction: ContentSection;
-  proof: {
-    ariaLabel: string;
-    items: readonly {
-      value: string;
-      label: string;
-    }[];
-  };
   storyHeading: {
     eyebrow: string;
     title: string;

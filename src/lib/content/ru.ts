@@ -151,14 +151,6 @@ export const russianContent = {
         ],
         image: homeImages.view,
       },
-      proof: {
-        ariaLabel: "Кратко о главном",
-        items: [
-          { value: "3", label: "гектара террасной земли" },
-          { value: "01", label: "бассейн с морской водой" },
-          { value: "01", label: "частный выход к морю" },
-        ],
-      },
       storyHeading: {
         eyebrow: "От склона к морю",
         title: "Четыре главы, один пейзаж.",

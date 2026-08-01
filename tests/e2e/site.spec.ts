@@ -49,6 +49,7 @@ test.beforeEach(async ({ page }) => {
 test("renders the English narrative and switches to Italian", async ({ page }) => {
   await page.goto("/");
   await expectHydrated(page);
+  await expect(page.locator(".proof-strip")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://www.lafenicepositano.com");
 

@@ -63,17 +63,6 @@ export function HomePage({ content }: HomePageProps) {
           <span className="scroll-cue">{page.locationTeaser.scrollLabel}</span>
         </section>
 
-        <section aria-label={page.proof.ariaLabel} className="proof-strip">
-          <div className="proof-strip__grid">
-            {page.proof.items.map((item) => (
-              <div className="proof-item" key={item.label}>
-                <span className="proof-item__number">{item.value}</span>
-                <span className="proof-item__label">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <section className="intro-section">
           <div className="container intro-section__grid">
             <span className="eyebrow">{page.introduction.eyebrow}</span>

@@ -151,14 +151,6 @@ export const germanContent = {
         ],
         image: homeImages.view,
       },
-      proof: {
-        ariaLabel: "Auf einen Blick",
-        items: [
-          { value: "3", label: "Hektar terrassiertes Land" },
-          { value: "01", label: "Meerwasserpool" },
-          { value: "01", label: "privater Zugang zum Meer" },
-        ],
-      },
       storyHeading: {
         eyebrow: "Vom Hang bis zum Meer",
         title: "Vier Kapitel, eine Landschaft.",

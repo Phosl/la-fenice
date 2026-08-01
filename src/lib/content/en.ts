@@ -151,14 +151,6 @@ export const englishContent = {
         ],
         image: homeImages.view,
       },
-      proof: {
-        ariaLabel: "At a glance",
-        items: [
-          { value: "3", label: "hectares of terraced land" },
-          { value: "01", label: "seawater swimming pool" },
-          { value: "01", label: "private access to the sea" },
-        ],
-      },
       storyHeading: {
         eyebrow: "From the hillside to the sea",
         title: "Four chapters, one landscape.",

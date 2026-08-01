@@ -151,14 +151,6 @@ export const italianContent = {
         ],
         image: homeImages.view,
       },
-      proof: {
-        ariaLabel: "In breve",
-        items: [
-          { value: "3", label: "ettari di terrazzamenti" },
-          { value: "01", label: "piscina con acqua di mare" },
-          { value: "01", label: "accesso privato al mare" },
-        ],
-      },
       storyHeading: {
         eyebrow: "Dall'alto verso il mare",
         title: "Quattro capitoli, un solo paesaggio.",
