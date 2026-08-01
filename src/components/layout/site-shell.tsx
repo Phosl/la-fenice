@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/content/types";
 import type { SiteContent } from "@/lib/content/types";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
+import { PageTransition } from "./page-transition";
 
 type SiteShellProps = {
   children: React.ReactNode;
@@ -30,7 +31,7 @@ export function SiteShell({ children, content, overlayHeader = true }: SiteShell
         overlay={overlayHeader}
         primaryNavigationLabel={content.common.primaryNavigation}
       />
-      {children}
+      <PageTransition>{children}</PageTransition>
       <SiteFooter content={content} navigation={navigation} />
     </>
   );

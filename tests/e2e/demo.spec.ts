@@ -1,0 +1,224 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const GUEST_CODE = "ROSSI-27";
+const GUEST_PASSWORD = "Fenice2026!";
+const ADMIN_CODE = "ADMIN-DEMO";
+const ADMIN_PASSWORD = "FeniceAdmin2026!";
+
+async function expectNoHorizontalOverflow(page: Page) {
+  const overflow = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          className: element.className,
+          overflow: Math.ceil(rect.right - viewportWidth),
+          tagName: element.tagName,
+        };
+      })
+      .filter(({ overflow }) => overflow > 1)
+      .sort((a, b) => b.overflow - a.overflow)
+      .slice(0, 5);
+
+    return {
+      amount: document.documentElement.scrollWidth - viewportWidth,
+      offenders,
+    };
+  });
+
+  expect(overflow.amount, JSON.stringify(overflow.offenders)).toBeLessThanOrEqual(1);
+}
+
+async function loginAsGuest(page: Page) {
+  await page.goto("/demo/login");
+  await page.getByLabel("Codice soggiorno").fill(GUEST_CODE);
+  await page.getByLabel("Password").fill(GUEST_PASSWORD);
+  await page.getByRole("button", { name: "Entra nel soggiorno" }).click();
+  await expect(page).toHaveURL(/\/demo\/stay$/);
+  await expect(page.getByRole("heading", { level: 1, name: /Famiglia Rossi/ })).toBeVisible();
+}
+
+async function createCapreseOrder(page: Page) {
+  const caprese = page
+    .getByRole("article")
+    .filter({ has: page.getByText("Panino caprese", { exact: true }) })
+    .first();
+  await caprese.getByRole("button", { name: "Aumenta quantità: Panino caprese" }).click();
+  await page.getByRole("button", { name: /Invia richiesta d.?ordine/i }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "La richiesta è stata inviata" }),
+  ).toBeVisible();
+
+  const requests = page.getByRole("region", { name: "Le tue richieste" });
+  const request = requests.getByRole("article").filter({ hasText: "Panino caprese" });
+  await expect(request).toHaveCount(1);
+  await expect(request.getByText("In attesa", { exact: true })).toBeVisible();
+  return request;
+}
+
+async function createFishingRequest(page: Page) {
+  await page.getByRole("tab", { name: "Attività" }).click();
+  await page.getByRole("button", { name: "Richiedi questa attività" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "La richiesta attività è stata inviata" }),
+  ).toBeVisible();
+
+  const request = page
+    .getByRole("region", { name: "Le tue richieste" })
+    .getByRole("article")
+    .filter({ hasText: "Esperienza di pesca" });
+  await expect(request).toHaveCount(1);
+  await expect(request.getByText("In attesa", { exact: true })).toBeVisible();
+}
+
+async function loginAsAdmin(page: Page) {
+  await page.goto("/demo/admin/login");
+  await page.getByLabel("Codice amministratore").fill(ADMIN_CODE);
+  await page.getByLabel("Password").fill(ADMIN_PASSWORD);
+  await page.getByRole("button", { name: "Entra nel pannello" }).click();
+  await expect(page).toHaveURL(/\/demo\/admin$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Gestione ospiti" })).toBeVisible();
+}
+
+test("demo routes are explicitly excluded from indexing", async ({ page }) => {
+  await page.goto("/demo/login");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /nofollow/i);
+});
+
+test("guest login, stay calendar, order persistence, cancellation and guard work", async ({ page }) => {
+  await page.goto("/demo/login");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Benvenuto a La Fenice" }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByLabel("Codice soggiorno").fill(GUEST_CODE);
+  await page.getByLabel("Password").fill("password-errata");
+  await page.getByRole("button", { name: "Entra nel soggiorno" }).click();
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Il codice o la password non sono validi. Riprova.",
+    }),
+  ).toBeVisible();
+
+  await page.getByLabel("Password").fill(GUEST_PASSWORD);
+  await page.getByRole("button", { name: "Entra nel soggiorno" }).click();
+  await expect(page).toHaveURL(/\/demo\/stay$/);
+  await expect(page.getByRole("heading", { level: 1, name: /Famiglia Rossi/ })).toBeVisible();
+
+  const today = page.locator('button[aria-current="date"]');
+  await expect(today).toHaveCount(1);
+  await expect(today).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /Check-out/ })).toBeDisabled();
+  await expectNoHorizontalOverflow(page);
+
+  let request = await createCapreseOrder(page);
+  await createFishingRequest(page);
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: /Famiglia Rossi/ })).toBeVisible();
+
+  const requests = page.getByRole("region", { name: "Le tue richieste" });
+  request = requests.getByRole("article").filter({ hasText: "Panino caprese" });
+  await expect(request).toHaveCount(1);
+  await expect(request.getByText("In attesa", { exact: true })).toBeVisible();
+
+  await request.getByRole("button", { name: "Annulla richiesta" }).click();
+  await expect(request.getByText("Annullato", { exact: true })).toBeVisible();
+  await expect(request.getByRole("button", { name: "Annulla richiesta" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Esci" }).click();
+  await expect(page).toHaveURL(/\/demo\/login$/);
+  await page.goto("/demo/stay");
+  await expect(page).toHaveURL(/\/demo\/login$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Benvenuto a La Fenice" })).toBeVisible();
+});
+
+test("guest language follows the selected Russian locale", async ({ page }) => {
+  await page.goto("/demo/login");
+  await page.getByLabel("Lingua").selectOption("ru");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Добро пожаловать в La Fenice" }),
+  ).toBeVisible();
+  await page.getByLabel("Код проживания").fill(GUEST_CODE);
+  await page.getByLabel("Пароль").fill(GUEST_PASSWORD);
+  await page.getByRole("button", { name: "Открыть проживание" }).click();
+  await expect(page).toHaveURL(/\/demo\/stay$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("button", { name: "Выйти" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
+
+test("staff confirms the same guest request in the same browser", async ({ page }) => {
+  await loginAsGuest(page);
+  await createCapreseOrder(page);
+
+  await page.getByRole("button", { name: "Esci" }).click();
+  await loginAsAdmin(page);
+  await expectNoHorizontalOverflow(page);
+
+  const requestListItem = page.getByRole("button", { name: /Panino caprese/ }).first();
+  await expect(requestListItem).toContainText("In attesa");
+  await requestListItem.click();
+
+  await page.getByLabel("Stato richiesta").selectOption("confirmed");
+  await page.getByLabel("Nota dello staff").fill("Confermato per le 12:30.");
+  await page.getByRole("button", { name: "Salva aggiornamento" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Richiesta aggiornata" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /Panino caprese/ }).first()).toContainText(
+    "Confermato",
+  );
+
+  await page.getByRole("main").getByRole("button", { name: "Esci" }).click();
+  await loginAsGuest(page);
+
+  const guestRequest = page
+    .getByRole("region", { name: "Le tue richieste" })
+    .getByRole("article")
+    .filter({ hasText: "Panino caprese" });
+  await expect(guestRequest.getByText("Confermato", { exact: true })).toBeVisible();
+  await expect(guestRequest).toContainText("Confermato per le 12:30.");
+});
+
+test("staff creates credentials, resets a password and adds a catalog item", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.getByRole("tab", { name: "Soggiorni" }).click();
+  await page.getByRole("button", { name: "Nuovo soggiorno" }).click();
+
+  const stayDialog = page.getByRole("dialog", { name: "Nuovo soggiorno" });
+  await stayDialog.getByLabel("Cognome").fill("Bianchi");
+  await stayDialog.getByLabel("Nome visualizzato").fill("Famiglia Bianchi");
+  await stayDialog.getByLabel("Camera").fill("Camera demo");
+  await stayDialog.getByLabel("Ospiti").fill("3");
+  await stayDialog.getByLabel("Lingua ospite").selectOption("de");
+  await stayDialog.getByRole("button", { name: "Crea accesso" }).click();
+
+  const credentialDialog = page.getByRole("dialog", {
+    name: "Credenziali del nuovo soggiorno",
+  });
+  await expect(credentialDialog).toContainText(/BIANCHI-\d{2}/);
+  await expect(credentialDialog).toContainText("Password temporanea");
+  await credentialDialog.getByRole("button", { name: "Ho copiato, chiudi" }).click();
+
+  await expect(page.getByRole("heading", { level: 3, name: "Famiglia Bianchi" })).toBeVisible();
+  await page.getByRole("button", { name: "Reimposta password" }).click();
+  const resetDialog = page.getByRole("dialog", { name: /Nuova password/ });
+  await expect(resetDialog).toContainText("Password temporanea");
+  await resetDialog.getByRole("button", { name: "Ho copiato, chiudi" }).click();
+
+  await page.getByRole("tab", { name: "Catalogo" }).click();
+  await page.getByRole("button", { name: "Nuovo prodotto" }).click();
+  const productDialog = page.getByRole("dialog", { name: "Nuovo prodotto" });
+  await productDialog.getByLabel("IT", { exact: true }).fill("Aperitivo della casa");
+  await productDialog.getByLabel("EN", { exact: true }).fill("House aperitivo");
+  await productDialog.getByLabel("DE", { exact: true }).fill("Aperitif des Hauses");
+  await productDialog.getByLabel("RU", { exact: true }).fill("Домашний аперитив");
+  await productDialog.getByLabel("Prezzo EUR (opzionale)").fill("18.50");
+  await productDialog.getByRole("button", { name: "Aggiungi al catalogo" }).click();
+  await expect(page.getByRole("heading", { level: 3, name: "Aperitivo della casa" })).toBeVisible();
+  await expect(page.getByText(/18,50\s*€/).first()).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});

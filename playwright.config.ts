@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const localChromiumExecutable = process.env.LA_FENICE_CHROMIUM_EXECUTABLE;
+const reuseExistingServer = process.env.LA_FENICE_REUSE_SERVER === "true" || !process.env.CI;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -9,7 +10,7 @@ export default defineConfig({
   workers: 3,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: "http://localhost:3100",
     launchOptions: localChromiumExecutable
       ? { executablePath: localChromiumExecutable }
       : undefined,
@@ -17,8 +18,8 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run build && npm run start -- -p 3100",
-    url: "http://127.0.0.1:3100",
-    reuseExistingServer: false,
+    url: "http://localhost:3100",
+    reuseExistingServer,
     timeout: 120_000,
   },
   projects: [

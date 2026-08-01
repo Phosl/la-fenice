@@ -205,7 +205,7 @@ describe("metadata routes", () => {
       rules: {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/"],
+        disallow: ["/admin/", "/api/", "/demo/"],
       },
       sitemap: "https://preview.example.com/sitemap.xml",
       host: "https://preview.example.com",

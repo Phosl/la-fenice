@@ -18,7 +18,7 @@ type RootDocumentProps = {
 
 export function RootDocument({ children, content }: RootDocumentProps) {
   return (
-    <html lang={content.locale} suppressHydrationWarning>
+    <html data-scroll-behavior="smooth" lang={content.locale} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: introBootstrap }} />
         <a className="skip-link" href="#main-content">

@@ -231,6 +231,46 @@ test("location pages reveal the verified La Fenice map and directions", async ({
   }
 });
 
+test("replays the content transition on internal navigation and history", async ({ page }) => {
+  await page.goto("/");
+  await expectHydrated(page);
+
+  const initialMain = page.locator("main");
+  await initialMain.evaluate((element) => {
+    element.dataset.navigationMarker = "initial";
+  });
+
+  await page.locator('a[href="/rooms"]:visible').first().click();
+  await expect(page).toHaveURL(/\/rooms$/);
+  await expect(page.locator('main[data-navigation-marker="initial"]')).toHaveCount(0);
+  await expect(page.locator(".page-transition")).toHaveCSS(
+    "animation-name",
+    "page-enter",
+  );
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { level: 1, name: "From the garden to the sea" })).toBeVisible();
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/rooms$/);
+  await expect(page.getByRole("heading", { level: 1, name: /Rooms filled with the light/ })).toBeVisible();
+});
+
+test("removes page animation when reduced motion is requested", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One reduced-motion browser check is sufficient");
+
+  const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("la-fenice-intro-seen", "true");
+  });
+  await page.goto("/");
+  await expectHydrated(page);
+  await expect(page.locator(".page-transition")).toHaveCSS("animation-name", "none");
+  await context.close();
+});
+
 test("advertises all experiences with direct email requests", async ({ page }) => {
   await page.goto("/it");
   await expectHydrated(page);
@@ -254,8 +294,8 @@ test("legacy PHP paths return a permanent redirect", async ({ request }) => {
   expect(response.headers().location).toBe("/rooms");
 });
 
-test("intro can be skipped and stays dismissed for the session", async ({ browser }) => {
-  const context = await browser.newContext();
+test("intro can be skipped and stays dismissed for the session", async ({ baseURL, browser }) => {
+  const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   await page.goto("/");
   await expectHydrated(page);
