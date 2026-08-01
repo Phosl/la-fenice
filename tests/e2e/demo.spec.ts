@@ -171,6 +171,141 @@ test("guest language follows the selected Russian locale", async ({ page }) => {
   await expectNoHorizontalOverflow(page);
 });
 
+test("guest browses the Positano guide and sends a non-binding request", async ({ page }) => {
+  await loginAsGuest(page);
+  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  await expect(page).toHaveURL(/\/demo\/guide$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "La nostra Positano" }),
+  ).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "24 luoghi" })).toBeVisible();
+
+  const filters = page.getByRole("group", { name: "Filtra i luoghi per categoria" });
+  await filters.getByRole("button", { name: "Sul mare" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "6 luoghi" })).toBeVisible();
+  await filters.getByRole("button", { name: "Tutti" }).click();
+  await page.getByLabel("Cerca nella guida").fill("Tre Sorelle");
+
+  const place = page
+    .getByRole("article")
+    .filter({ has: page.getByRole("heading", { level: 3, name: "Le Tre Sorelle" }) });
+  await expect(place).toHaveCount(1);
+  await expect(place.getByRole("link", { name: /Sito/ })).toHaveAttribute(
+    "href",
+    /letresorellepositano\.it/,
+  );
+  await expect(place.getByRole("link", { name: /Apri in Maps/ })).toHaveAttribute(
+    "href",
+    /google\.com\/maps/,
+  );
+
+  const requestButton = place.getByRole("button", { name: "Chiedi a La Fenice" });
+  await requestButton.click();
+  const dialog = page.getByRole("dialog", { name: "Richiedi informazioni" });
+  await expectDialogIsTopmost(page, "Richiedi informazioni");
+  await expect(dialog.getByText(/non una prenotazione confermata/i)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(requestButton).toBeFocused();
+
+  await requestButton.click();
+  const requestDialog = page.getByRole("dialog", { name: "Richiedi informazioni" });
+  await requestDialog.getByLabel("Orario preferito").fill("20:00");
+  await requestDialog.getByLabel("Partecipanti").selectOption("2");
+  await requestDialog.getByLabel("Note").fill("Un tavolo tranquillo, se possibile.");
+  await requestDialog.getByRole("button", { name: "Invia richiesta" }).click();
+  await expect(requestDialog.getByRole("status")).toContainText(
+    "La richiesta è stata inviata",
+  );
+  await requestDialog.getByRole("button", { name: "Fatto" }).click();
+
+  const requests = page.getByRole("region", { name: "Richieste dalla guida" });
+  const request = requests.getByRole("article").filter({ hasText: "Le Tre Sorelle" });
+  await expect(request).toHaveCount(1);
+  await expect(request.getByText("In attesa", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(
+    page
+      .getByRole("region", { name: "Richieste dalla guida" })
+      .getByRole("article")
+      .filter({ hasText: "Le Tre Sorelle" }),
+  ).toHaveCount(1);
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByLabel("Lingua").selectOption("ru");
+  await expect(page.getByRole("heading", { level: 1, name: "Наш Позитано" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+});
+
+test("staff manages guide places and confirms a concierge request", async ({ page }) => {
+  await loginAsGuest(page);
+  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  const leTreSorelle = page
+    .getByRole("article")
+    .filter({ has: page.getByRole("heading", { level: 3, name: "Le Tre Sorelle" }) });
+  await leTreSorelle.getByRole("button", { name: "Chiedi a La Fenice" }).click();
+  const requestDialog = page.getByRole("dialog", { name: "Richiedi informazioni" });
+  await requestDialog.getByLabel("Orario preferito").fill("19:30");
+  await requestDialog.getByRole("button", { name: "Invia richiesta" }).click();
+  await requestDialog.getByRole("button", { name: "Fatto" }).click();
+  await page.getByRole("button", { name: "Esci" }).click();
+
+  await loginAsAdmin(page);
+  const conciergeRequest = page.getByRole("button", { name: /Le Tre Sorelle/ }).first();
+  await expect(conciergeRequest).toContainText("Concierge");
+  await conciergeRequest.click();
+  await page.getByLabel("Stato richiesta").selectOption("confirmed");
+  await page.getByLabel("Nota dello staff").fill("Richiesta inoltrata, attendiamo conferma.");
+  await page.getByRole("button", { name: "Salva aggiornamento" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Richiesta aggiornata" })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Guida" }).click();
+  await expect(page.getByText("24 luoghi visibili")).toBeVisible();
+  await page.getByRole("button", { name: "Aggiungi luogo" }).click();
+  const placeDialog = page.getByRole("dialog", { name: "Nuovo luogo" });
+  await expectDialogIsTopmost(page, "Nuovo luogo");
+  await placeDialog.getByLabel("Categoria").selectOption("essentials");
+  await placeDialog.getByLabel("Indirizzo").fill("Via demo 1, Positano");
+  await placeDialog.getByLabel("Sito ufficiale").fill("https://example.com/positano-demo");
+  await placeDialog.getByLabel("Google Maps").fill("https://www.google.com/maps/search/?api=1&query=Positano");
+
+  const nameFields = placeDialog.getByRole("group", { name: "Nome mostrato agli ospiti" });
+  await nameFields.getByLabel("Italiano").fill("Belvedere demo");
+  await nameFields.getByLabel("English").fill("Demo viewpoint");
+  await nameFields.getByLabel("Deutsch").fill("Demo-Aussichtspunkt");
+  await nameFields.getByLabel("Русский").fill("Демо-смотровая");
+  const descriptionFields = placeDialog.getByRole("group", { name: "Descrizione breve" });
+  await descriptionFields.getByLabel("Italiano").fill("Un indirizzo dimostrativo per la guida ospite.");
+  await descriptionFields.getByLabel("English").fill("A demonstration place for the guest guide.");
+  await descriptionFields.getByLabel("Deutsch").fill("Ein Demonstrationsort für den Gästeführer.");
+  await descriptionFields.getByLabel("Русский").fill("Демонстрационное место для путеводителя гостей.");
+  await placeDialog.getByRole("button", { name: "Aggiungi alla guida" }).click();
+  await expect(page.getByRole("heading", { level: 3, name: "Belvedere demo" })).toBeVisible();
+
+  await page.getByLabel("Indirizzo").fill("Via demo 2, Positano");
+  await page.getByRole("button", { name: "Salva luogo" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Luogo aggiornato" })).toBeVisible();
+  await page.getByRole("button", { name: "Archivia luogo" }).click();
+  await expect(page.getByText("Archiviato", { exact: true }).last()).toBeVisible();
+  await page.reload();
+  await page.getByRole("tab", { name: "Guida" }).click();
+  await page.getByLabel("Visibilità").selectOption("hidden");
+  await expect(page.getByRole("button", { name: /Belvedere demo/ })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("main").getByRole("button", { name: "Esci" }).click();
+  await loginAsGuest(page);
+  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  const confirmed = page
+    .getByRole("region", { name: "Richieste dalla guida" })
+    .getByRole("article")
+    .filter({ hasText: "Le Tre Sorelle" });
+  await expect(confirmed.getByText("Confermata", { exact: true })).toBeVisible();
+  await expect(confirmed).toContainText("Richiesta inoltrata, attendiamo conferma.");
+  await page.getByLabel("Cerca nella guida").fill("Belvedere demo");
+  await expect(page.getByText("Nessun luogo trovato", { exact: true })).toBeVisible();
+});
+
 test("staff confirms the same guest request in the same browser", async ({ page }) => {
   await loginAsGuest(page);
   await createCapreseOrder(page);

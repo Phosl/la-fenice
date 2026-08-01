@@ -18,46 +18,61 @@ const chromeCopy: Record<DemoLocale, {
   admin: string;
   footer: string;
   guest: string;
+  guestNavigation: string;
+  guide: string;
   logout: string;
   notice: string;
   publicSite: string;
   skip: string;
+  stay: string;
 }> = {
   en: {
     admin: "Administration",
     footer: "No data is sent or stored online.",
     guest: "Guest area",
+    guestNavigation: "Guest navigation",
+    guide: "Positano guide",
     logout: "Sign out",
     notice: "Demo data — visible only in this browser",
     publicSite: "Public website",
     skip: "Skip to content",
+    stay: "Your stay",
   },
   it: {
     admin: "Amministrazione",
     footer: "Nessun dato viene inviato o salvato online.",
     guest: "Area ospite",
+    guestNavigation: "Navigazione area ospite",
+    guide: "Guida a Positano",
     logout: "Esci",
     notice: "Dati dimostrativi — visibili solo in questo browser",
     publicSite: "Sito pubblico",
     skip: "Salta al contenuto",
+    stay: "Soggiorno",
   },
   de: {
     admin: "Verwaltung",
     footer: "Es werden keine Daten online gesendet oder gespeichert.",
     guest: "Gästebereich",
+    guestNavigation: "Navigation im Gästebereich",
+    guide: "Positano-Guide",
     logout: "Abmelden",
     notice: "Demodaten — nur in diesem Browser sichtbar",
     publicSite: "Öffentliche Website",
     skip: "Zum Inhalt springen",
+    stay: "Aufenthalt",
   },
   ru: {
     admin: "Управление",
     footer: "Данные не отправляются и не сохраняются онлайн.",
     guest: "Личный кабинет",
+    guestNavigation: "Навигация личного кабинета",
+    guide: "Путеводитель по Позитано",
     logout: "Выйти",
     notice: "Демонстрационные данные видны только в этом браузере",
     publicSite: "Открыть сайт",
     skip: "Перейти к содержимому",
+    stay: "Проживание",
   },
 };
 
@@ -69,6 +84,10 @@ export function DemoChrome({ children }: DemoChromeProps) {
   const locale: DemoLocale =
     session?.role === "guest" && currentStay ? currentStay.locale : "it";
   const copy = chromeCopy[locale];
+  const showGuestNavigation =
+    session?.role === "guest" &&
+    currentStay !== null &&
+    (pathname.startsWith("/demo/stay") || pathname.startsWith("/demo/guide"));
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -114,6 +133,23 @@ export function DemoChrome({ children }: DemoChromeProps) {
           ) : null}
         </nav>
       </header>
+
+      {showGuestNavigation ? (
+        <nav aria-label={copy.guestNavigation} className={styles.guestNavigation}>
+          <Link
+            aria-current={pathname.startsWith("/demo/stay") ? "page" : undefined}
+            href="/demo/stay"
+          >
+            {copy.stay}
+          </Link>
+          <Link
+            aria-current={pathname.startsWith("/demo/guide") ? "page" : undefined}
+            href="/demo/guide"
+          >
+            {copy.guide}
+          </Link>
+        </nav>
+      ) : null}
 
       <main className={styles.main} id="main-content">
         <PageTransition>{children}</PageTransition>

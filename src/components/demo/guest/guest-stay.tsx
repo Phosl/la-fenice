@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useState } from "react";
 
 import {
   isStayDateOrderable,
@@ -9,50 +8,34 @@ import {
   type DemoActivityCatalogItem,
   type DemoDate,
   type DemoProductCatalogItem,
-  useDemoPortal,
 } from "@/lib/demo-portal";
 
 import { ActivityPanel } from "./activity-panel";
-import { guestDemoCopy, guestDemoLocales, isGuestDemoLocale } from "./copy";
+import { guestDemoCopy } from "./copy";
 import { countStayNights, formatGuestDate } from "./format";
+import { GuestLanguageSelect } from "./guest-language-select";
 import styles from "./guest.module.css";
 import { RequestsList } from "./requests-list";
 import { ShopPanel } from "./shop-panel";
 import { StayCalendar } from "./stay-calendar";
+import { useGuestPortalAccess } from "./use-guest-portal-access";
 
 type PlannerTab = "shop" | "activity";
 
 export function GuestStay() {
-  const router = useRouter();
   const {
+    authenticated,
     cancelActivityRequest,
     cancelOrder,
     createActivityRequest,
     createOrder,
-    currentAccount,
     currentStay,
-    logout,
-    ready,
-    session,
     setGuestLocale,
     state,
     today,
-  } = useDemoPortal();
+  } = useGuestPortalAccess();
   const [selectedDate, setSelectedDate] = useState<DemoDate>(today);
   const [activeTab, setActiveTab] = useState<PlannerTab>("shop");
-
-  const authenticated =
-    ready &&
-    session?.role === "guest" &&
-    currentAccount?.active === true &&
-    currentStay?.active === true &&
-    state !== null;
-
-  useEffect(() => {
-    if (!ready || authenticated) return;
-    if (session) logout();
-    router.replace("/demo/login");
-  }, [authenticated, logout, ready, router, session]);
 
   const calendarDates = useMemo(
     () => (currentStay ? listStayCalendarDates(currentStay) : []),
@@ -111,22 +94,11 @@ export function GuestStay() {
         <div className={styles.stayHeroMain}>
           <div className={styles.heroTopline}>
             <span className={styles.eyebrow}>{copy.stay.eyebrow}</span>
-            <label className={styles.stayLanguage}>
-              <span>{copy.login.languageLabel}</span>
-              <select
-                aria-label={copy.login.languageLabel}
-                onChange={(event) => {
-                  if (isGuestDemoLocale(event.target.value)) setGuestLocale(event.target.value);
-                }}
-                value={locale}
-              >
-                {guestDemoLocales.map((optionLocale) => (
-                  <option key={optionLocale} value={optionLocale}>
-                    {guestDemoCopy[optionLocale].languageName}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <GuestLanguageSelect
+              className={styles.stayLanguage}
+              locale={locale}
+              onChange={setGuestLocale}
+            />
           </div>
           <h1 className={styles.stayTitle}>
             {copy.stay.welcome}, {currentStay.guestName}

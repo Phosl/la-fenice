@@ -1,4 +1,5 @@
 import { addDemoDays, getRomeToday, isDateWithinStay } from "./dates";
+import { createGuideSeedCatalog } from "./guide-seed";
 import { hashDemoPassword, normaliseLoginCode } from "./security";
 import type {
   DemoCatalogItem,
@@ -93,9 +94,10 @@ export async function createDemoPortalSeed(now = new Date()): Promise<DemoPortal
         updatedAt: timestamp,
       },
     ],
-    catalog: createSeedCatalog(timestamp),
+    catalog: [...createSeedCatalog(timestamp), ...createGuideSeedCatalog(timestamp)],
     orders: [],
     activityRequests: [],
+    guideRequests: [],
     updatedAt: timestamp,
   };
 }
@@ -131,6 +133,9 @@ export function refreshDemoStayForToday(
     ),
     orders: state.orders.filter((order) => order.stayId !== seedStay.id),
     activityRequests: state.activityRequests.filter(
+      (request) => request.stayId !== seedStay.id,
+    ),
+    guideRequests: state.guideRequests.filter(
       (request) => request.stayId !== seedStay.id,
     ),
     updatedAt: timestamp,

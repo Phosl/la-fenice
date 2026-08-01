@@ -1,4 +1,4 @@
-export const DEMO_PORTAL_VERSION = 3 as const;
+export const DEMO_PORTAL_VERSION = 4 as const;
 
 export const DEMO_LOCALES = ["en", "it", "de", "ru"] as const;
 export type DemoLocale = (typeof DEMO_LOCALES)[number];
@@ -49,9 +49,12 @@ interface DemoCatalogItemBase {
   description?: DemoLocalizedLabel;
   active: boolean;
   sortOrder: number;
-  priceCents?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface DemoPricedCatalogItemBase extends DemoCatalogItemBase {
+  priceCents?: number;
 }
 
 export type DemoProductCategory =
@@ -61,7 +64,7 @@ export type DemoProductCategory =
   | "champagne"
   | "raw-fish";
 
-export interface DemoProductCatalogItem extends DemoCatalogItemBase {
+export interface DemoProductCatalogItem extends DemoPricedCatalogItemBase {
   kind: "product";
   category: DemoProductCategory;
 }
@@ -72,14 +75,37 @@ export type DemoActivityCategory =
   | "lemon-grove"
   | "other";
 
-export interface DemoActivityCatalogItem extends DemoCatalogItemBase {
+export interface DemoActivityCatalogItem extends DemoPricedCatalogItemBase {
   kind: "activity";
   category: DemoActivityCategory;
 }
 
+export const DEMO_GUIDE_CATEGORIES = [
+  "dining",
+  "after-dark",
+  "sea",
+  "see",
+  "getting-around",
+  "essentials",
+] as const;
+export type DemoGuideCategory = (typeof DEMO_GUIDE_CATEGORIES)[number];
+
+export interface DemoGuideCatalogItem extends DemoCatalogItemBase {
+  kind: "guide";
+  category: DemoGuideCategory;
+  address?: string;
+  phone?: string;
+  websiteUrl?: string;
+  mapsUrl?: string;
+  bookingNote?: DemoLocalizedLabel;
+  requestable: boolean;
+  verifiedAt: string;
+}
+
 export type DemoCatalogItem =
   | DemoProductCatalogItem
-  | DemoActivityCatalogItem;
+  | DemoActivityCatalogItem
+  | DemoGuideCatalogItem;
 
 export type DemoDeliveryLocation = "room" | "pool" | "beach";
 
@@ -122,6 +148,22 @@ export interface DemoActivityRequest {
   updatedAt: string;
 }
 
+export interface DemoGuideRequest {
+  id: string;
+  stayId: string;
+  guideItemId: string;
+  guideLabelSnapshot: DemoLocalizedLabel;
+  requestedDate: DemoDate;
+  preferredTime: string;
+  participants: number;
+  notes: string;
+  status: DemoRequestStatus;
+  staffNote: string;
+  clientRequestId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DemoSession {
   accountId: string;
   loginCode: string;
@@ -138,6 +180,7 @@ export interface DemoPortalState {
   catalog: DemoCatalogItem[];
   orders: DemoOrder[];
   activityRequests: DemoActivityRequest[];
+  guideRequests: DemoGuideRequest[];
   updatedAt: string;
 }
 
@@ -162,6 +205,15 @@ export interface DemoOrderInput {
 
 export interface DemoActivityRequestInput {
   activityId: string;
+  requestedDate: DemoDate;
+  preferredTime: string;
+  participants: number;
+  notes?: string;
+  clientRequestId?: string;
+}
+
+export interface DemoGuideRequestInput {
+  guideItemId: string;
   requestedDate: DemoDate;
   preferredTime: string;
   participants: number;
@@ -194,20 +246,47 @@ export type DemoStayPatch = Partial<
   >
 >;
 
-export interface DemoCatalogItemInput {
+interface DemoCatalogItemInputBase {
   id?: string;
-  kind: DemoCatalogItem["kind"];
-  category: DemoProductCategory | DemoActivityCategory;
   slug?: string;
   labels: DemoLocalizedLabel;
   description?: DemoLocalizedLabel;
-  priceCents?: number;
   active?: boolean;
   sortOrder?: number;
 }
 
+export interface DemoProductCatalogItemInput extends DemoCatalogItemInputBase {
+  kind: "product";
+  category: DemoProductCategory;
+  priceCents?: number;
+}
+
+export interface DemoActivityCatalogItemInput extends DemoCatalogItemInputBase {
+  kind: "activity";
+  category: DemoActivityCategory;
+  priceCents?: number;
+}
+
+export interface DemoGuideCatalogItemInput extends DemoCatalogItemInputBase {
+  kind: "guide";
+  category: DemoGuideCategory;
+  priceCents?: never;
+  address?: string;
+  phone?: string;
+  websiteUrl?: string;
+  mapsUrl?: string;
+  bookingNote?: DemoLocalizedLabel;
+  requestable: boolean;
+  verifiedAt: string;
+}
+
+export type DemoCatalogItemInput =
+  | DemoProductCatalogItemInput
+  | DemoActivityCatalogItemInput
+  | DemoGuideCatalogItemInput;
+
 export interface DemoUpdateRequestInput {
-  kind: "order" | "activity";
+  kind: "order" | "activity" | "guide";
   id: string;
   status: DemoRequestStatus;
   staffNote?: string;

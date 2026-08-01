@@ -9,6 +9,9 @@ import type {
   DemoCreateStayInput,
   DemoCreatedStay,
   DemoDate,
+  DemoGuideRequest,
+  DemoGuideRequestInput,
+  DemoLocalizedLabel,
   DemoOrder,
   DemoOrderInput,
   DemoPortalState,
@@ -18,7 +21,11 @@ import type {
   DemoStayPatch,
   DemoUpdateRequestInput,
 } from "./types";
-import { DEMO_LOCALES, DemoPortalError } from "./types";
+import {
+  DEMO_GUIDE_CATEGORIES,
+  DEMO_LOCALES,
+  DemoPortalError,
+} from "./types";
 
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
@@ -69,6 +76,19 @@ function assertRequestDate(stay: DemoStay, date: DemoDate, today: DemoDate): voi
 function assertTime(value: string): void {
   if (!TIME_PATTERN.test(value)) {
     throw new DemoPortalError("invalid_input", "Use a valid time in HH:mm format.");
+  }
+}
+
+function assertParticipants(participants: number, stay: DemoStay): void {
+  if (
+    !Number.isInteger(participants) ||
+    participants < 1 ||
+    participants > stay.guests
+  ) {
+    throw new DemoPortalError(
+      "invalid_input",
+      "Participants must be between 1 and the number of guests.",
+    );
   }
 }
 
@@ -123,10 +143,11 @@ export function createGuestOrder(
     }
     productIds.add(line.catalogItemId);
     const item = state.catalog.find(
-      (candidate) =>
-        candidate.id === line.catalogItemId && candidate.kind === "product" && candidate.active,
+      (candidate) => candidate.id === line.catalogItemId,
     );
-    if (!item) throw new DemoPortalError("not_found", "Product not available.");
+    if (!item || item.kind !== "product" || !item.active) {
+      throw new DemoPortalError("not_found", "Product not available.");
+    }
     return {
       id: createId("line"),
       catalogItemId: item.id,
@@ -167,16 +188,7 @@ export function createGuestActivityRequest(
   const stay = requireGuestStay(state, session);
   assertRequestDate(stay, input.requestedDate, today);
   assertTime(input.preferredTime);
-  if (
-    !Number.isInteger(input.participants) ||
-    input.participants < 1 ||
-    input.participants > stay.guests
-  ) {
-    throw new DemoPortalError(
-      "invalid_input",
-      "Participants must be between 1 and the number of guests.",
-    );
-  }
+  assertParticipants(input.participants, stay);
   if (input.clientRequestId) {
     const existing = state.activityRequests.find(
       (request) =>
@@ -215,10 +227,68 @@ export function createGuestActivityRequest(
   };
 }
 
+export function createGuestGuideRequest(
+  state: DemoPortalState,
+  session: DemoSession | null,
+  input: DemoGuideRequestInput,
+  today: DemoDate,
+  now = new Date(),
+): { state: DemoPortalState; request: DemoGuideRequest } {
+  const stay = requireGuestStay(state, session);
+  assertRequestDate(stay, input.requestedDate, today);
+  assertTime(input.preferredTime);
+  assertParticipants(input.participants, stay);
+
+  if (input.clientRequestId) {
+    const existing = state.guideRequests.find(
+      (request) =>
+        request.stayId === stay.id &&
+        request.clientRequestId === input.clientRequestId,
+    );
+    if (existing) return { state, request: existing };
+  }
+
+  const guideItem = state.catalog.find(
+    (candidate) =>
+      candidate.id === input.guideItemId &&
+      candidate.kind === "guide" &&
+      candidate.active &&
+      candidate.requestable,
+  );
+  if (!guideItem) {
+    throw new DemoPortalError("not_found", "Guide item not available for requests.");
+  }
+
+  const timestamp = now.toISOString();
+  const request: DemoGuideRequest = {
+    id: createId("guide-request"),
+    stayId: stay.id,
+    guideItemId: guideItem.id,
+    guideLabelSnapshot: { ...guideItem.labels },
+    requestedDate: input.requestedDate,
+    preferredTime: input.preferredTime,
+    participants: input.participants,
+    notes: input.notes?.trim().slice(0, 1_000) ?? "",
+    status: "pending",
+    staffNote: "",
+    clientRequestId: input.clientRequestId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  return {
+    state: withUpdatedAt(
+      { ...state, guideRequests: [...state.guideRequests, request] },
+      timestamp,
+    ),
+    request,
+  };
+}
+
 export function cancelGuestRequest(
   state: DemoPortalState,
   session: DemoSession | null,
-  kind: "order" | "activity",
+  kind: "order" | "activity" | "guide",
   id: string,
   now = new Date(),
 ): DemoPortalState {
@@ -241,20 +311,44 @@ export function cancelGuestRequest(
     );
   }
 
-  const target = state.activityRequests.find(
+  if (kind === "activity") {
+    const target = state.activityRequests.find(
+      (request) => request.id === id && request.stayId === stay.id,
+    );
+    if (!target) throw new DemoPortalError("not_found", "Activity request not found.");
+    if (target.status !== "pending") {
+      throw new DemoPortalError(
+        "invalid_status_transition",
+        "Only pending activity requests can be cancelled.",
+      );
+    }
+    return withUpdatedAt(
+      {
+        ...state,
+        activityRequests: state.activityRequests.map((request) =>
+          request.id === id
+            ? { ...request, status: "cancelled", updatedAt: timestamp }
+            : request,
+        ),
+      },
+      timestamp,
+    );
+  }
+
+  const target = state.guideRequests.find(
     (request) => request.id === id && request.stayId === stay.id,
   );
-  if (!target) throw new DemoPortalError("not_found", "Activity request not found.");
+  if (!target) throw new DemoPortalError("not_found", "Guide request not found.");
   if (target.status !== "pending") {
     throw new DemoPortalError(
       "invalid_status_transition",
-      "Only pending activity requests can be cancelled.",
+      "Only pending guide requests can be cancelled.",
     );
   }
   return withUpdatedAt(
     {
       ...state,
-      activityRequests: state.activityRequests.map((request) =>
+      guideRequests: state.guideRequests.map((request) =>
         request.id === id
           ? { ...request, status: "cancelled", updatedAt: timestamp }
           : request,
@@ -345,6 +439,12 @@ export function updateAdminStay(
         (order.serviceDate < next.checkIn || order.serviceDate >= next.checkOut),
     ) ||
     state.activityRequests.some(
+      (request) =>
+        request.stayId === stayId &&
+        (request.requestedDate < next.checkIn ||
+          request.requestedDate >= next.checkOut),
+    ) ||
+    state.guideRequests.some(
       (request) =>
         request.stayId === stayId &&
         (request.requestedDate < next.checkIn ||
@@ -453,21 +553,140 @@ export function replaceAccountPasswordHash(
 }
 
 function validateCatalogInput(input: DemoCatalogItemInput): void {
+  normaliseLocalizedLabel(input.labels, 120, "labels");
+  normaliseOptionalLocalizedLabel(input.description, 600, "description");
   if (
-    Object.values(input.labels).some((label) => !label.trim()) ||
-    (input.priceCents !== undefined &&
-      (!Number.isInteger(input.priceCents) || input.priceCents < 0))
+    input.sortOrder !== undefined &&
+    (!Number.isInteger(input.sortOrder) || input.sortOrder < 0)
   ) {
-    throw new DemoPortalError("invalid_input", "Invalid catalog item.");
+    throw new DemoPortalError("invalid_input", "Invalid catalog order.");
   }
-  const productCategories = ["food", "classic-drink", "wine", "champagne", "raw-fish"];
-  const activityCategories = ["fishing", "boat-trip", "lemon-grove", "other"];
-  if (
-    (input.kind === "product" && !productCategories.includes(input.category)) ||
-    (input.kind === "activity" && !activityCategories.includes(input.category))
-  ) {
+
+  if (input.kind === "product") {
+    if (
+      !["food", "classic-drink", "wine", "champagne", "raw-fish"].includes(
+        input.category,
+      )
+    ) {
+      throw new DemoPortalError("invalid_input", "Category and item type do not match.");
+    }
+    assertOptionalPrice(input.priceCents);
+    return;
+  }
+
+  if (input.kind === "activity") {
+    if (
+      !["fishing", "boat-trip", "lemon-grove", "other"].includes(input.category)
+    ) {
+      throw new DemoPortalError("invalid_input", "Category and item type do not match.");
+    }
+    assertOptionalPrice(input.priceCents);
+    return;
+  }
+
+  if (!DEMO_GUIDE_CATEGORIES.includes(input.category)) {
     throw new DemoPortalError("invalid_input", "Category and item type do not match.");
   }
+  if (
+    "priceCents" in input &&
+    (input as DemoCatalogItemInput & { priceCents?: unknown }).priceCents !== undefined
+  ) {
+    throw new DemoPortalError("invalid_input", "Guide items cannot have a price.");
+  }
+  if (typeof input.requestable !== "boolean") {
+    throw new DemoPortalError("invalid_input", "Invalid guide request setting.");
+  }
+  const verifiedAt = input.verifiedAt?.trim();
+  if (!verifiedAt || Number.isNaN(Date.parse(verifiedAt))) {
+    throw new DemoPortalError("invalid_input", "Use a valid verification date.");
+  }
+  normaliseOptionalText(input.address, 180, "address");
+  normaliseOptionalText(input.phone, 80, "phone");
+  normaliseOptionalHttpUrl(input.websiteUrl, "website URL");
+  normaliseOptionalHttpUrl(input.mapsUrl, "maps URL");
+  normaliseOptionalLocalizedLabel(input.bookingNote, 300, "booking note");
+}
+
+function assertOptionalPrice(priceCents: number | undefined): void {
+  if (
+    priceCents !== undefined &&
+    (!Number.isInteger(priceCents) || priceCents < 0)
+  ) {
+    throw new DemoPortalError("invalid_input", "Invalid catalog price.");
+  }
+}
+
+function normaliseLocalizedLabel(
+  value: DemoLocalizedLabel,
+  maxLength: number,
+  field: string,
+): DemoLocalizedLabel {
+  if (!value || typeof value !== "object") {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  const entries = DEMO_LOCALES.map((locale) => {
+    const candidate = (value as Partial<DemoLocalizedLabel>)[locale];
+    if (typeof candidate !== "string") {
+      throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+    }
+    const trimmed = candidate.trim();
+    if (!trimmed || trimmed.length > maxLength) {
+      throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+    }
+    return [locale, trimmed] as const;
+  });
+  return Object.fromEntries(entries) as DemoLocalizedLabel;
+}
+
+function normaliseOptionalLocalizedLabel(
+  value: DemoLocalizedLabel | undefined,
+  maxLength: number,
+  field: string,
+): DemoLocalizedLabel | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object") {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  const rawValues = DEMO_LOCALES.map(
+    (locale) => (value as Partial<DemoLocalizedLabel>)[locale],
+  );
+  if (rawValues.some((candidate) => typeof candidate !== "string")) {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  if (rawValues.every((candidate) => !(candidate as string).trim())) return undefined;
+  return normaliseLocalizedLabel(value, maxLength, field);
+}
+
+function normaliseOptionalText(
+  value: string | undefined,
+  maxLength: number,
+  field: string,
+): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > maxLength) {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  return trimmed;
+}
+
+function normaliseOptionalHttpUrl(
+  value: string | undefined,
+  field: string,
+): string | undefined {
+  const trimmed = normaliseOptionalText(value, 2_048, field);
+  if (!trimmed) return undefined;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error();
+  } catch {
+    throw new DemoPortalError("invalid_input", `Invalid ${field}.`);
+  }
+  return trimmed;
 }
 
 export function saveAdminCatalogItem(
@@ -483,29 +702,62 @@ export function saveAdminCatalogItem(
     ? state.catalog.find((candidate) => candidate.id === input.id)
     : undefined;
   if (input.id && !existing) throw new DemoPortalError("not_found", "Catalog item not found.");
+  if (existing && existing.kind !== input.kind) {
+    throw new DemoPortalError("invalid_input", "Catalog item type cannot be changed.");
+  }
   const slug = (input.slug || existing?.slug || input.labels.en)
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+  if (!slug) throw new DemoPortalError("invalid_input", "Invalid catalog slug.");
   const common = {
     id: existing?.id ?? createId(input.kind),
     slug,
-    labels: Object.fromEntries(
-      Object.entries(input.labels).map(([locale, label]) => [locale, label.trim()]),
-    ) as DemoCatalogItem["labels"],
-    description: input.description,
+    labels: normaliseLocalizedLabel(input.labels, 120, "labels"),
+    description: normaliseOptionalLocalizedLabel(
+      input.description,
+      600,
+      "description",
+    ),
     active: input.active ?? existing?.active ?? true,
     sortOrder: input.sortOrder ?? existing?.sortOrder ?? state.catalog.length * 10 + 10,
-    priceCents: input.priceCents,
     createdAt: existing?.createdAt ?? timestamp,
     updatedAt: timestamp,
   };
-  const item = (
-    input.kind === "product"
-      ? { ...common, kind: "product", category: input.category }
-      : { ...common, kind: "activity", category: input.category }
-  ) as DemoCatalogItem;
+  let item: DemoCatalogItem;
+  if (input.kind === "product") {
+    item = {
+      ...common,
+      kind: "product",
+      category: input.category,
+      priceCents: input.priceCents,
+    };
+  } else if (input.kind === "activity") {
+    item = {
+      ...common,
+      kind: "activity",
+      category: input.category,
+      priceCents: input.priceCents,
+    };
+  } else {
+    item = {
+      ...common,
+      kind: "guide",
+      category: input.category,
+      address: normaliseOptionalText(input.address, 180, "address"),
+      phone: normaliseOptionalText(input.phone, 80, "phone"),
+      websiteUrl: normaliseOptionalHttpUrl(input.websiteUrl, "website URL"),
+      mapsUrl: normaliseOptionalHttpUrl(input.mapsUrl, "maps URL"),
+      bookingNote: normaliseOptionalLocalizedLabel(
+        input.bookingNote,
+        300,
+        "booking note",
+      ),
+      requestable: input.requestable,
+      verifiedAt: input.verifiedAt.trim(),
+    };
+  }
   const catalog = existing
     ? state.catalog.map((candidate) => (candidate.id === existing.id ? item : candidate))
     : [...state.catalog, item];
@@ -561,13 +813,30 @@ export function updateAdminRequest(
       timestamp,
     );
   }
-  const request = state.activityRequests.find((candidate) => candidate.id === input.id);
-  if (!request) throw new DemoPortalError("not_found", "Activity request not found.");
+  if (input.kind === "activity") {
+    const request = state.activityRequests.find((candidate) => candidate.id === input.id);
+    if (!request) throw new DemoPortalError("not_found", "Activity request not found.");
+    assertRequestStatusTransition(request.status, input.status);
+    return withUpdatedAt(
+      {
+        ...state,
+        activityRequests: state.activityRequests.map((candidate) =>
+          candidate.id === input.id
+            ? { ...candidate, status: input.status, staffNote, updatedAt: timestamp }
+            : candidate,
+        ),
+      },
+      timestamp,
+    );
+  }
+
+  const request = state.guideRequests.find((candidate) => candidate.id === input.id);
+  if (!request) throw new DemoPortalError("not_found", "Guide request not found.");
   assertRequestStatusTransition(request.status, input.status);
   return withUpdatedAt(
     {
       ...state,
-      activityRequests: state.activityRequests.map((candidate) =>
+      guideRequests: state.guideRequests.map((candidate) =>
         candidate.id === input.id
           ? { ...candidate, status: input.status, staffNote, updatedAt: timestamp }
           : candidate,

@@ -15,6 +15,7 @@ import { getRomeToday } from "./dates";
 import {
   cancelGuestRequest,
   createGuestActivityRequest,
+  createGuestGuideRequest,
   createGuestOrder,
   createStayWithAccount,
   generateUniqueLoginCode,
@@ -48,6 +49,8 @@ import type {
   DemoCatalogItemInput,
   DemoCreateStayInput,
   DemoCreatedStay,
+  DemoGuideRequest,
+  DemoGuideRequestInput,
   DemoLoginResult,
   DemoOrder,
   DemoOrderInput,
@@ -82,6 +85,8 @@ export interface DemoPortalContextValue {
   cancelOrder: (id: string) => void;
   createActivityRequest: (input: DemoActivityRequestInput) => DemoActivityRequest;
   cancelActivityRequest: (id: string) => void;
+  createGuideRequest: (input: DemoGuideRequestInput) => DemoGuideRequest;
+  cancelGuideRequest: (id: string) => void;
   createStay: (input: DemoCreateStayInput) => Promise<DemoCreatedStay>;
   updateStay: (stayId: string, patch: DemoStayPatch) => void;
   toggleStay: (stayId: string, active?: boolean) => void;
@@ -309,6 +314,28 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
     [replaceState, requireState],
   );
 
+  const createGuideRequest = useCallback(
+    (input: DemoGuideRequestInput) => {
+      const result = createGuestGuideRequest(
+        requireState(),
+        sessionRef.current,
+        input,
+        getRomeToday(),
+      );
+      if (result.state !== stateRef.current) replaceState(result.state);
+      return result.request;
+    },
+    [replaceState, requireState],
+  );
+
+  const cancelGuideRequest = useCallback(
+    (id: string) =>
+      replaceState(
+        cancelGuestRequest(requireState(), sessionRef.current, "guide", id),
+      ),
+    [replaceState, requireState],
+  );
+
   const createStay = useCallback(
     async (input: DemoCreateStayInput) => {
       const current = requireState();
@@ -417,6 +444,8 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
       cancelOrder,
       createActivityRequest,
       cancelActivityRequest,
+      createGuideRequest,
+      cancelGuideRequest,
       createStay,
       updateStay,
       toggleStay,
@@ -442,6 +471,8 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
       cancelOrder,
       createActivityRequest,
       cancelActivityRequest,
+      createGuideRequest,
+      cancelGuideRequest,
       createStay,
       updateStay,
       toggleStay,

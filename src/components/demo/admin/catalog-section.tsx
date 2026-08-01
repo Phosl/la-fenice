@@ -3,9 +3,10 @@
 import { type FormEvent, useMemo, useState } from "react";
 import {
   type DemoActivityCategory,
-  type DemoCatalogItem,
+  type DemoActivityCatalogItem,
   type DemoCatalogItemInput,
   type DemoProductCategory,
+  type DemoProductCatalogItem,
   useDemoPortal,
 } from "@/lib/demo-portal";
 import { AdminModal, formatPrice } from "./admin-ui";
@@ -27,8 +28,11 @@ const activityCategories: Array<{ value: DemoActivityCategory; label: string }> 
 ];
 
 type CatalogSectionProps = {
-  kind: DemoCatalogItem["kind"];
+  kind: "product" | "activity";
 };
+
+type StandardCatalogItem = DemoProductCatalogItem | DemoActivityCatalogItem;
+type StandardCatalogInput = Extract<DemoCatalogItemInput, { kind: "product" | "activity" }>;
 
 const sectionCopy = {
   product: {
@@ -76,7 +80,7 @@ export function CatalogSection({ kind }: CatalogSectionProps) {
 
   const catalog = useMemo(
     () => [...(state?.catalog ?? [])]
-      .filter((item) => item.kind === kind)
+      .filter((item): item is StandardCatalogItem => item.kind === kind)
       .sort((a, b) => a.sortOrder - b.sortOrder),
     [kind, state?.catalog],
   );
@@ -186,12 +190,12 @@ export function CatalogSection({ kind }: CatalogSectionProps) {
   );
 }
 
-function categoryLabel(item: DemoCatalogItem) {
+function categoryLabel(item: StandardCatalogItem) {
   const choices = item.kind === "product" ? productCategories : activityCategories;
   return choices.find((choice) => choice.value === item.category)?.label ?? item.category;
 }
 
-type CatalogFormInitial = Pick<DemoCatalogItemInput, "kind" | "category" | "labels"> & {
+type CatalogFormInitial = Pick<StandardCatalogInput, "kind" | "category" | "labels"> & {
   id?: string;
   active: boolean;
   priceCents?: number;
@@ -200,8 +204,8 @@ type CatalogFormInitial = Pick<DemoCatalogItemInput, "kind" | "category" | "labe
 
 type CatalogFormProps = {
   initial: CatalogFormInitial;
-  labels: (typeof sectionCopy)[DemoCatalogItem["kind"]];
-  onSubmit: (input: DemoCatalogItemInput) => void;
+  labels: (typeof sectionCopy)[CatalogSectionProps["kind"]];
+  onSubmit: (input: StandardCatalogInput) => void;
 };
 
 function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
@@ -223,15 +227,18 @@ function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
     }
 
     try {
-      onSubmit({
+      const common = {
         id: initial.id,
-        kind: initial.kind,
-        category,
         labels,
         priceCents: parsedPrice,
         active,
         sortOrder: initial.sortOrder,
-      });
+      };
+      onSubmit(
+        initial.kind === "product"
+          ? { ...common, kind: "product", category: category as DemoProductCategory }
+          : { ...common, kind: "activity", category: category as DemoActivityCategory },
+      );
       setNotice("saved");
     } catch {
       setNotice("error");
@@ -245,7 +252,7 @@ function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
           <label htmlFor={`catalog-category-${initial.id ?? "new"}`}>Categoria</label>
           <select
             id={`catalog-category-${initial.id ?? "new"}`}
-            onChange={(event) => setCategory(event.target.value as DemoCatalogItemInput["category"])}
+            onChange={(event) => setCategory(event.target.value as StandardCatalogInput["category"])}
             value={category}
           >
             {categories.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}

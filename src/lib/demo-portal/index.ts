@@ -15,6 +15,7 @@ export {
   createDemoPortalSeed,
   refreshDemoStayForToday,
 } from "./seed";
+export { createGuideSeedCatalog } from "./guide-seed";
 export {
   authenticateDemoAccount,
   generateDemoPassword,
@@ -24,11 +25,17 @@ export {
   verifyDemoPassword,
 } from "./security";
 export {
+  DEMO_LEGACY_SESSION_STORAGE_KEY,
+  DEMO_LEGACY_STATE_STORAGE_KEY,
   DEMO_SESSION_STORAGE_KEY,
   DEMO_STATE_STORAGE_KEY,
   isDemoPortalState,
+  isDemoPortalStateV3,
+  loadDemoSession,
+  loadDemoState,
+  migrateDemoPortalStateV3,
   saveDemoSession,
   saveDemoState,
 } from "./storage";
-export type { DemoStateSaveResult } from "./storage";
+export type { DemoPortalStateV3, DemoStateSaveResult } from "./storage";
 export * from "./types";

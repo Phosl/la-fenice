@@ -4,12 +4,21 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { createDemoPortalSeed } from "./seed";
 import {
+  DEMO_LEGACY_SESSION_STORAGE_KEY,
+  DEMO_LEGACY_STATE_STORAGE_KEY,
   DEMO_SESSION_STORAGE_KEY,
+  DEMO_STATE_STORAGE_KEY,
+  isDemoPortalState,
   loadDemoSession,
+  loadDemoState,
   saveDemoSession,
   saveDemoState,
+  type DemoPortalStateV3,
 } from "./storage";
-import type { DemoPortalState, DemoSession } from "./types";
+import type {
+  DemoPortalState,
+  DemoSession,
+} from "./types";
 
 let seed: DemoPortalState;
 let localStorage: MemoryStorage;
@@ -114,5 +123,73 @@ describe("resilient demo browser storage", () => {
     );
 
     expect(loadDemoSession()).toBeNull();
+  });
+
+  it("migrates v3 state once while preserving existing data", () => {
+    const v3: DemoPortalStateV3 = {
+      version: 3,
+      revision: 7,
+      accounts: structuredClone(seed.accounts),
+      stays: structuredClone(seed.stays),
+      catalog: structuredClone(
+        seed.catalog.filter(
+          (item) => item.kind === "product" || item.kind === "activity",
+        ),
+      ),
+      orders: structuredClone(seed.orders),
+      activityRequests: structuredClone(seed.activityRequests),
+      updatedAt: "2026-07-31T10:00:00.000Z",
+    };
+    v3.catalog[0].labels.it = "Panino conservato";
+    localStorage.setItem(DEMO_STATE_STORAGE_KEY, "{malformed");
+    localStorage.setItem(DEMO_LEGACY_STATE_STORAGE_KEY, JSON.stringify(v3));
+
+    const migrated = loadDemoState();
+
+    expect(migrated).toMatchObject({ version: 4, revision: 8 });
+    expect(migrated?.catalog[0].labels.it).toBe("Panino conservato");
+    expect(migrated?.catalog.filter((item) => item.kind === "guide")).toHaveLength(24);
+    expect(migrated?.guideRequests).toEqual([]);
+    expect(isDemoPortalState(migrated)).toBe(true);
+    expect(JSON.parse(localStorage.getItem(DEMO_STATE_STORAGE_KEY) ?? "null"))
+      .toMatchObject({ version: 4, revision: 8 });
+
+    expect(loadDemoState()).toEqual(migrated);
+  });
+
+  it("migrates valid v3 sessions to the current key", () => {
+    const legacySession: DemoSession = {
+      accountId: "demo-guest-account",
+      loginCode: "CLIENTE",
+      role: "guest",
+      credentialVersion: 1,
+      createdAt: "2026-08-01T10:00:00.000Z",
+    };
+    sessionStorage.setItem(
+      DEMO_LEGACY_SESSION_STORAGE_KEY,
+      JSON.stringify(legacySession),
+    );
+
+    expect(loadDemoSession()).toEqual(legacySession);
+    expect(
+      JSON.parse(sessionStorage.getItem(DEMO_SESSION_STORAGE_KEY) ?? "null"),
+    ).toEqual(legacySession);
+
+    expect(saveDemoSession(null)).toBe(true);
+    expect(sessionStorage.getItem(DEMO_SESSION_STORAGE_KEY)).toBeNull();
+    expect(sessionStorage.getItem(DEMO_LEGACY_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it("rejects malformed v4 guide data", () => {
+    const invalid = {
+      ...structuredClone(seed),
+      catalog: seed.catalog.map((item) =>
+        item.kind === "guide" ? { ...item, priceCents: 50 } : item,
+      ),
+    };
+
+    expect(isDemoPortalState(invalid)).toBe(false);
+    localStorage.setItem(DEMO_STATE_STORAGE_KEY, JSON.stringify(invalid));
+    expect(loadDemoState()).toBeNull();
   });
 });

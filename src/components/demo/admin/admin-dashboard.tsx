@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { useDemoPortal } from "@/lib/demo-portal";
 import { AdminModal, ConfirmModal } from "./admin-ui";
 import { CatalogSection } from "./catalog-section";
+import { GuideSection } from "./guide-section";
 import { RequestsSection } from "./requests-section";
 import { StaysSection } from "./stays-section";
 import styles from "./admin.module.css";
 
-type AdminTab = "requests" | "stays" | "shop" | "activities";
+type AdminTab = "requests" | "stays" | "shop" | "activities" | "guide";
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -37,16 +38,19 @@ export function AdminDashboard() {
   const pendingRequests = [
     ...state.orders.filter((order) => order.status === "pending"),
     ...state.activityRequests.filter((request) => request.status === "pending"),
+    ...state.guideRequests.filter((request) => request.status === "pending"),
   ].length;
   const todayOrders = state.orders.filter((order) => order.serviceDate === today).length;
   const activeStays = state.stays.filter((stay) => stay.active).length;
   const activeProducts = state.catalog.filter((item) => item.kind === "product" && item.active).length;
   const activeActivities = state.catalog.filter((item) => item.kind === "activity" && item.active).length;
+  const activeGuideItems = state.catalog.filter((item) => item.kind === "guide" && item.active).length;
   const tabs: Array<{ count: number; id: AdminTab; label: string }> = [
     { count: pendingRequests, id: "requests", label: "Richieste" },
     { count: activeStays, id: "stays", label: "Soggiorni" },
     { count: activeProducts, id: "shop", label: "Shop" },
     { count: activeActivities, id: "activities", label: "Attività" },
+    { count: activeGuideItems, id: "guide", label: "Guida" },
   ];
 
   async function handleReset() {
@@ -138,6 +142,7 @@ export function AdminDashboard() {
         {tab === "stays" ? <StaysSection /> : null}
         {tab === "shop" ? <CatalogSection kind="product" /> : null}
         {tab === "activities" ? <CatalogSection kind="activity" /> : null}
+        {tab === "guide" ? <GuideSection /> : null}
       </div>
 
       {showReset ? (

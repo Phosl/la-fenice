@@ -284,11 +284,21 @@
 .formActions,
 .cardActions,
 .statusActions,
-.filterBar {
+.filterBar,
+.guideAdminActions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
+}
+
+.guideSwitches {
+  background: color-mix(in srgb, var(--sea) 7%, var(--paper));
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
 }
 
 .statsGrid {
@@ -812,7 +822,7 @@ button.listCard[aria-pressed="true"] {
 
   .tabs {
     border-radius: 999px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .drawerBackdrop,

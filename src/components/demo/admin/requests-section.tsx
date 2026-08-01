@@ -3,6 +3,7 @@
 import { type FormEvent, useMemo, useState } from "react";
 import {
   type DemoActivityRequest,
+  type DemoGuideRequest,
   type DemoOrder,
   type DemoRequestStatus,
   type DemoStay,
@@ -35,7 +36,8 @@ const locationLabels = {
 
 type AdminRequest =
   | { kind: "order"; data: DemoOrder; stay?: DemoStay }
-  | { kind: "activity"; data: DemoActivityRequest; stay?: DemoStay };
+  | { kind: "activity"; data: DemoActivityRequest; stay?: DemoStay }
+  | { kind: "guide"; data: DemoGuideRequest; stay?: DemoStay };
 
 function requestKey(request: AdminRequest) {
   return `${request.kind}:${request.data.id}`;
@@ -51,11 +53,18 @@ function requestTime(request: AdminRequest) {
 
 function requestTitle(request: AdminRequest) {
   if (request.kind === "activity") return request.data.activityLabelSnapshot.it;
+  if (request.kind === "guide") return request.data.guideLabelSnapshot.it;
   const firstLine = request.data.lines[0];
   if (!firstLine) return "Ordine senza articoli";
   return request.data.lines.length > 1
     ? `${firstLine.labelSnapshot.it} +${request.data.lines.length - 1}`
     : firstLine.labelSnapshot.it;
+}
+
+function requestKindLabel(kind: AdminRequest["kind"]) {
+  if (kind === "order") return "Ordine";
+  if (kind === "activity") return "Attività";
+  return "Concierge";
 }
 
 export function RequestsSection() {
@@ -70,6 +79,7 @@ export function RequestsSection() {
     return [
       ...state.orders.map((data) => ({ kind: "order" as const, data, stay: stays.get(data.stayId) })),
       ...state.activityRequests.map((data) => ({ kind: "activity" as const, data, stay: stays.get(data.stayId) })),
+      ...state.guideRequests.map((data) => ({ kind: "guide" as const, data, stay: stays.get(data.stayId) })),
     ]
       .filter((request) => kindFilter === "all" || request.kind === kindFilter)
       .filter((request) => statusFilter === "all" || request.data.status === statusFilter)
@@ -88,7 +98,7 @@ export function RequestsSection() {
               {requests.length} {requests.length === 1 ? "risultato" : "risultati"}
             </span>
           </div>
-          <p className={styles.sectionIntro}>Ordini ed esperienze, in un’unica coda.</p>
+          <p className={styles.sectionIntro}>Ordini, esperienze e richieste concierge, in un’unica coda.</p>
         </div>
       </div>
 
@@ -107,6 +117,7 @@ export function RequestsSection() {
             <option value="all">Tutte</option>
             <option value="order">Ordini</option>
             <option value="activity">Attività</option>
+            <option value="guide">Concierge</option>
           </select>
         </div>
         <div className={styles.filterGroup}>
@@ -144,7 +155,7 @@ export function RequestsSection() {
                     >
                       <span className={styles.cardTopline}>
                         <span className={styles.requestKind}>
-                          {request.kind === "order" ? "Ordine" : "Attività"}
+                          {requestKindLabel(request.kind)}
                         </span>
                         <span className={styles.statusBadge} data-status={request.data.status}>
                           {statusLabels[request.data.status]}
@@ -195,7 +206,7 @@ function RequestDetail({ request, updateRequest }: RequestDetailProps) {
   return (
     <article className={styles.detailPanel}>
       <div className={styles.detailTopline}>
-        <span className={styles.requestKind}>{request.kind === "order" ? "Ordine" : "Attività"}</span>
+        <span className={styles.requestKind}>{requestKindLabel(request.kind)}</span>
         <span className={styles.statusBadge} data-status={request.data.status}>
           {statusLabels[request.data.status]}
         </span>
