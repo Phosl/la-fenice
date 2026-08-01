@@ -246,10 +246,29 @@ test("replays the content transition on internal navigation and history", async 
   await page.locator('a[href="/rooms"]:visible').first().click();
   await expect(page).toHaveURL(/\/rooms$/);
   await expect(page.locator('main[data-navigation-marker="initial"]')).toHaveCount(0);
-  await expect(page.locator(".page-transition")).toHaveCSS(
+  const transition = page.locator(".page-transition");
+  await expect(transition).toHaveAttribute("data-accent", "true");
+  await expect(transition).toHaveCSS(
     "animation-name",
     "page-enter",
   );
+  await expect(transition.locator(":scope > main")).toHaveCSS(
+    "animation-name",
+    "page-content-enter",
+  );
+  await expect(page.locator(".page-hero__media")).toHaveCSS(
+    "animation-name",
+    "page-media-enter",
+  );
+  await expect(page.locator(".page-hero__content h1")).toHaveCSS(
+    "animation-name",
+    "page-copy-enter",
+  );
+
+  await page.waitForTimeout(850);
+  await expect(transition.locator(":scope > main")).toHaveCSS("transform", "none");
+  await expect(page.locator(".page-hero__media")).toHaveCSS("transform", "none");
+  await expect(page.locator(".page-hero__media")).toHaveCSS("clip-path", "none");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
@@ -271,6 +290,9 @@ test("removes page animation when reduced motion is requested", async ({ baseURL
   await page.goto("/");
   await expectHydrated(page);
   await expect(page.locator(".page-transition")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".page-transition > main")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".home-hero__media")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".home-hero__content h1")).toHaveCSS("animation-name", "none");
   await context.close();
 });
 

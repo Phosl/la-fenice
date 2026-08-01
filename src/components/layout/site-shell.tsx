@@ -31,7 +31,7 @@ export function SiteShell({ children, content, overlayHeader = true }: SiteShell
         overlay={overlayHeader}
         primaryNavigationLabel={content.common.primaryNavigation}
       />
-      <PageTransition>{children}</PageTransition>
+      <PageTransition accent>{children}</PageTransition>
       <SiteFooter content={content} navigation={navigation} />
     </>
   );
