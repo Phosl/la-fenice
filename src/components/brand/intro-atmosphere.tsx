@@ -56,19 +56,18 @@ const FRAGMENT_SHADER = `
     float horizon = exp(-abs(point.y + 0.11) * 4.4);
     float drift = 0.5 + 0.5 * sin(point.x * 2.1 - time * 0.38);
 
-    vec3 white = vec3(0.997, 0.996, 0.988);
-    vec3 sky = vec3(0.875, 0.952, 0.985);
+    vec3 white = vec3(0.992, 0.988, 0.965);
+    vec3 sky = vec3(0.640, 0.840, 0.940);
     vec3 feniceBlue = vec3(0.078, 0.173, 0.514);
 
-    float blueWash = 0.035 + air * 0.075 + horizon * drift * 0.025;
+    float blueWash = 0.160 + air * 0.180 + horizon * drift * 0.100;
     vec3 colour = mix(white, sky, blueWash);
-    colour = mix(colour, feniceBlue, caustic * (0.018 + air * 0.012));
-    colour += vec3(0.025, 0.036, 0.042) * caustic * air;
+    colour = mix(colour, feniceBlue, caustic * (0.050 + air * 0.035));
 
-    float edgeFade = 1.0 - smoothstep(0.58, 1.34, distanceFromCentre);
-    float opacity = 0.52 + edgeFade * 0.18;
+    float reflectedLight = smoothstep(0.22, 0.88, caustic) * air;
+    colour = mix(colour, vec3(1.0), reflectedLight * 0.100);
 
-    gl_FragColor = vec4(colour, opacity);
+    gl_FragColor = vec4(colour, 1.0);
   }
 `;
 

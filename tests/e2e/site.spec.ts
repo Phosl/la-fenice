@@ -393,6 +393,10 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
   await expectHydrated(page);
   await expect(intro).toBeVisible();
   await expect(intro).toHaveCSS("animation-name", "intro-shell");
+  expect(await intro.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain(
+    "linear-gradient",
+  );
+  await expect(page.locator(".logo-intro__atmosphere")).toHaveCSS("opacity", "0.88");
   await expect(page.locator(".logo-intro__mark")).toHaveCSS(
     "animation-name",
     "intro-mark-reveal",

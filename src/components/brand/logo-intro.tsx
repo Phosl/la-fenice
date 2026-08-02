@@ -6,7 +6,7 @@ import { LogoLockup } from "./logo-lockup";
 
 const INTRO_KEY = "la-fenice-intro-seen";
 const INTRO_FAILSAFE_MS = 1650;
-const INTRO_ATMOSPHERE_MS = 1050;
+const INTRO_ATMOSPHERE_MS = 1400;
 const REDUCED_MOTION_FAILSAFE_MS = 120;
 const MANUAL_DISMISS_FAILSAFE_MS = 360;
 
