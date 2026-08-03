@@ -432,7 +432,7 @@ img {
       rgb(255 255 255 / 88%) 30%,
       transparent 52%
     ),
-    linear-gradient(180deg, #fdfbf4 0%, #e7f3fa 56%, #d8eaf3 100%);
+    linear-gradient(180deg, #fffdf7 0%, #f1f8fa 56%, #e4f2f6 100%);
   display: flex;
   height: 100dvh;
   inset: 0;
@@ -500,7 +500,7 @@ img {
       rgb(20 44 131 / 8%) 44.5% 45%,
       transparent 46%
     ),
-    linear-gradient(160deg, #eff9fc, #b8ddea);
+    linear-gradient(160deg, #f8fcfd, #d7edf3);
   background-position: 0 0, 0 0, 0 0;
   background-size: 130% 130%, 145% 145%, 100% 100%;
 }
@@ -519,8 +519,20 @@ img {
   z-index: 1;
 }
 
-.logo-intro .logo-lockup {
-  width: clamp(230px, 38vw, 360px);
+.logo-intro__logo-target {
+  display: block;
+  line-height: 0;
+  opacity: 1;
+  transition: opacity 90ms linear;
+  width: min(clamp(224px, 39vw, 356px), 53.28svh);
+}
+
+.logo-intro__logo-target .logo-lockup {
+  width: 100%;
+}
+
+.logo-intro[data-logo-mode="texture"] .logo-intro__logo-target {
+  opacity: 0;
 }
 
 .logo-intro__horizon {
@@ -2243,4 +2255,8 @@ img {
     animation: none !important;
   }
   .logo-intro__atmosphere { display: none; }
+  .logo-intro__logo-target {
+    opacity: 1 !important;
+    transition: none !important;
+  }
 }

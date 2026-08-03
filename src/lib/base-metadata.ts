@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { brandLogo } from "@/lib/brand-assets";
 import { getContent } from "@/lib/content";
 import { siteIdentity } from "@/lib/content/site";
 import type { Locale } from "@/lib/content/types";
@@ -19,8 +20,8 @@ export function buildBaseMetadata(locale: Locale): Metadata {
     description: homeMetadata.description,
     manifest: "/site.webmanifest",
     icons: {
-      icon: "/logo-la-fenice.svg",
-      apple: "/logo-la-fenice.svg",
+      icon: brandLogo.blueSrc,
+      apple: brandLogo.blueSrc,
     },
   };
 }

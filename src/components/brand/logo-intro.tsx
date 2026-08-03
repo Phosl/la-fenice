@@ -14,11 +14,13 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
   const [atmosphereActive, setAtmosphereActive] = useState(true);
   const [closing, setClosing] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [logoIntegrated, setLogoIntegrated] = useState(false);
   const closingRef = useRef(false);
   const atmosphereTimerRef = useRef<number | null>(null);
   const inertTargetsRef = useRef<Array<{ element: HTMLElement; wasInert: boolean }>>([]);
   const finishTimerRef = useRef<number | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
+  const logoTargetRef = useRef<HTMLSpanElement>(null);
   const restoreFocusRef = useRef(false);
   const skipButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -27,6 +29,10 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
       if (!wasInert) element.removeAttribute("inert");
     }
     inertTargetsRef.current = [];
+  }, []);
+
+  const handleLogoIntegrationChange = useCallback((integrated: boolean) => {
+    setLogoIntegrated(integrated);
   }, []);
 
   const finishDismiss = useCallback(() => {
@@ -175,13 +181,20 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
       aria-modal="true"
       className="logo-intro"
       data-closing={closing ? "true" : undefined}
+      data-logo-mode={logoIntegrated ? "texture" : "dom"}
       onAnimationEnd={handleAnimationEnd}
       ref={introRef}
       role="dialog"
     >
-      <IntroAtmosphere active={atmosphereActive && !closing} />
+      <IntroAtmosphere
+        active={atmosphereActive && !closing}
+        logoTargetRef={logoTargetRef}
+        onLogoIntegrationChange={handleLogoIntegrationChange}
+      />
       <div className="logo-intro__mark">
-        <LogoLockup priority />
+        <span className="logo-intro__logo-target" ref={logoTargetRef}>
+          <LogoLockup priority />
+        </span>
         <span aria-hidden="true" className="logo-intro__horizon" />
       </div>
       <button

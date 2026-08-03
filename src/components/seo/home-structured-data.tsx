@@ -1,4 +1,5 @@
 import { getLocalizedPath } from "@/lib/content/routes";
+import { brandLogo } from "@/lib/brand-assets";
 import { siteIdentity } from "@/lib/content/site";
 import type { SiteContent } from "@/lib/content/types";
 import { languageTags } from "@/lib/seo-locales";
@@ -30,7 +31,7 @@ export function buildHomeStructuredData(content: SiteContent): JsonLdValue {
     description: page.metadata.description,
     email: siteIdentity.email,
     telephone: siteIdentity.phone.href.replace("tel:", ""),
-    logo: getAbsoluteUrl("/logo-la-fenice.svg"),
+    logo: getAbsoluteUrl(brandLogo.blueSrc),
     image,
     address: {
       "@type": "PostalAddress",

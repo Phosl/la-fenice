@@ -20,6 +20,27 @@ async function meanImageChannelDifference(firstPng: Buffer, secondPng: Buffer) {
   return totalDifference / first.data.length;
 }
 
+async function countCobaltPixels(image: Buffer) {
+  const { data } = await sharp(image)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let cobaltPixels = 0;
+
+  for (let index = 0; index < data.length; index += 3) {
+    if (
+      data[index] < 90 &&
+      data[index + 1] < 120 &&
+      data[index + 2] > 100 &&
+      data[index + 2] < 210
+    ) {
+      cobaltPixels += 1;
+    }
+  }
+
+  return cobaltPixels;
+}
+
 async function expectHydrated(page: Page) {
   try {
     await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true", {
@@ -483,10 +504,44 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
     baseURL,
     viewport: { width: 720, height: 500 },
   });
+  await context.addInitScript(() => {
+    const originalTexImage2D = WebGLRenderingContext.prototype.texImage2D;
+    Object.defineProperty(WebGLRenderingContext.prototype, "texImage2D", {
+      configurable: true,
+      value(...args: unknown[]) {
+        const source = args.length === 6 ? args[5] : null;
+        if (source instanceof HTMLCanvasElement) {
+          const state = window as Window & {
+            __introLogoTextureUpload?: { height: number; width: number };
+          };
+          state.__introLogoTextureUpload = {
+            height: source.height,
+            width: source.width,
+          };
+        }
+        return Reflect.apply(originalTexImage2D, this, args);
+      },
+    });
+  });
   const page = await context.newPage();
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const atmosphere = page.locator(".logo-intro__atmosphere");
   await expect(atmosphere).toHaveAttribute("data-renderer", "webgl");
+  await expect(atmosphere).toHaveAttribute("data-logo-texture", "ready");
+  await expect(atmosphere).toHaveAttribute("data-logo-frame", "ready");
+  await expect(page.locator(".logo-intro")).toHaveAttribute(
+    "data-logo-mode",
+    "texture",
+  );
+  await expect(page.locator(".logo-intro__logo-target")).toHaveCSS("opacity", "0");
+  expect(
+    await page.evaluate(
+      () =>
+        (window as Window & {
+          __introLogoTextureUpload?: { height: number; width: number };
+        }).__introLogoTextureUpload,
+    ),
+  ).toEqual({ height: 384, width: 640 });
   await page.addStyleTag({
     content: `
       .logo-intro,
@@ -503,13 +558,14 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
     `,
   });
 
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(500);
   const firstFrame = await atmosphere.screenshot({ animations: "allow" });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(400);
   const secondFrame = await atmosphere.screenshot({ animations: "allow" });
   const difference = await meanImageChannelDifference(firstFrame, secondFrame);
 
   expect(difference).toBeGreaterThan(2);
+  expect(await countCobaltPixels(secondFrame)).toBeGreaterThan(250);
   expect(await page.pageErrors()).toEqual([]);
   await context.close();
 });
@@ -537,6 +593,9 @@ test("intro keeps its CSS fallback when WebGL is unavailable", async ({ baseURL,
   await expect(page.locator(".logo-intro")).toBeVisible();
   const atmosphere = page.locator(".logo-intro__atmosphere");
   await expect(atmosphere).toHaveAttribute("data-renderer", "fallback");
+  await expect(atmosphere).toHaveAttribute("data-logo-texture", "error");
+  await expect(page.locator(".logo-intro")).toHaveAttribute("data-logo-mode", "dom");
+  await expect(page.locator(".logo-intro__logo-target")).toHaveCSS("opacity", "1");
   expect(
     await atmosphere.evaluate((element) => getComputedStyle(element).backgroundImage),
   ).toContain("radial-gradient");
