@@ -1,28 +1,37 @@
 "use client";
 
 import { type AnimationEvent, useCallback, useEffect, useRef, useState } from "react";
+import type { IntroControlsCopy } from "@/lib/content/types";
 import { IntroAtmosphere } from "./intro-atmosphere";
 import { LogoLockup } from "./logo-lockup";
 
 const INTRO_KEY = "la-fenice-intro-seen";
-const INTRO_FAILSAFE_MS = 1650;
-const INTRO_ATMOSPHERE_MS = 1400;
-const REDUCED_MOTION_FAILSAFE_MS = 120;
 const MANUAL_DISMISS_FAILSAFE_MS = 360;
+const REPLAYABLE_ANIMATIONS = new Set([
+  "intro-horizon",
+  "intro-mark-reveal",
+  "intro-mist",
+  "intro-water-fallback",
+]);
 
-export function LogoIntro({ skipLabel }: { skipLabel: string }) {
-  const [atmosphereActive, setAtmosphereActive] = useState(true);
+type LogoIntroProps = {
+  controls: IntroControlsCopy;
+};
+
+export function LogoIntro({ controls }: LogoIntroProps) {
   const [closing, setClosing] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [logoIntegrated, setLogoIntegrated] = useState(false);
+  const [replayAnnouncementId, setReplayAnnouncementId] = useState(0);
+  const [replayId, setReplayId] = useState(0);
   const closingRef = useRef(false);
-  const atmosphereTimerRef = useRef<number | null>(null);
   const inertTargetsRef = useRef<Array<{ element: HTMLElement; wasInert: boolean }>>([]);
+  const enterButtonRef = useRef<HTMLButtonElement>(null);
   const finishTimerRef = useRef<number | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const logoTargetRef = useRef<HTMLSpanElement>(null);
+  const reloadButtonRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef(false);
-  const skipButtonRef = useRef<HTMLButtonElement>(null);
 
   const restoreInertTargets = useCallback(() => {
     for (const { element, wasInert } of inertTargetsRef.current) {
@@ -36,10 +45,6 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
   }, []);
 
   const finishDismiss = useCallback(() => {
-    if (atmosphereTimerRef.current !== null) {
-      window.clearTimeout(atmosphereTimerRef.current);
-      atmosphereTimerRef.current = null;
-    }
     if (finishTimerRef.current !== null) {
       window.clearTimeout(finishTimerRef.current);
       finishTimerRef.current = null;
@@ -50,12 +55,14 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
       // Storage can be unavailable in privacy modes; the intro still dismisses.
     }
     const shouldRestoreFocus =
-      restoreFocusRef.current || document.activeElement === skipButtonRef.current;
-    skipButtonRef.current?.blur();
+      restoreFocusRef.current ||
+      document.activeElement === enterButtonRef.current ||
+      document.activeElement === reloadButtonRef.current;
+    enterButtonRef.current?.blur();
+    reloadButtonRef.current?.blur();
     restoreInertTargets();
     document.documentElement.classList.remove("intro-active");
     document.documentElement.classList.add("intro-seen");
-    setAtmosphereActive(false);
     setDismissed(true);
 
     if (shouldRestoreFocus) {
@@ -80,15 +87,10 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
     if (closingRef.current) return;
     closingRef.current = true;
     restoreFocusRef.current = true;
-    if (atmosphereTimerRef.current !== null) {
-      window.clearTimeout(atmosphereTimerRef.current);
-      atmosphereTimerRef.current = null;
-    }
     if (finishTimerRef.current !== null) {
       window.clearTimeout(finishTimerRef.current);
       finishTimerRef.current = null;
     }
-    setAtmosphereActive(false);
     setClosing(true);
     finishTimerRef.current = window.setTimeout(
       finishDismiss,
@@ -96,15 +98,28 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
     );
   }, [finishDismiss]);
 
+  const handleReload = useCallback(() => {
+    if (closingRef.current) return;
+
+    setReplayId((current) => current + 1);
+    setReplayAnnouncementId((current) => current + 1);
+
+    for (const animation of introRef.current?.getAnimations({ subtree: true }) ?? []) {
+      const animationName = (animation as CSSAnimation).animationName;
+      if (!REPLAYABLE_ANIMATIONS.has(animationName)) continue;
+      animation.currentTime = 0;
+      animation.play();
+    }
+
+    reloadButtonRef.current?.focus({ preventScroll: true });
+  }, []);
+
   useEffect(() => {
     document.documentElement.dataset.hydrated = "true";
     if (dismissed) return;
 
     if (document.documentElement.classList.contains("intro-seen")) {
-      const hiddenIntroTimer = window.setTimeout(() => {
-        setAtmosphereActive(false);
-        setDismissed(true);
-      }, 0);
+      const hiddenIntroTimer = window.setTimeout(() => setDismissed(true), 0);
       return () => window.clearTimeout(hiddenIntroTimer);
     }
 
@@ -127,36 +142,49 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
     }
 
     document.documentElement.classList.add("intro-active");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!reducedMotion) {
-      atmosphereTimerRef.current = window.setTimeout(() => {
-        atmosphereTimerRef.current = null;
-        setAtmosphereActive(false);
-      }, INTRO_ATMOSPHERE_MS);
-    }
-    finishTimerRef.current = window.setTimeout(
-      finishDismiss,
-      reducedMotion ? REDUCED_MOTION_FAILSAFE_MS : INTRO_FAILSAFE_MS,
-    );
+    const focusFrame = window.requestAnimationFrame(() => {
+      enterButtonRef.current?.focus({ preventScroll: true });
+    });
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         beginDismiss();
       } else if (event.key === "Tab") {
+        const focusableControls = [
+          enterButtonRef.current,
+          reloadButtonRef.current,
+        ].filter(
+          (button): button is HTMLButtonElement =>
+            Boolean(
+              button &&
+                !button.disabled &&
+                button.getClientRects().length > 0,
+            ),
+        );
+
+        if (focusableControls.length === 0) return;
         event.preventDefault();
-        skipButtonRef.current?.focus();
+        const currentIndex = focusableControls.indexOf(
+          document.activeElement as HTMLButtonElement,
+        );
+        const nextIndex = event.shiftKey
+          ? currentIndex <= 0
+            ? focusableControls.length - 1
+            : currentIndex - 1
+          : currentIndex < 0 || currentIndex === focusableControls.length - 1
+            ? 0
+            : currentIndex + 1;
+        focusableControls[nextIndex]?.focus({ preventScroll: true });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       window.removeEventListener("keydown", handleKeyDown);
       restoreInertTargets();
       document.documentElement.classList.remove("intro-active");
-      if (atmosphereTimerRef.current !== null) {
-        window.clearTimeout(atmosphereTimerRef.current);
-      }
       if (finishTimerRef.current !== null) {
         window.clearTimeout(finishTimerRef.current);
       }
@@ -166,8 +194,7 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
   const handleAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
     if (
       event.currentTarget === event.target &&
-      (event.animationName === "intro-shell" ||
-        event.animationName === "intro-shell-dismiss")
+      event.animationName === "intro-shell-dismiss"
     ) {
       finishDismiss();
     }
@@ -182,14 +209,16 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
       className="logo-intro"
       data-closing={closing ? "true" : undefined}
       data-logo-mode={logoIntegrated ? "texture" : "dom"}
+      data-replay-id={replayId}
       onAnimationEnd={handleAnimationEnd}
       ref={introRef}
       role="dialog"
     >
       <IntroAtmosphere
-        active={atmosphereActive && !closing}
+        active={!closing}
         logoTargetRef={logoTargetRef}
         onLogoIntegrationChange={handleLogoIntegrationChange}
+        replayId={replayId}
       />
       <div className="logo-intro__mark">
         <span className="logo-intro__logo-target" ref={logoTargetRef}>
@@ -197,14 +226,36 @@ export function LogoIntro({ skipLabel }: { skipLabel: string }) {
         </span>
         <span aria-hidden="true" className="logo-intro__horizon" />
       </div>
-      <button
-        className="logo-intro__skip"
-        onClick={beginDismiss}
-        ref={skipButtonRef}
-        type="button"
+      <div className="logo-intro__controls">
+        <button
+          className="button-primary logo-intro__control logo-intro__enter"
+          onClick={beginDismiss}
+          ref={enterButtonRef}
+          type="button"
+        >
+          {controls.enter}
+        </button>
+        <button
+          className="button-secondary logo-intro__control logo-intro__reload"
+          onClick={handleReload}
+          ref={reloadButtonRef}
+          type="button"
+        >
+          {controls.reload}
+        </button>
+      </div>
+      <span
+        aria-atomic="true"
+        aria-live="polite"
+        className="logo-intro__status"
+        role="status"
       >
-        {skipLabel}
-      </button>
+        {replayAnnouncementId > 0 ? (
+          <span key={replayAnnouncementId}>
+            {controls.reloadedAnnouncement}
+          </span>
+        ) : null}
+      </span>
     </div>
   );
 }

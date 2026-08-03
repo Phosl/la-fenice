@@ -60,7 +60,11 @@ const availabilityImage = withCopy(
 export const italianContent = {
   locale: "it",
   common: {
-    skipIntro: "Salta intro",
+    introControls: {
+      enter: "Entra",
+      reload: "Ripeti",
+      reloadedAnnouncement: "L'animazione introduttiva è ripartita.",
+    },
     skipToContent: "Vai al contenuto",
     openMenu: "Apri menu",
     closeMenu: "Chiudi menu",

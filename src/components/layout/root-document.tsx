@@ -11,6 +11,12 @@ try {
 }
 `;
 
+const introNoScriptFallback = `
+.logo-intro {
+  animation: intro-shell-nojs 1680ms cubic-bezier(.2, .72, .2, 1) both !important;
+}
+`;
+
 type RootDocumentProps = {
   children: React.ReactNode;
   content: SiteContent;
@@ -21,10 +27,13 @@ export function RootDocument({ children, content }: RootDocumentProps) {
     <html data-scroll-behavior="smooth" lang={content.locale} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: introBootstrap }} />
+        <noscript>
+          <style>{introNoScriptFallback}</style>
+        </noscript>
         <a className="skip-link" href="#main-content">
           {content.common.skipToContent}
         </a>
-        <LogoIntro skipLabel={content.common.skipIntro} />
+        <LogoIntro controls={content.common.introControls} />
         {children}
       </body>
     </html>

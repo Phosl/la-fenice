@@ -1,6 +1,39 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
 
+const INTRO_STORAGE_KEY = "la-fenice-intro-seen";
+
+const introLocales = [
+  {
+    enter: "Enter",
+    locale: "en",
+    path: "/",
+    reload: "Reload",
+    restarted: /playing again|reload|replay|restart/i,
+  },
+  {
+    enter: "Entra",
+    locale: "it",
+    path: "/it",
+    reload: "Ripeti",
+    restarted: /ripartit|riavviat|ripet|riprodott/i,
+  },
+  {
+    enter: "Eintreten",
+    locale: "de",
+    path: "/de",
+    reload: "Wiederholen",
+    restarted: /erneut abgespielt|wiederhol|neu gestartet/i,
+  },
+  {
+    enter: "Войти",
+    locale: "ru",
+    path: "/ru",
+    reload: "Повторить",
+    restarted: /повтор|перезапущ/i,
+  },
+] as const;
+
 async function meanImageChannelDifference(firstPng: Buffer, secondPng: Buffer) {
   const [first, second] = await Promise.all(
     [firstPng, secondPng].map((image) =>
@@ -415,7 +448,7 @@ test("legacy PHP paths return a permanent redirect", async ({ request }) => {
   expect(response.headers().location).toBe("/rooms");
 });
 
-test("intro is ethereal, keyboard accessible and dismissed for the session", async ({ baseURL, browser }, testInfo) => {
+test("intro persists, traps focus and enters once per session", async ({ baseURL, browser }, testInfo) => {
   const viewport = {
     "mobile-360": { width: 360, height: 800 },
     "tablet-768": { width: 768, height: 1024 },
@@ -427,22 +460,25 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
   await page.clock.install({ time: clockTime });
   await page.clock.pauseAt(clockTime);
   await page.goto("/", { waitUntil: "commit" });
-  const intro = page.locator(".logo-intro");
-  await intro.evaluate((element) => {
-    element.getAnimations({ subtree: true }).forEach((animation) => animation.pause());
-  });
   await expectHydrated(page);
+  await page.clock.runFor(50);
+
+  const intro = page.getByRole("dialog", { name: "La Fenice Positano" });
+  const enter = page.getByRole("button", { name: "Enter", exact: true });
+  const reload = page.getByRole("button", { name: "Reload", exact: true });
+  const atmosphere = page.locator(".logo-intro__atmosphere");
+
   await expect(intro).toBeVisible();
-  await expect(intro).toHaveCSS("animation-name", "intro-shell");
+  await expect(intro).toHaveAttribute("aria-modal", "true");
+  await expect(intro).toHaveAttribute("data-replay-id", "0");
   expect(await intro.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain(
     "linear-gradient",
   );
-  await expect(page.locator(".logo-intro__atmosphere")).toHaveCSS("opacity", "1");
-  await expect(page.locator(".logo-intro__mark")).toHaveCSS(
-    "animation-name",
-    "intro-mark-reveal",
-  );
+  await expect(atmosphere).toHaveCSS("opacity", "1");
   await expect(page.locator(".logo-intro__halo")).toHaveCount(0);
+  await expect(enter).toBeVisible();
+  await expect(reload).toBeVisible();
+  await expect(enter).toBeFocused();
 
   const logoBounds = await page.locator(".logo-intro .logo-lockup").boundingBox();
   expect(logoBounds).not.toBeNull();
@@ -451,50 +487,135 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
     expect(Math.abs(logoBounds.x + logoBounds.width / 2 - viewport.width / 2)).toBeLessThan(2);
   }
 
+  for (const control of [enter, reload]) {
+    const bounds = await control.boundingBox();
+    expect(bounds).not.toBeNull();
+    if (bounds) {
+      expect(bounds.height).toBeGreaterThanOrEqual(44);
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
+    }
+  }
+
+  expect(
+    await page.locator("#main-content").evaluate((element) =>
+      Boolean(element.closest("[inert]")),
+    ),
+  ).toBe(true);
   await page.mouse.wheel(0, 600);
   await page.waitForTimeout(50);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
   await page.keyboard.press("Tab");
-  await expect(page.locator(".logo-intro__skip")).toBeFocused();
-  await page.keyboard.press(testInfo.project.name === "mobile-360" ? "Escape" : "Enter");
+  await expect(reload).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(enter).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(reload).toBeFocused();
+
+  await page.clock.runFor(4_100);
+  await expect(intro).toBeVisible();
+  await expect(atmosphere).toHaveCount(1);
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBeNull();
+
+  if (testInfo.project.name === "mobile-360") {
+    await page.keyboard.press("Escape");
+  } else if (testInfo.project.name === "tablet-768") {
+    await enter.click();
+  } else {
+    await enter.focus();
+    await page.keyboard.press("Enter");
+  }
   await page.clock.runFor(400);
   await expect(intro).not.toBeVisible();
   await expect(page.locator("#main-content")).toBeFocused();
-  await expect(page.locator(".logo-intro__atmosphere")).toHaveCount(0);
-  const skipLink = page.locator(".skip-link");
-  await skipLink.focus();
-  await page.clock.runFor(1_300);
-  await expect(skipLink).toBeFocused();
+  await expect(atmosphere).toHaveCount(0);
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBe(
+    "true",
+  );
+
   await page.clock.resume();
   await page.reload();
-  await expect(intro).not.toBeVisible();
+  await expect(page.locator(".logo-intro")).toHaveCount(0);
   await page.goto("/it");
   await expect(page.locator(".logo-intro")).toHaveCount(0);
   expect(await page.pageErrors()).toEqual([]);
   await context.close();
 });
 
-test("intro dismisses automatically and supports reduced motion", async ({ baseURL, browser }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-1440", "One timing and reduced-motion check is sufficient");
+test("intro localizes Enter and Reload and replays in place", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One locale and replay check is sufficient");
 
-  const regularContext = await browser.newContext({ baseURL });
-  const regularPage = await regularContext.newPage();
-  await regularPage.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(regularPage.locator(".logo-intro")).toBeVisible();
-  await expect(regularPage.locator(".logo-intro")).not.toBeVisible({ timeout: 3_000 });
-  await expect.poll(
-    () => regularPage.evaluate(() => sessionStorage.getItem("la-fenice-intro-seen")),
-  ).toBe("true");
-  await expect(regularPage.locator(".logo-intro__atmosphere")).toHaveCount(0);
-  await expect(regularPage.locator(".home-hero__media")).toHaveCSS("transform", "none");
-  await regularContext.close();
+  for (const copy of introLocales) {
+    const context = await browser.newContext({ baseURL });
+    const page = await context.newPage();
+    await page.goto(copy.path, { waitUntil: "domcontentloaded" });
+    await expectHydrated(page);
 
-  const reducedContext = await browser.newContext({ baseURL, reducedMotion: "reduce" });
-  const reducedPage = await reducedContext.newPage();
-  await reducedPage.goto("/");
-  await expect(reducedPage.locator(".logo-intro")).not.toBeVisible({ timeout: 1_000 });
-  await expect(reducedPage.locator(".logo-intro__atmosphere")).toHaveCount(0);
-  await reducedContext.close();
+    const intro = page.getByRole("dialog", { name: "La Fenice Positano" });
+    const enter = page.getByRole("button", { name: copy.enter, exact: true });
+    const reload = page.getByRole("button", { name: copy.reload, exact: true });
+    const atmosphere = page.locator(".logo-intro__atmosphere");
+    const initialUrl = page.url();
+
+    await expect(page.locator("html")).toHaveAttribute("lang", copy.locale);
+    await expect(enter).toBeVisible();
+    await expect(reload).toBeVisible();
+    await expect(intro).toHaveAttribute("data-replay-id", "0");
+    await atmosphere.evaluate((element) => {
+      (window as Window & { __introCanvas?: Element }).__introCanvas = element;
+    });
+
+    await reload.click();
+
+    await expect(intro).toHaveAttribute("data-replay-id", "1");
+    await expect(reload).toBeFocused();
+    await expect(intro.locator('[aria-live="polite"]')).toHaveText(copy.restarted);
+    expect(page.url()).toBe(initialUrl);
+    expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBeNull();
+    expect(
+      await atmosphere.evaluate(
+        (element) => element === (window as Window & { __introCanvas?: Element }).__introCanvas,
+      ),
+    ).toBe(true);
+    await expect(atmosphere).toHaveCount(1);
+    await expect(intro).toBeVisible();
+    expect(await page.pageErrors()).toEqual([]);
+    await context.close();
+  }
+});
+
+test("intro remains accessible with reduced motion", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One reduced-motion check is sufficient");
+
+  const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expectHydrated(page);
+
+  const intro = page.getByRole("dialog", { name: "La Fenice Positano" });
+  const enter = page.getByRole("button", { name: "Enter", exact: true });
+  const reload = page.getByRole("button", { name: "Reload", exact: true });
+  const atmosphere = page.locator(".logo-intro__atmosphere");
+
+  await expect(intro).toBeVisible();
+  await expect(enter).toBeVisible();
+  await expect(enter).toBeFocused();
+  await expect(reload).not.toBeVisible();
+  await expect(atmosphere).toHaveAttribute("data-renderer", "disabled");
+  await expect(atmosphere).not.toBeVisible();
+  await expect(page.locator(".logo-intro__logo-target")).toHaveCSS("opacity", "1");
+  await page.waitForTimeout(1_000);
+  await expect(intro).toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBeNull();
+
+  await enter.click();
+  await expect(intro).not.toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBe(
+    "true",
+  );
+  expect(await page.pageErrors()).toEqual([]);
+  await context.close();
 });
 
 test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser }, testInfo) => {
@@ -506,6 +627,17 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
   });
   await context.addInitScript(() => {
     const originalTexImage2D = WebGLRenderingContext.prototype.texImage2D;
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+      configurable: true,
+      value(type: string, ...args: unknown[]) {
+        if (type === "webgl") {
+          const state = window as Window & { __introWebglContexts?: number };
+          state.__introWebglContexts = (state.__introWebglContexts ?? 0) + 1;
+        }
+        return Reflect.apply(originalGetContext, this, [type, ...args]);
+      },
+    });
     Object.defineProperty(WebGLRenderingContext.prototype, "texImage2D", {
       configurable: true,
       value(...args: unknown[]) {
@@ -534,6 +666,7 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
     "texture",
   );
   await expect(page.locator(".logo-intro__logo-target")).toHaveCSS("opacity", "0");
+  await expect(page.locator(".logo-intro")).toHaveAttribute("data-replay-id", "0");
   expect(
     await page.evaluate(
       () =>
@@ -542,14 +675,19 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
         }).__introLogoTextureUpload,
     ),
   ).toEqual({ height: 384, width: 640 });
+  const initialContextCount = await page.evaluate(
+    () => (window as Window & { __introWebglContexts?: number }).__introWebglContexts,
+  );
+  await atmosphere.evaluate((element) => {
+    (window as Window & { __introCanvas?: Element }).__introCanvas = element;
+  });
   await page.addStyleTag({
     content: `
-      .logo-intro,
       .logo-intro::before,
       .logo-intro__mark,
-      .logo-intro__horizon { animation-play-state: paused !important; }
-      .logo-intro__mark,
-      .logo-intro__skip { visibility: hidden !important; }
+      .logo-intro__horizon { visibility: hidden !important; }
+      .logo-intro button,
+      .logo-intro [aria-live] { visibility: hidden !important; }
       .logo-intro__atmosphere {
         animation: none !important;
         background: none !important;
@@ -566,6 +704,34 @@ test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser },
 
   expect(difference).toBeGreaterThan(2);
   expect(await countCobaltPixels(secondFrame)).toBeGreaterThan(250);
+
+  await page.locator(".logo-intro__reload").evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+  await expect(page.locator(".logo-intro")).toHaveAttribute("data-replay-id", "1");
+  await page.waitForTimeout(250);
+  const replayFirstFrame = await atmosphere.screenshot({ animations: "allow" });
+  await page.waitForTimeout(400);
+  const replaySecondFrame = await atmosphere.screenshot({ animations: "allow" });
+  const replayDifference = await meanImageChannelDifference(
+    replayFirstFrame,
+    replaySecondFrame,
+  );
+
+  expect(replayDifference).toBeGreaterThan(2);
+  expect(await countCobaltPixels(replaySecondFrame)).toBeGreaterThan(250);
+  expect(
+    await atmosphere.evaluate(
+      (element) => element === (window as Window & { __introCanvas?: Element }).__introCanvas,
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __introWebglContexts?: number }).__introWebglContexts,
+    ),
+  ).toBe(initialContextCount);
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBeNull();
+  await expect(page.locator(".logo-intro")).toBeVisible();
   expect(await page.pageErrors()).toEqual([]);
   await context.close();
 });
@@ -604,8 +770,85 @@ test("intro keeps its CSS fallback when WebGL is unavailable", async ({ baseURL,
       () => (window as Window & { __introWebglAttempts?: number }).__introWebglAttempts,
     ),
   ).toBeGreaterThan(0);
-  await page.keyboard.press("Escape");
+  await atmosphere.evaluate((element) => {
+    (window as Window & { __introCanvas?: Element }).__introCanvas = element;
+  });
+  await page.waitForTimeout(350);
+  const fallbackReplayTiming = await page.evaluate(() => {
+    const atmosphere = document.querySelector<HTMLElement>(
+      ".logo-intro__atmosphere",
+    );
+    const reload = document.querySelector<HTMLButtonElement>(
+      ".logo-intro__reload",
+    );
+    const waterAnimation = atmosphere
+      ?.getAnimations()
+      .find(
+        (animation) =>
+          (animation as CSSAnimation).animationName === "intro-water-fallback",
+      );
+    if (!reload || !waterAnimation) {
+      throw new Error("The fallback replay controls are unavailable");
+    }
+
+    const before = Number(waterAnimation.currentTime ?? 0);
+    reload.focus();
+    reload.click();
+    return {
+      after: Number(waterAnimation.currentTime ?? 0),
+      before,
+    };
+  });
+  expect(fallbackReplayTiming.before).toBeGreaterThan(200);
+  expect(fallbackReplayTiming.after).toBeLessThan(50);
+
+  const reload = page.getByRole("button", { name: "Reload", exact: true });
+  await expect(page.locator(".logo-intro")).toHaveAttribute("data-replay-id", "1");
+  await expect(reload).toBeFocused();
+  expect(
+    await atmosphere.evaluate(
+      (element) => element === (window as Window & { __introCanvas?: Element }).__introCanvas,
+    ),
+  ).toBe(true);
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBeNull();
+
+  await page.getByRole("button", { name: "Enter", exact: true }).click();
   await expect(page.locator(".logo-intro")).not.toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), INTRO_STORAGE_KEY)).toBe(
+    "true",
+  );
+  expect(await page.pageErrors()).toEqual([]);
+  await context.close();
+});
+
+test("intro remains usable when session storage is unavailable", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One storage failure check is sufficient");
+
+  const context = await browser.newContext({ baseURL });
+  await context.addInitScript(() => {
+    const throwStorageError = () => {
+      throw new DOMException("Storage unavailable", "SecurityError");
+    };
+    Object.defineProperties(Storage.prototype, {
+      getItem: { configurable: true, value: throwStorageError },
+      setItem: { configurable: true, value: throwStorageError },
+    });
+  });
+  const page = await context.newPage();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expectHydrated(page);
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-intro-storage",
+    "unavailable",
+  );
+  await expect(page.locator(".logo-intro")).toBeVisible();
+  await page.getByRole("button", { name: "Enter", exact: true }).click();
+  await expect(page.locator(".logo-intro")).not.toBeVisible();
+
+  await page.reload();
+  await expectHydrated(page);
+  await expect(page.locator(".logo-intro")).toBeVisible();
   expect(await page.pageErrors()).toEqual([]);
   await context.close();
 });

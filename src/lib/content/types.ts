@@ -248,8 +248,14 @@ export interface NavigationLabels {
   availability: string;
 }
 
+export interface IntroControlsCopy {
+  enter: string;
+  reload: string;
+  reloadedAnnouncement: string;
+}
+
 export interface CommonCopy {
-  skipIntro: string;
+  introControls: IntroControlsCopy;
   skipToContent: string;
   openMenu: string;
   closeMenu: string;

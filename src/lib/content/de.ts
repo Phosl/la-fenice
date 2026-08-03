@@ -60,7 +60,11 @@ const availabilityImage = withCopy(
 export const germanContent = {
   locale: "de",
   common: {
-    skipIntro: "Intro überspringen",
+    introControls: {
+      enter: "Eintreten",
+      reload: "Wiederholen",
+      reloadedAnnouncement: "Die Intro-Animation wird erneut abgespielt.",
+    },
     skipToContent: "Zum Inhalt springen",
     openMenu: "Menü öffnen",
     closeMenu: "Menü schließen",

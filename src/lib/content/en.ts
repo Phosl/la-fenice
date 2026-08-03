@@ -60,7 +60,11 @@ const availabilityImage = withCopy(
 export const englishContent = {
   locale: "en",
   common: {
-    skipIntro: "Skip intro",
+    introControls: {
+      enter: "Enter",
+      reload: "Reload",
+      reloadedAnnouncement: "The intro animation is playing again.",
+    },
     skipToContent: "Skip to content",
     openMenu: "Open menu",
     closeMenu: "Close menu",

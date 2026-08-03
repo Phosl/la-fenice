@@ -60,7 +60,11 @@ const availabilityImage = withCopy(
 export const russianContent = {
   locale: "ru",
   common: {
-    skipIntro: "Пропустить заставку",
+    introControls: {
+      enter: "Войти",
+      reload: "Повторить",
+      reloadedAnnouncement: "Заставка запущена повторно.",
+    },
     skipToContent: "Перейти к содержанию",
     openMenu: "Открыть меню",
     closeMenu: "Закрыть меню",

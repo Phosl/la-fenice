@@ -5,7 +5,9 @@ import { BRAND_LOGO_ASPECT_RATIO, brandLogo } from "@/lib/brand-assets";
 
 const MAX_DEVICE_PIXEL_RATIO = 1.5;
 const MAX_RENDER_PIXELS = 1_200_000;
-const FRAME_INTERVAL_MS = 1000 / 30;
+const INTRO_FRAME_INTERVAL_MS = 1000 / 30;
+const AMBIENT_FRAME_INTERVAL_MS = 1000 / 15;
+const INTRO_MOTION_DURATION_MS = 1_400;
 const noopLogoIntegration = () => undefined;
 
 const VERTEX_SHADER = `
@@ -180,6 +182,7 @@ type IntroAtmosphereProps = {
   className?: string;
   logoTargetRef: RefObject<HTMLElement | null>;
   onLogoIntegrationChange?: (integrated: boolean) => void;
+  replayId?: number;
 };
 
 type AtmosphereRenderer = {
@@ -516,8 +519,11 @@ export function IntroAtmosphere({
   className,
   logoTargetRef,
   onLogoIntegrationChange = noopLogoIntegration,
+  replayId,
 }: IntroAtmosphereProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previousReplayIdRef = useRef(replayId);
+  const replayTimelineRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -553,8 +559,13 @@ export function IntroAtmosphere({
       }
 
       if (!startedAt) startedAt = now;
-      if (!lastDrawnAt || now - lastDrawnAt >= FRAME_INTERVAL_MS) {
-        renderer.draw((now - startedAt) / 1000);
+      const elapsedMs = Math.max(0, now - startedAt);
+      const frameIntervalMs =
+        elapsedMs < INTRO_MOTION_DURATION_MS
+          ? INTRO_FRAME_INTERVAL_MS
+          : AMBIENT_FRAME_INTERVAL_MS;
+      if (!lastDrawnAt || now - lastDrawnAt >= frameIntervalMs) {
+        renderer.draw(elapsedMs / 1000);
         lastDrawnAt = now;
       }
       animationFrame = window.requestAnimationFrame(animate);
@@ -572,6 +583,17 @@ export function IntroAtmosphere({
       }
       animationFrame = window.requestAnimationFrame(animate);
     };
+
+    const replayTimeline = () => {
+      if (!renderer || reducedMotion.matches) return;
+
+      const now = performance.now();
+      startedAt = now;
+      lastDrawnAt = now;
+      renderer.draw(0);
+      requestAnimation();
+    };
+    replayTimelineRef.current = replayTimeline;
 
     const stopRenderer = () => {
       cancelAnimation();
@@ -685,9 +707,20 @@ export function IntroAtmosphere({
       canvas.removeEventListener("webglcontextlost", handleContextLost);
       canvas.removeEventListener("webglcontextrestored", handleContextRestored);
       window.removeEventListener("resize", handleWindowResize);
+      if (replayTimelineRef.current === replayTimeline) {
+        replayTimelineRef.current = null;
+      }
       stopRenderer();
     };
   }, [active, logoTargetRef, onLogoIntegrationChange]);
+
+  useEffect(() => {
+    const previousReplayId = previousReplayIdRef.current;
+    previousReplayIdRef.current = replayId;
+    if (previousReplayId === replayId) return;
+
+    replayTimelineRef.current?.();
+  }, [replayId]);
 
   return (
     <canvas
