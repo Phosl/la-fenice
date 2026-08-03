@@ -473,12 +473,36 @@ img {
 .logo-intro__atmosphere {
   height: 100%;
   inset: 0;
-  opacity: .88;
+  opacity: 1;
   pointer-events: none;
   position: absolute;
   transition: opacity 280ms ease;
   width: 100%;
   z-index: 0;
+}
+
+.logo-intro__atmosphere[data-renderer="fallback"] {
+  animation: intro-water-fallback 2800ms ease-in-out infinite alternate;
+  background:
+    radial-gradient(
+      ellipse at 14% 112%,
+      transparent 0 27%,
+      rgb(255 255 255 / 68%) 27.5% 28.2%,
+      transparent 29% 39%,
+      rgb(20 44 131 / 10%) 39.5% 40%,
+      transparent 41%
+    ),
+    radial-gradient(
+      ellipse at 92% -12%,
+      transparent 0 31%,
+      rgb(255 255 255 / 62%) 31.5% 32.1%,
+      transparent 33% 44%,
+      rgb(20 44 131 / 8%) 44.5% 45%,
+      transparent 46%
+    ),
+    linear-gradient(160deg, #eff9fc, #b8ddea);
+  background-position: 0 0, 0 0, 0 0;
+  background-size: 130% 130%, 145% 145%, 100% 100%;
 }
 
 .logo-intro__atmosphere[data-active="false"] {
@@ -517,9 +541,9 @@ img {
 .logo-intro__skip {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid rgb(20 44 131 / 22%);
+  border-bottom: 1px solid rgb(20 44 131 / 38%);
   bottom: max(22px, env(safe-area-inset-bottom));
-  color: rgb(20 44 131 / 68%);
+  color: rgb(20 44 131 / 86%);
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 700;
@@ -553,6 +577,11 @@ img {
   0% { opacity: 0; transform: scale(.94); }
   52% { opacity: 1; }
   100% { opacity: .52; transform: scale(1.03); }
+}
+
+@keyframes intro-water-fallback {
+  from { background-position: -5% 2%, 6% -3%, 0 0; }
+  to { background-position: 7% -4%, -5% 5%, 0 0; }
 }
 
 @keyframes intro-mark-reveal {

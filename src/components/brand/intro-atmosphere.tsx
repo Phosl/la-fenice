@@ -23,49 +23,82 @@ const FRAGMENT_SHADER = `
   uniform float u_time;
   varying vec2 v_uv;
 
-  float marineLight(vec2 point, float time) {
-    vec2 first = point * 3.2;
-    vec2 second = point.yx * 2.7;
+  vec2 causticNet(vec2 point, float time) {
+    vec2 warped = point;
+    warped.x += 0.105 * sin(warped.y * 7.0 + time * 1.10);
+    warped.y += 0.085 * sin(warped.x * 6.2 - time * 0.88);
 
     float ribbonA = sin(
-      first.x * 1.35 +
-      sin(first.y * 1.7 - time * 0.72) * 0.82 +
-      time * 0.46
+      warped.x * 13.4 +
+      sin(warped.y * 7.4 - time * 0.92) * 1.22 +
+      time * 0.64
     );
     float ribbonB = sin(
-      second.x * 1.52 +
-      sin(second.y * 1.42 + time * 0.58) * 0.76 -
-      time * 0.39
+      warped.y * 12.2 +
+      sin(warped.x * 8.1 + time * 0.74) * 1.12 -
+      time * 0.52
     );
+    float joined = abs((ribbonA + ribbonB) * 0.5);
+    float primary = 1.0 - smoothstep(0.035, 0.125, joined);
+    float fringe =
+      (1.0 - smoothstep(0.10, 0.285, joined)) *
+      (1.0 - primary * 0.82);
 
-    float crossing = abs(ribbonA + ribbonB) * 0.42;
-    return pow(1.0 - clamp(crossing, 0.0, 1.0), 6.0);
+    float detailRibbon = sin(
+      warped.x * 18.0 - warped.y * 8.6 +
+      sin(warped.y * 9.4 + time) * 0.80 +
+      time * 0.36
+    );
+    float detail =
+      (1.0 - smoothstep(0.015, 0.058, abs(detailRibbon))) * 0.38;
+
+    return vec2(max(primary, detail), fringe);
   }
 
   void main() {
-    vec2 point = v_uv - 0.5;
+    vec2 point = v_uv * 2.0 - 1.0;
     point.x *= u_resolution.x / max(u_resolution.y, 1.0);
+    float time = u_time;
 
-    float time = u_time * 0.24;
-    float causticA = marineLight(point + vec2(0.08, -0.04), time);
-    float causticB = marineLight(point * 0.76 - vec2(0.13, 0.09), -time * 0.63);
-    float caustic = causticA * 0.68 + causticB * 0.32;
+    float depth = smoothstep(-0.92, 0.88, -point.y);
+    vec3 pearl = vec3(0.915, 0.966, 0.982);
+    vec3 water = vec3(0.480, 0.765, 0.875);
+    vec3 colour = mix(pearl, water, depth * 0.72);
 
-    float distanceFromCentre = length(point * vec2(0.82, 1.0));
-    float air = 1.0 - smoothstep(0.08, 0.92, distanceFromCentre);
-    float horizon = exp(-abs(point.y + 0.11) * 4.4);
-    float drift = 0.5 + 0.5 * sin(point.x * 2.1 - time * 0.38);
+    float logoDistance = length(
+      vec2(point.x / 0.47, (point.y + 0.015) / 0.30)
+    );
+    float logoClear = 1.0 - smoothstep(0.62, 1.22, logoDistance);
+    colour = mix(colour, vec3(0.995, 0.991, 0.965), logoClear * 0.82);
 
-    vec3 white = vec3(0.992, 0.988, 0.965);
-    vec3 sky = vec3(0.640, 0.840, 0.940);
-    vec3 feniceBlue = vec3(0.078, 0.173, 0.514);
+    vec2 caustic = causticNet(point + vec2(0.03, -0.02), time);
+    float patternMask = 1.0 - logoClear * 0.86;
 
-    float blueWash = 0.160 + air * 0.180 + horizon * drift * 0.100;
-    vec3 colour = mix(white, sky, blueWash);
-    colour = mix(colour, feniceBlue, caustic * (0.050 + air * 0.035));
+    colour = mix(
+      colour,
+      vec3(0.155, 0.555, 0.735),
+      caustic.y * 0.18 * patternMask
+    );
+    colour = mix(
+      colour,
+      vec3(1.0, 0.995, 0.942),
+      caustic.x * 0.64 * patternMask
+    );
 
-    float reflectedLight = smoothstep(0.22, 0.88, caustic) * air;
-    colour = mix(colour, vec3(1.0), reflectedLight * 0.100);
+    float broadRipple =
+      0.5 + 0.5 * sin(point.x * 3.3 + point.y * 4.8 - time * 1.15);
+    colour = mix(
+      colour,
+      vec3(0.735, 0.910, 0.960),
+      broadRipple * 0.08 * patternMask
+    );
+
+    float edge = smoothstep(
+      0.42,
+      1.52,
+      length(point * vec2(0.70, 0.82))
+    );
+    colour = mix(colour, vec3(0.155, 0.505, 0.705), edge * 0.10);
 
     gl_FragColor = vec4(colour, 1.0);
   }
@@ -137,7 +170,7 @@ function createRenderer(canvas: HTMLCanvasElement): AtmosphereRenderer | null {
     alpha: true,
     antialias: false,
     depth: false,
-    failIfMajorPerformanceCaveat: true,
+    failIfMajorPerformanceCaveat: false,
     powerPreference: "low-power",
     premultipliedAlpha: true,
     preserveDrawingBuffer: false,
@@ -288,8 +321,12 @@ export function IntroAtmosphere({ active = true, className }: IntroAtmospherePro
         renderer = null;
       }
 
-      if (!renderer) return;
+      if (!renderer) {
+        canvas.dataset.renderer = "fallback";
+        return;
+      }
 
+      canvas.dataset.renderer = "webgl";
       renderer.resize();
       if (typeof ResizeObserver !== "undefined") {
         resizeObserver = new ResizeObserver(() => renderer?.resize());
@@ -317,6 +354,7 @@ export function IntroAtmosphere({ active = true, className }: IntroAtmospherePro
     const handleContextLost = (event: Event) => {
       event.preventDefault();
       stopRenderer();
+      canvas.dataset.renderer = "fallback";
     };
 
     const handleContextRestored = () => {

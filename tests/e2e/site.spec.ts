@@ -1,4 +1,24 @@
 import { expect, test, type Page } from "@playwright/test";
+import sharp from "sharp";
+
+async function meanImageChannelDifference(firstPng: Buffer, secondPng: Buffer) {
+  const [first, second] = await Promise.all(
+    [firstPng, secondPng].map((image) =>
+      sharp(image).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+
+  expect(second.info.width).toBe(first.info.width);
+  expect(second.info.height).toBe(first.info.height);
+  expect(second.data.length).toBe(first.data.length);
+
+  let totalDifference = 0;
+  for (let index = 0; index < first.data.length; index += 1) {
+    totalDifference += Math.abs(first.data[index] - second.data[index]);
+  }
+
+  return totalDifference / first.data.length;
+}
 
 async function expectHydrated(page: Page) {
   try {
@@ -396,7 +416,7 @@ test("intro is ethereal, keyboard accessible and dismissed for the session", asy
   expect(await intro.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain(
     "linear-gradient",
   );
-  await expect(page.locator(".logo-intro__atmosphere")).toHaveCSS("opacity", "0.88");
+  await expect(page.locator(".logo-intro__atmosphere")).toHaveCSS("opacity", "1");
   await expect(page.locator(".logo-intro__mark")).toHaveCSS(
     "animation-name",
     "intro-mark-reveal",
@@ -456,6 +476,44 @@ test("intro dismisses automatically and supports reduced motion", async ({ baseU
   await reducedContext.close();
 });
 
+test("intro WebGL renders visibly moving caustics", async ({ baseURL, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "One rendered-motion check is sufficient");
+
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: 720, height: 500 },
+  });
+  const page = await context.newPage();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const atmosphere = page.locator(".logo-intro__atmosphere");
+  await expect(atmosphere).toHaveAttribute("data-renderer", "webgl");
+  await page.addStyleTag({
+    content: `
+      .logo-intro,
+      .logo-intro::before,
+      .logo-intro__mark,
+      .logo-intro__horizon { animation-play-state: paused !important; }
+      .logo-intro__mark,
+      .logo-intro__skip { visibility: hidden !important; }
+      .logo-intro__atmosphere {
+        animation: none !important;
+        background: none !important;
+        opacity: 1 !important;
+      }
+    `,
+  });
+
+  await page.waitForTimeout(250);
+  const firstFrame = await atmosphere.screenshot({ animations: "allow" });
+  await page.waitForTimeout(600);
+  const secondFrame = await atmosphere.screenshot({ animations: "allow" });
+  const difference = await meanImageChannelDifference(firstFrame, secondFrame);
+
+  expect(difference).toBeGreaterThan(2);
+  expect(await page.pageErrors()).toEqual([]);
+  await context.close();
+});
+
 test("intro keeps its CSS fallback when WebGL is unavailable", async ({ baseURL, browser }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1440", "One WebGL fallback check is sufficient");
 
@@ -477,6 +535,11 @@ test("intro keeps its CSS fallback when WebGL is unavailable", async ({ baseURL,
   const page = await context.newPage();
   await page.goto("/");
   await expect(page.locator(".logo-intro")).toBeVisible();
+  const atmosphere = page.locator(".logo-intro__atmosphere");
+  await expect(atmosphere).toHaveAttribute("data-renderer", "fallback");
+  expect(
+    await atmosphere.evaluate((element) => getComputedStyle(element).backgroundImage),
+  ).toContain("radial-gradient");
   expect(
     await page.evaluate(
       () => (window as Window & { __introWebglAttempts?: number }).__introWebglAttempts,
