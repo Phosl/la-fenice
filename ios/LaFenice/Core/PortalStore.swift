@@ -24,6 +24,17 @@ final class PortalStore {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    func orderBill(for stayID: String) -> (totalCents: Int?, tipCents: Int, pendingTipCents: Int, orderCount: Int) {
+        guard let account, account.role == .admin || account.stayID == stayID,
+              state.stays.contains(where: { $0.id == stayID }) else { return (nil, 0, 0, 0) }
+        let orders = visibleRequests.filter { $0.stayID == stayID && $0.kind == .order }
+        let accepted = orders.filter { $0.status == .confirmed || $0.status == .fulfilled }
+        let total = accepted.allSatisfy { $0.totalCents != nil }
+            ? accepted.reduce(0) { $0 + ($1.totalCents ?? 0) } : nil
+        return (total, accepted.reduce(0) { $0 + $1.gratuityCents },
+                orders.filter { $0.status == .pending }.reduce(0) { $0 + $1.gratuityCents }, accepted.count)
+    }
+
     static func openDemo() throws -> PortalStore {
         guard let resource = Bundle.main.url(forResource: "catalog", withExtension: "json") else { throw PortalError.corruptData }
         let catalog = try JSONDecoder().decode([CatalogItem].self, from: Data(contentsOf: resource))
@@ -91,18 +102,19 @@ final class PortalStore {
     }
 
     func submitOrder(date: String, location: DeliveryLocation, time: String, notes: String,
-                     quantities: [String: Int], clientRequestID: String) throws -> ServiceRequest {
+                     quantities: [String: Int], tipCents: Int = 0, clientRequestID: String) throws -> ServiceRequest {
         let stay = try requireGuest()
         if let existing = try repeated(clientRequestID, stay: stay, kind: .order, itemID: nil) { return existing }
         try validateRequest(date: date, time: time, notes: notes, stay: stay)
-        guard !quantities.isEmpty, quantities.count <= 100 else { throw PortalError.invalidInput }
+        guard !quantities.isEmpty, quantities.count <= 100,
+              (0...OrderTip.maximumCents).contains(tipCents) else { throw PortalError.invalidInput }
         let lines = try quantities.sorted(by: { $0.key < $1.key }).map { id, quantity in
             guard (1...20).contains(quantity) else { throw PortalError.invalidInput }
             guard let item = state.catalog.first(where: { $0.id == id && $0.active && $0.kind == .product }) else { throw PortalError.unavailable }
             return OrderLine(itemID: id, labels: item.labels, quantity: quantity, priceCents: item.priceCents)
         }
         let request = ServiceRequest(clientRequestID: clientRequestID, stayID: stay.id, kind: .order,
-                                     labels: ["it": "Ordine", "en": "Order", "de": "Bestellung", "ru": "Заказ"], lines: lines,
+                                     labels: ["it": "Ordine", "en": "Order", "de": "Bestellung", "ru": "Заказ"], lines: lines, tipCents: tipCents,
                                      serviceDate: date, time: time, location: location, notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
                                      createdAt: now, updatedAt: now)
         return try append(request)
@@ -339,6 +351,7 @@ final class PortalStore {
                   request.serviceDate >= stay.checkIn, request.serviceDate < stay.checkOut,
                   serviceMoment(date: request.serviceDate, time: request.time) != nil,
                   request.notes.count <= 1_000, request.staffNote.count <= 1_000,
+                  (0...OrderTip.maximumCents).contains(request.gratuityCents),
                   validateLabels(request.labels), request.createdAt <= request.updatedAt else { throw PortalError.corruptData }
             if request.kind == .order {
                 guard !request.lines.isEmpty, request.lines.count <= 100, request.location != nil,
@@ -347,7 +360,7 @@ final class PortalStore {
                           && (line.priceCents == nil || (0...1_000_000).contains(line.priceCents!))
                           && state.catalog.contains(where: { $0.id == line.itemID && $0.kind == .product }) }) else { throw PortalError.corruptData }
             } else {
-                guard request.lines.isEmpty, (1...stay.guests).contains(request.participants ?? 0),
+                guard request.lines.isEmpty, request.gratuityCents == 0, (1...stay.guests).contains(request.participants ?? 0),
                       state.catalog.contains(where: { $0.id == request.itemID && $0.kind == (request.kind == .guide ? .guide : .activity) }) else { throw PortalError.corruptData }
             }
         }

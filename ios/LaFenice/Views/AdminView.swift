@@ -147,7 +147,11 @@ private struct AdminRequestDetail: View {
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                     }
-                    LabeledContent("Totale", value: request.totalCents.map(AdminCopy.price) ?? "Da confermare")
+                    LabeledContent("Prodotti", value: request.subtotalCents.map(AdminCopy.price) ?? "Da confermare")
+                    LabeledContent("Mancia", value: request.gratuityCents == 0 ? "Nessuna" : AdminCopy.price(request.gratuityCents))
+                    LabeledContent("Totale ordine", value: request.totalCents.map(AdminCopy.price) ?? "Da confermare")
+                    Text("La mancia entra nel conto con l’ordine confermato o completato. Ordini annullati o rifiutati sono esclusi. Nessun addebito reale nella demo.")
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Section {
@@ -263,6 +267,7 @@ private struct AdminStayDetail: View {
             } header: { Text("Accesso ospite") } footer: {
                 Text("La password è mostrata soltanto dopo la creazione o il reset. Disattivare l’accesso non elimina il soggiorno o le richieste.")
             }
+            StayOrderBillSection(store: store, stayID: stay.id)
             Section("Richieste del soggiorno") {
                 let requests = store.visibleRequests.filter { $0.stayID == stay.id }
                 if requests.isEmpty { Text("Nessuna richiesta").foregroundStyle(.secondary) }

@@ -52,6 +52,16 @@ L’interfaccia è in italiano. Menu, esperienze e guida hanno contenuti inglesi
 5. Come admin, prova **Soggiorni**: crea un soggiorno fittizio, conserva le credenziali mostrate, modifica la scheda, reimposta la password o disattiva l’accesso. La disattivazione conserva lo storico. In **Catalogo**, modifica un elemento e verifica la vista ospite dopo il cambio account.
 6. Chiudi completamente e riapri l’app: deve richiedere il login e mantenere i dati salvati. Prova anche password errata, date fuori soggiorno e ricerca senza risultati. Per verificare i due ruoli, resta sullo stesso dispositivo: due simulatori hanno archivi distinti.
 
+### Mance sul conto · modifica locale successiva alla build 3
+
+Nel riepilogo dell'ordine l'ospite può scegliere **Nessuna** (predefinita), 2, 5 o 10 EUR oppure un importo libero da 0 a 1.000 EUR, con al massimo due decimali. La mancia è una voce separata, salvata in centesimi insieme all'ordine; i prezzi dei prodotti non ancora noti non diventano zero e il totale resta da confermare.
+
+La scheda soggiorno e il dettaglio admin mostrano il **Conto del soggiorno · demo**: solo ordini confermati o completati, mance comprese. Le mance delle richieste in attesa sono separate; ordini annullati o rifiutati sono esclusi dal conto ma rimangono nello storico. Il riepilogo non include il pernottamento o le esperienze e non crea addebiti reali. Gli ordini precedenti senza questo campo vengono letti come privi di mancia, senza azzerare i dati.
+
+Prova un importo come `2,50`, torna indietro dal riepilogo e riaprilo, salva l'ordine, controlla la mancia nelle Richieste e nel conto in attesa. Come admin conferma l'ordine e verifica l'importo nel conto; annullandolo deve uscire dal conto. Dopo un salvataggio riuscito, il nuovo ordine riparte da **Nessuna**. Queste modifiche non sono incluse nella build TestFlight 3 finché non viene pubblicata una nuova beta.
+
+Verifica locale del 23 settembre 2026: **25 test del core superati** (inclusi importi, persistenza legacy, idempotenza e regole del conto); build Debug simulatore e Release iOS senza firma riuscite. Nel simulatore iPhone 14 Pro / iOS 17 verificati scelta iniziale senza mancia, importo libero `2,50`, errore e conferma disabilitata con `2,555`, riattivazione dopo correzione nello stesso riepilogo, salvataggio e mancia in attesa nel conto ospite. Dopo conferma admin dell'ordine fittizio, il conto del soggiorno mostra **Di cui mance: 2,50 EUR**, senza includerla più tra le mance in attesa. Nessun addebito, invio esterno o aggiornamento TestFlight eseguito.
+
 ## Test e catalogo condiviso con il sito
 
 Il core Foundation/Observation è verificabile con SwiftPM, senza avviare l’interfaccia:
@@ -82,7 +92,15 @@ Per rigenerare `LaFenice/Resources/catalog.json` dopo una modifica approvata ai 
 - **Restyling calm, iPhone 14 Pro:** verificati nel simulatore il login, il riflesso sul mare con logo stabile, l’apertura/chiusura del calendario, il menu, l’aggiunta di una caprese, il riepilogo con prezzo da confermare e il salvataggio locale con svuotamento del carrello. La richiesta già presente è stata conservata durante l’aggiornamento. Debug simulatore e Release dispositivo compilano anche il nuovo shader Metal. I colori testuali dei badge confermato/completato e rifiutato superano 4,5:1 sui rispettivi fondi chiari e scuri.
 - **Restyling finale, iPhone SE (iOS 18.3):** verificati login, scheda soggiorno, comando principale e menu con contenuti russi; i nomi lunghi vanno a capo e il riepilogo fisso resta sopra la barra delle schede. La preferenza russa e la richiesta precedente sono rimaste presenti. Il tentativo di attivare Movimento ridotto tramite il controllo visuale del simulatore non ha modificato l’opzione: il fallback è implementato, ma la sua resa non è attestata da questa prova. Restano non misurate le prestazioni su iPhone fisico.
 
-La logica di creazione soggiorni, credenziali e modifiche catalogo è coperta dai test; non sono stati completati manualmente tutti i relativi percorsi dell’interfaccia. Restano da verificare VoiceOver, dimensioni testo estreme, iPad e un iPhone fisico. Non sono stati eseguiti firma, invio ad App Store Connect o distribuzione TestFlight. Nessun ordine o messaggio è stato inviato all’esterno.
+La logica di creazione soggiorni, credenziali e modifiche catalogo è coperta dai test; non sono stati completati manualmente tutti i relativi percorsi dell’interfaccia. Restano da verificare VoiceOver, dimensioni testo estreme, iPad e un iPhone fisico. Nessun ordine o messaggio della demo è stato inviato all’esterno.
+
+## TestFlight verificato · 23 settembre 2026
+
+- **0.1.0 (3)**, commit `2ef9b04c2ed367588b58c5bd9b17e3ebeac22e95`, branch `codex/la-fenice-ios-testflight`.
+- Xcode Cloud: build 3 riuscita con Xcode 27 (27A266a), archivio iOS ed esportazione firmata per App Store Connect completati. La prima build aveva il compilatore Metal assente; la seconda tentava di reinstallare un componente già importato. `ci_scripts/ci_post_clone.sh` ora verifica l'eseguibile prima e dopo l'eventuale installazione; quattro casi di regressione passano con `sh ios/ci_scripts/test_metal_preflight.sh`.
+- App Store Connect: caricamento **Complete**, informazioni sulla crittografia di sistema Apple completate, build **Testing** nel gruppo **La Fenice · Interni** con un tester interno. Note di prova e limiti della demo inseriti nella build.
+- [Build TestFlight](https://appstoreconnect.apple.com/teams/69a6de88-aa87-47e3-e053-5b8c7c11a4d1/apps/6815123720/testflight/ios/9b9b7649-2eea-4593-8112-4873fa7295b9).
+- La distribuzione interna non dimostra un'installazione su iPhone fisico. Nessuna revisione beta esterna inviata e nessun link pubblico creato: mancano i dati autorizzati del referente per Apple. Nessuna pubblicazione App Store, web o Android.
 
 ## Confini della demo
 

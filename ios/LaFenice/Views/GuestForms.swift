@@ -9,11 +9,14 @@ struct GuestOrderView: View {
     @State private var notes = ""
     @State private var clientRequestID = UUID().uuidString
     @State private var review: OrderDraft?
+    @State private var tipChoice = 0
+    @State private var customTip = ""
 
     private var products: [CatalogItem] { store.activeCatalog(.product) }
     private var count: Int { quantities.values.reduce(0, +) }
     private var orderable: Bool { store.stay.map { RomeDay.orderable(RomeDay.key(date), stay: $0, now: store.now) } ?? false }
     private var futureTime: Bool { guestFutureTime(date: date, time: time, now: store.now) }
+    private var tipCents: Int? { tipChoice == -1 ? OrderTip.cents(from: customTip) : tipChoice }
 
     var body: some View {
         Form {
@@ -75,14 +78,33 @@ struct GuestOrderView: View {
             .background(.regularMaterial)
         }
         .sheet(item: $review) { draft in
-            GuestReviewSheet(title: "Rivedi ordine") {
+            GuestReviewSheet(title: "Rivedi ordine", canConfirm: { tipCents != nil }) {
                 Section("La tua scelta") {
                     ForEach(draft.lines) { line in
                         LabeledContent("\(line.quantity) × \(line.title(store.locale))", value: guestPrice(line.priceCents.map { $0 * line.quantity }))
                     }
-                    let total = draft.lines.allSatisfy { $0.priceCents != nil } ? draft.lines.reduce(0) { $0 + ($1.priceCents ?? 0) * $1.quantity } : nil
-                    LabeledContent("Totale", value: guestPrice(total))
+                    LabeledContent("Prodotti", value: guestPrice(draft.subtotalCents))
                 }
+                Section {
+                    Picker("Mancia", selection: $tipChoice) {
+                        Text("Nessuna").tag(0)
+                        ForEach([200, 500, 1_000], id: \.self) { cents in
+                            Text(guestPrice(cents)).tag(cents)
+                        }
+                        Text("Altro importo").tag(-1)
+                    }
+                    .accessibilityIdentifier("guest.order.tip")
+                    if tipChoice == -1 {
+                        TipAmountField(amount: $customTip)
+                        if tipCents == nil {
+                            Text("Inserisci un importo da 0 a 1.000 EUR, con al massimo due decimali.")
+                                .font(.footnote).foregroundStyle(.red)
+                        }
+                    }
+                    LabeledContent("Mancia scelta", value: tipCents.map(guestPrice) ?? "Importo non valido")
+                    LabeledContent("Totale ordine", value: guestPrice(draft.subtotalCents.flatMap { subtotal in tipCents.map { subtotal + $0 } }))
+                } header: { Text("Mancia facoltativa") }
+                    footer: { Text("La mancia si aggiunge al conto del soggiorno quando l’ordine viene confermato. Nella demo non avviene alcun addebito. I prezzi mancanti restano da confermare.") }
                 Section("Consegna richiesta") {
                     LabeledContent("Giorno", value: guestDate(draft.date))
                     LabeledContent("Orario preferito", value: draft.time)
@@ -90,9 +112,12 @@ struct GuestOrderView: View {
                     if !draft.notes.isEmpty { Text(draft.notes) }
                 }
             } onConfirm: {
-                _ = try store.submitOrder(date: draft.date, location: draft.location, time: draft.time, notes: draft.notes, quantities: draft.quantities, clientRequestID: draft.id)
+                guard let tipCents else { throw PortalError.invalidInput }
+                _ = try store.submitOrder(date: draft.date, location: draft.location, time: draft.time, notes: draft.notes, quantities: draft.quantities, tipCents: tipCents, clientRequestID: draft.id)
                 quantities = [:]
                 notes = ""
+                tipChoice = 0
+                customTip = ""
                 clientRequestID = UUID().uuidString
             }
         }
@@ -114,6 +139,32 @@ private struct OrderDraft: Identifiable {
     let notes: String
     let quantities: [String: Int]
     let lines: [OrderLine]
+    var subtotalCents: Int? {
+        guard lines.allSatisfy({ $0.priceCents != nil }) else { return nil }
+        return lines.reduce(0) { $0 + ($1.priceCents ?? 0) * $1.quantity }
+    }
+}
+
+private struct TipAmountField: View {
+    @Binding var amount: String
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        LabeledContent("Importo in euro") {
+            TextField("Importo mancia in euro", text: $amount, prompt: Text("0,00"))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .focused($focused)
+                .accessibilityLabel("Importo mancia in euro")
+                .accessibilityIdentifier("guest.order.tip.custom")
+        }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Fine") { focused = false }
+                }
+            }
+    }
 }
 
 struct GuestExperienceForm: View {
@@ -215,6 +266,7 @@ private struct GuestServiceDatePicker: View {
 
 private struct GuestReviewSheet<Details: View>: View {
     let title: String
+    var canConfirm: () -> Bool = { true }
     @ViewBuilder var details: () -> Details
     let onConfirm: () throws -> Void
     @Environment(\.dismiss) private var dismiss
@@ -243,9 +295,11 @@ private struct GuestReviewSheet<Details: View>: View {
                                 do { try onConfirm(); saved = true } catch { self.error = error.localizedDescription }
                             }
                             .buttonStyle(FenicePrimaryButtonStyle())
+                            .disabled(!canConfirm())
                             .accessibilityIdentifier("guest.request.confirm")
                         }
                     }
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
             .navigationTitle(saved ? "Richiesta salvata" : title)

@@ -44,10 +44,10 @@ final class PortalStoreTests: XCTestCase {
 
     @discardableResult
     private func order(_ store: PortalStore, id: String = UUID().uuidString,
-                       date: String? = nil, time: String = "14:30", quantity: Int = 1) throws -> ServiceRequest {
+                       date: String? = nil, time: String = "14:30", quantity: Int = 1, tipCents: Int = 0) throws -> ServiceRequest {
         let item = try XCTUnwrap(store.activeCatalog(.product).first)
         return try store.submitOrder(date: date ?? store.today, location: .beach, time: time,
-                                     notes: "  Senza pomodoro  ", quantities: [item.id: quantity], clientRequestID: id)
+                                     notes: "  Senza pomodoro  ", quantities: [item.id: quantity], tipCents: tipCents, clientRequestID: id)
     }
 
     private func expect(_ error: PortalError, _ operation: () throws -> Void,
@@ -93,10 +93,12 @@ final class PortalStoreTests: XCTestCase {
         let store = try store()
         try guest(store)
         let id = UUID().uuidString
-        let request = try order(store, id: id, quantity: 2)
+        let request = try order(store, id: id, quantity: 2, tipCents: 350)
+        XCTAssertNil(request.subtotalCents)
         XCTAssertNil(request.totalCents, "An unspecified price must never become a zero-price promise")
+        XCTAssertEqual(request.gratuityCents, 350)
         XCTAssertEqual(request.notes, "Senza pomodoro")
-        XCTAssertEqual(try order(store, id: id, quantity: 2), request)
+        XCTAssertEqual(try order(store, id: id, quantity: 2, tipCents: 900), request)
         XCTAssertEqual(store.state.requests.count, 1)
         try admin(store)
         var item = try XCTUnwrap(store.state.catalog.first { $0.id == request.lines[0].itemID })
@@ -120,8 +122,9 @@ final class PortalStoreTests: XCTestCase {
         let store = try store()
         try guest(store)
         let clientID = UUID().uuidString
-        let first = try order(store, id: clientID)
+        let first = try order(store, id: clientID, tipCents: 200)
         try admin(store)
+        try store.updateRequest(id: first.id, status: .confirmed, staffNote: "")
         let credential = try store.createStay(surname: "Bianchi", guestName: "Anna Bianchi", room: "7", guests: 1,
                                               checkIn: store.today, checkOut: "2026-09-26", locale: .de)
         store.logout()
@@ -129,13 +132,24 @@ final class PortalStoreTests: XCTestCase {
         XCTAssertEqual(store.locale, .de)
         XCTAssertTrue(store.visibleRequests.isEmpty)
         expect(.unauthorized) { try store.cancelRequest(id: first.id) }
-        let second = try order(store, id: clientID)
+        let second = try order(store, id: clientID, tipCents: 700)
         XCTAssertNotEqual(second.stayID, first.stayID)
         XCTAssertEqual(store.visibleRequests.map(\.id), [second.id])
+        XCTAssertNil(store.orderBill(for: first.stayID).totalCents)
+        XCTAssertEqual(store.orderBill(for: first.stayID).tipCents, 0)
+        XCTAssertEqual(store.orderBill(for: first.stayID).orderCount, 0)
+        XCTAssertEqual(store.orderBill(for: second.stayID).pendingTipCents, 700)
         try admin(store)
         XCTAssertEqual(Set(store.visibleRequests.map(\.id)), Set([first.id, second.id]))
+        XCTAssertEqual(store.orderBill(for: first.stayID).tipCents, 200)
+        XCTAssertEqual(store.orderBill(for: second.stayID).pendingTipCents, 700)
         try guest(store)
         XCTAssertEqual(store.visibleRequests.map(\.id), [first.id])
+        XCTAssertEqual(store.orderBill(for: second.stayID).pendingTipCents, 0)
+        store.logout()
+        XCTAssertNil(store.orderBill(for: first.stayID).totalCents)
+        XCTAssertEqual(store.orderBill(for: first.stayID).tipCents, 0)
+        XCTAssertEqual(store.orderBill(for: first.stayID).orderCount, 0)
     }
 
     func testDatesAndTimesCannotRequestPastCheckoutOrInvalidCalendarValues() async throws {
@@ -158,6 +172,9 @@ final class PortalStoreTests: XCTestCase {
         try guest(store)
         for quantity in [-1, 0, 21, Int.max] {
             expect(.invalidInput) { _ = try order(store, quantity: quantity) }
+        }
+        for tip in [-1, OrderTip.maximumCents + 1, Int.max] {
+            expect(.invalidInput) { _ = try order(store, tipCents: tip) }
         }
         expect(.invalidInput) { _ = try order(store, id: "not-a-uuid") }
         expect(.invalidInput) {
@@ -379,7 +396,7 @@ final class PortalStoreTests: XCTestCase {
         let original = try store(at: fileURL)
         try guest(original)
         try original.setLocale(.ru)
-        let request = try order(original)
+        let request = try order(original, tipCents: 275)
         try admin(original)
         try original.updateRequest(id: request.id, status: .confirmed, staffNote: "Confermato dallo staff")
         let reopened = try store(at: fileURL)
@@ -390,7 +407,122 @@ final class PortalStoreTests: XCTestCase {
         XCTAssertEqual(reopened.visibleRequests.first?.id, request.id)
         XCTAssertEqual(reopened.visibleRequests.first?.status, .confirmed)
         XCTAssertEqual(reopened.visibleRequests.first?.staffNote, "Confermato dallo staff")
+        XCTAssertEqual(reopened.visibleRequests.first?.gratuityCents, 275)
+        XCTAssertEqual(reopened.orderBill(for: request.stayID).tipCents, 275)
+        XCTAssertNil(reopened.orderBill(for: request.stayID).totalCents)
         XCTAssertEqual(reopened.state.catalog, original.state.catalog)
+    }
+
+    func testTipParserUsesExactCentsAndRejectsAmbiguousOrInvalidAmounts() {
+        for (amount, cents) in [("", 0), (" \n", 0), ("0", 0), ("0,00", 0), ("0.01", 1),
+                                 ("2", 200), ("2,5", 250), ("2.05", 205), (" 12,34 ", 1_234),
+                                 ("0002.00", 200), ("999.99", 99_999), ("1000", 100_000), ("1000,00", 100_000)] {
+            XCTAssertEqual(OrderTip.cents(from: amount), cents, amount)
+        }
+        for amount in ["-1", "+1", "1e2", "NaN", "inf", "∞", "€2", "2 EUR", "1 000", "1,000", "1.000",
+                       "1,000.00", "1.000,00", "2.001", "1000.01", "1001", ".50", "2.", "2,", "1..2", "1,,2",
+                       "１", "١", "1\n2", String(repeating: "9", count: 1_000)] {
+            XCTAssertNil(OrderTip.cents(from: amount), amount)
+        }
+    }
+
+    func testKnownOrderTotalIncludesTipExactlyOnceAndAcceptsBoundary() async throws {
+        let store = try store()
+        try admin(store)
+        var item = try XCTUnwrap(store.activeCatalog(.product).first)
+        item.priceCents = 1_200
+        try store.saveItem(item)
+        try guest(store)
+        let request = try order(store, quantity: 2, tipCents: 350)
+        XCTAssertEqual(request.subtotalCents, 2_400)
+        XCTAssertEqual(request.totalCents, 2_750)
+        XCTAssertEqual(try order(store, tipCents: OrderTip.maximumCents).totalCents, 101_200)
+        XCTAssertEqual(try order(store).totalCents, 1_200)
+    }
+
+    func testOrderBillSeparatesPendingTipsAndExcludesCancelledRejectedAndExperiences() async throws {
+        let store = try store()
+        try admin(store)
+        var item = try XCTUnwrap(store.activeCatalog(.product).first)
+        item.priceCents = 1_200
+        try store.saveItem(item)
+        try guest(store)
+        let stayID = try XCTUnwrap(store.stay?.id)
+        XCTAssertEqual(store.orderBill(for: stayID).totalCents, 0)
+        let confirmed = try order(store, quantity: 2, tipCents: 250)
+        let fulfilled = try order(store, tipCents: 400)
+        let pending = try order(store, tipCents: 100)
+        let cancelled = try order(store, tipCents: 200)
+        let rejected = try order(store, tipCents: 300)
+        let activity = try XCTUnwrap(store.activeCatalog(.activity).first)
+        let experience = try store.submitExperience(itemID: activity.id, date: store.today, time: "14:30", participants: 1,
+                                                    notes: "", clientRequestID: UUID().uuidString)
+        try store.cancelRequest(id: cancelled.id)
+        try admin(store)
+        try store.updateRequest(id: confirmed.id, status: .confirmed, staffNote: "")
+        try store.updateRequest(id: fulfilled.id, status: .confirmed, staffNote: "")
+        try store.updateRequest(id: fulfilled.id, status: .fulfilled, staffNote: "")
+        try store.updateRequest(id: rejected.id, status: .rejected, staffNote: "")
+        try store.updateRequest(id: experience.id, status: .confirmed, staffNote: "")
+        let bill = store.orderBill(for: stayID)
+        XCTAssertEqual(bill.totalCents, 4_250)
+        XCTAssertEqual(bill.tipCents, 650)
+        XCTAssertEqual(bill.pendingTipCents, 100)
+        XCTAssertEqual(bill.orderCount, 2)
+        XCTAssertNil(store.orderBill(for: "missing-stay").totalCents)
+        item.priceCents = nil
+        try store.saveItem(item)
+        try guest(store)
+        let unknown = try order(store, tipCents: 150)
+        try admin(store)
+        try store.updateRequest(id: unknown.id, status: .confirmed, staffNote: "")
+        XCTAssertNil(store.orderBill(for: stayID).totalCents)
+        XCTAssertEqual(store.orderBill(for: stayID).tipCents, 800)
+        XCTAssertEqual(store.orderBill(for: stayID).orderCount, 3)
+        try store.updateRequest(id: unknown.id, status: .cancelled, staffNote: "")
+        try guest(store)
+        try store.cancelRequest(id: pending.id)
+        XCTAssertEqual(store.orderBill(for: stayID).totalCents, 4_250)
+        XCTAssertEqual(store.orderBill(for: stayID).pendingTipCents, 0)
+    }
+
+    func testLegacyRequestWithoutTipLoadsWithoutRewritingOrLosingHistory() async throws {
+        let fileURL = try temporaryDirectory().appendingPathComponent("state.json")
+        let original = try store(at: fileURL)
+        try guest(original)
+        let request = try order(original)
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: fileURL)) as? [String: Any])
+        var requests = try XCTUnwrap(json["requests"] as? [[String: Any]])
+        requests[0].removeValue(forKey: "tipCents")
+        json["requests"] = requests
+        let legacyBytes = try JSONSerialization.data(withJSONObject: json)
+        try legacyBytes.write(to: fileURL)
+        let reopened = try store(at: fileURL)
+        try guest(reopened)
+        XCTAssertEqual(reopened.visibleRequests.count, 1)
+        XCTAssertEqual(reopened.visibleRequests.first?.id, request.id)
+        XCTAssertEqual(reopened.visibleRequests.first?.lines, request.lines)
+        XCTAssertNil(reopened.visibleRequests.first?.tipCents)
+        XCTAssertEqual(reopened.visibleRequests.first?.gratuityCents, 0)
+        XCTAssertEqual(try Data(contentsOf: fileURL), legacyBytes)
+    }
+
+    func testCorruptPersistedTipsAreRejectedWithoutErasure() async throws {
+        let fileURL = try temporaryDirectory().appendingPathComponent("state.json")
+        let original = try store(at: fileURL)
+        try guest(original)
+        try order(original)
+        let activity = try XCTUnwrap(original.activeCatalog(.activity).first)
+        _ = try original.submitExperience(itemID: activity.id, date: original.today, time: "14:30", participants: 1,
+                                          notes: "", clientRequestID: UUID().uuidString)
+        for (index, tip) in [(0, -1), (0, OrderTip.maximumCents + 1), (0, Int.max), (1, 1)] {
+            var invalid = original.state
+            invalid.requests[index].tipCents = tip
+            let bytes = try JSONEncoder().encode(invalid)
+            try bytes.write(to: fileURL)
+            expect(.corruptData) { _ = try store(at: fileURL) }
+            XCTAssertEqual(try Data(contentsOf: fileURL), bytes)
+        }
     }
 
     func testRomeCalendarDSTAndNonexistentServiceTime() async throws {

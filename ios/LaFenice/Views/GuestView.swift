@@ -101,6 +101,7 @@ private struct GuestStayView: View {
                         } label: { GuestRequestRow(request: request, locale: store.locale) }
                     }
                 }
+                StayOrderBillSection(store: store, stayID: stay.id)
                 Section("Una nota sulle scale") {
                     Label {
                         Text("La Fenice si sviluppa su più livelli collegati da numerose scale. Contatta la struttura per valutare esigenze di mobilità e percorsi.")
@@ -288,6 +289,9 @@ private struct GuestRequestRow: View {
             Text(request.title(locale)).font(.headline)
             Text("\(guestDate(request.serviceDate)) · \(request.time)").font(.subheadline).foregroundStyle(.secondary)
             RequestStatusBadge(status: request.status)
+            if request.gratuityCents > 0 {
+                Text("Mancia · \(guestPrice(request.gratuityCents))").font(.footnote).foregroundStyle(.secondary)
+            }
             if !request.staffNote.isEmpty { Text(request.staffNote).font(.footnote).lineLimit(2) }
         }.padding(.vertical, 6)
     }
@@ -317,7 +321,11 @@ private struct GuestRequestDetail: View {
                         ForEach(request.lines) { line in
                             LabeledContent("\(line.quantity) × \(line.title(store.locale))", value: guestPrice(line.priceCents.map { $0 * line.quantity }))
                         }
-                        LabeledContent("Totale", value: guestPrice(request.totalCents))
+                        LabeledContent("Prodotti", value: guestPrice(request.subtotalCents))
+                        LabeledContent("Mancia", value: request.gratuityCents == 0 ? "Nessuna" : guestPrice(request.gratuityCents))
+                        LabeledContent("Totale ordine", value: guestPrice(request.totalCents))
+                        Text("Il conto include soltanto ordini confermati o completati, con le relative mance. Nessun addebito reale nella demo.")
+                            .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
                 if !request.notes.isEmpty { Section("La tua nota") { Text(request.notes) } }
@@ -344,6 +352,25 @@ private struct GuestRequestDetail: View {
         .alert("Impossibile annullare", isPresented: guestErrorBinding($error)) {
             Button("OK", role: .cancel) { error = nil }
         } message: { Text(error ?? "") }
+    }
+}
+
+struct StayOrderBillSection: View {
+    let store: PortalStore
+    let stayID: String
+
+    var body: some View {
+        let bill = store.orderBill(for: stayID)
+        if bill.orderCount > 0 || bill.pendingTipCents > 0 {
+            Section {
+                LabeledContent("Totale ordini", value: guestPrice(bill.totalCents))
+                LabeledContent("Di cui mance", value: guestPrice(bill.tipCents))
+                if bill.pendingTipCents > 0 {
+                    LabeledContent("Mance in attesa", value: guestPrice(bill.pendingTipCents))
+                }
+            } header: { Text("Conto del soggiorno · demo") }
+                footer: { Text("Il totale include solo ordini confermati o completati, mance comprese. Esclude soggiorno, esperienze e ordini annullati o rifiutati. Le mance in attesa non sono ancora nel totale. Nessun addebito reale.") }
+        }
     }
 }
 

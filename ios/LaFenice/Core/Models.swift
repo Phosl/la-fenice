@@ -91,6 +91,22 @@ struct OrderLine: Codable, Identifiable, Equatable {
     func title(_ locale: PortalLocale) -> String { labels[locale.rawValue] ?? labels["en"] ?? itemID }
 }
 
+enum OrderTip {
+    static let maximumCents = 100_000
+
+    static func cents(from amount: String) -> Int? {
+        let amount = amount.trimmingCharacters(in: .whitespacesAndNewlines)
+        if amount.isEmpty { return 0 }
+        guard amount.range(of: #"\A[0-9]{1,4}(?:[.,][0-9]{1,2})?\z"#, options: .regularExpression) != nil else { return nil }
+        let parts = amount.replacingOccurrences(of: ",", with: ".").split(separator: ".")
+        guard let euros = Int(parts[0]) else { return nil }
+        let decimals = parts.count == 2 ? String(parts[1]) : "0"
+        guard let fraction = Int(decimals.count == 1 ? decimals + "0" : decimals) else { return nil }
+        let cents = euros * 100 + fraction
+        return cents <= maximumCents ? cents : nil
+    }
+}
+
 struct ServiceRequest: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var clientRequestID: String
@@ -99,6 +115,7 @@ struct ServiceRequest: Codable, Identifiable, Equatable {
     var itemID: String?
     var labels: [String: String]
     var lines: [OrderLine] = []
+    var tipCents: Int? = nil
     var serviceDate: String
     var time: String
     var location: DeliveryLocation?
@@ -109,10 +126,12 @@ struct ServiceRequest: Codable, Identifiable, Equatable {
     var createdAt: Date
     var updatedAt: Date
     func title(_ locale: PortalLocale) -> String { labels[locale.rawValue] ?? labels["en"] ?? "Request" }
-    var totalCents: Int? {
+    var gratuityCents: Int { tipCents ?? 0 }
+    var subtotalCents: Int? {
         guard !lines.isEmpty, lines.allSatisfy({ $0.priceCents != nil }) else { return nil }
         return lines.reduce(0) { $0 + ($1.priceCents ?? 0) * $1.quantity }
     }
+    var totalCents: Int? { subtotalCents.map { $0 + gratuityCents } }
 }
 
 struct PortalState: Codable {
