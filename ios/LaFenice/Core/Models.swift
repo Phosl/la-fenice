@@ -1,5 +1,16 @@
 import Foundation
 
+/// A single decorative pulse; returning from background never replays elapsed frames.
+struct WaterPulse {
+    static let duration: TimeInterval = 2.4
+    var startedAt: Date?
+
+    func elapsed(at date: Date) -> Float {
+        guard let startedAt else { return 0 }
+        return Float(min(max(date.timeIntervalSince(startedAt), 0), Self.duration))
+    }
+}
+
 enum PortalLocale: String, Codable, CaseIterable, Identifiable {
     case en, it, de, ru
     var id: String { rawValue }

@@ -6,7 +6,10 @@ enum FeniceTheme {
             ? UIColor(red: 0.60, green: 0.72, blue: 1, alpha: 1)
             : UIColor(red: 0.078, green: 0.173, blue: 0.514, alpha: 1)
     })
-    static let paper = Color(uiColor: .systemGroupedBackground)
+    static let action = Color(red: 0.078, green: 0.173, blue: 0.514)
+    static let paper = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark ? UIColor.systemGroupedBackground : UIColor(red: 0.975, green: 0.963, blue: 0.939, alpha: 1)
+    })
 }
 
 struct RootView: View {
@@ -17,14 +20,14 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             Button { showDemoInfo = true } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "testtube.2")
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Demo locale").font(.subheadline.weight(.semibold))
                         Text("Nessun ordine inviato · Usa dati fittizi").font(.caption)
                     }
                     Spacer(minLength: 8)
-                    Image(systemName: "info.circle")
+                    Image(systemName: "chevron.right").font(.caption.weight(.medium))
                 }
                 .foregroundStyle(FeniceTheme.cobalt)
                 .padding(.horizontal, 20).padding(.vertical, 9)
@@ -42,6 +45,8 @@ struct RootView: View {
             .id(store.account?.id ?? "login")
         }
         .tint(FeniceTheme.cobalt)
+        .scrollContentBackground(.hidden)
+        .background(FeniceTheme.paper)
         .environment(\.locale, Locale(identifier: "it_IT"))
         .environment(\.calendar, RomeDay.calendar)
         .environment(\.timeZone, RomeDay.calendar.timeZone)
@@ -83,15 +88,15 @@ private struct LoginView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    VStack(spacing: 16) {
-                        Image("Phoenix").resizable().scaledToFit().frame(height: 110).accessibilityLabel("La Fenice")
-                        Text("Il soggiorno, a portata di mano.").font(.subheadline).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity).padding(.top, 8)
-
-                    Image("Property").resizable().scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .accessibilityLabel("La Fenice, le terrazze affacciate sul mare di Positano")
+                VStack(alignment: .leading, spacing: 22) {
+                    WelcomeHeader()
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(role == .guest ? "Benvenuti a La Fenice." : "La giornata, in ordine.")
+                            .font(.system(.title, design: .serif).weight(.medium))
+                            .foregroundStyle(FeniceTheme.cobalt)
+                        Text(role == .guest ? "Il tuo soggiorno, dal giardino al mare." : "Richieste e soggiorni, sullo stesso dispositivo.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
 
                     VStack(alignment: .leading, spacing: 18) {
                         Picker("Profilo", selection: $role) {
@@ -103,7 +108,7 @@ private struct LoginView: View {
                             Text("Codice di accesso").font(.subheadline.weight(.medium))
                             TextField("Codice ricevuto", text: $code)
                                 .textContentType(.username).textInputAutocapitalization(.never).autocorrectionDisabled()
-                                .padding(12).background(.background, in: RoundedRectangle(cornerRadius: 10))
+                                .padding(15).background(.background, in: RoundedRectangle(cornerRadius: 12))
                                 .focused($field, equals: .code).submitLabel(.next)
                                 .accessibilityLabel("Codice di accesso").accessibilityIdentifier("login.code")
                                 .onSubmit { field = .password }
@@ -111,8 +116,8 @@ private struct LoginView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Password").font(.subheadline.weight(.medium))
                             SecureField("Password", text: $password)
-                                .textContentType(.password).padding(12)
-                                .background(.background, in: RoundedRectangle(cornerRadius: 10))
+                                .textContentType(.password).padding(15)
+                                .background(.background, in: RoundedRectangle(cornerRadius: 12))
                                 .focused($field, equals: .password).submitLabel(.go)
                                 .accessibilityIdentifier("login.password").onSubmit(login)
                         }
@@ -120,29 +125,27 @@ private struct LoginView: View {
                             Label(error, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red)
                                 .accessibilityIdentifier("login.error")
                         }
-                        Button("Entra", action: login)
-                            .buttonStyle(.borderedProminent).controlSize(.large).frame(maxWidth: .infinity, minHeight: 44)
+                        Button(role == .guest ? "Entra nel tuo soggiorno" : "Entra come admin", action: login)
+                            .buttonStyle(FenicePrimaryButtonStyle())
                             .disabled(code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
                             .accessibilityIdentifier("login.enter")
-                        Text("Il solo cognome e numero di camera non bastano per accedere.")
-                            .font(.footnote).foregroundStyle(.secondary)
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Vuoi provare?").font(.headline)
-                        Text(role == .guest ? "Ospite dimostrativo: cliente / cliente" : "Admin dimostrativo: admin / admin")
-                            .font(.subheadline).textSelection(.enabled)
-                        Button("Compila l’accesso demo") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Button("Prova con l’accesso demo", systemImage: "arrow.right.circle") {
                             code = role == .guest ? "cliente" : "admin"
                             password = code
                             error = nil
                             field = nil
                         }.frame(minHeight: 44).accessibilityIdentifier("login.demo")
+                        Text(role == .guest ? "Codice e password: cliente" : "Codice e password: admin")
+                            .font(.footnote).foregroundStyle(.secondary).textSelection(.enabled)
+                        Text("Usa solo dati fittizi. Cognome e camera non sono credenziali.")
+                            .font(.footnote).foregroundStyle(.secondary)
                     }
-                    .padding(20).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(FeniceTheme.cobalt.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(24).frame(maxWidth: 560)
+                .padding(22).frame(maxWidth: 560)
                 .frame(maxWidth: .infinity)
             }
             .scrollDismissesKeyboard(.interactively)

@@ -17,16 +17,15 @@ struct GuestOrderView: View {
 
     var body: some View {
         Form {
-            Section("Giorno e consegna") {
+            Section {
                 GuestServiceDatePicker(stay: store.stay, now: store.now, date: $date)
                 Picker("Dove", selection: $location) {
                     ForEach(DeliveryLocation.allCases, id: \.self) { Text(guestLocation($0)).tag($0) }
                 }
                 DatePicker("Orario preferito", selection: $time, displayedComponents: .hourAndMinute)
                 if orderable && !futureTime { Text("Per oggi scegli un orario successivo a quello attuale.").font(.footnote).foregroundStyle(.red) }
-                Text("Orario e disponibilità sono da confermare. Segnala eventuali allergie direttamente alla struttura prima di ordinare.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
+            } header: { Text("Giorno e consegna") }
+                footer: { Text("Orario e disponibilità da confermare. Per le allergie, contatta la struttura prima di ordinare.") }
             ForEach(CatalogItem.productCategories, id: \.self) { category in
                 let items = products.filter { $0.category == category }
                 if !items.isEmpty {
@@ -34,7 +33,11 @@ struct GuestOrderView: View {
                         ForEach(items) { item in
                             Stepper(value: Binding(get: { quantities[item.id, default: 0] }, set: { quantities[item.id] = $0 }), in: 0...20) {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text("\(item.title(store.locale)) · \(quantities[item.id, default: 0])").font(.headline)
+                                    Text(item.title(store.locale)).font(.headline)
+                                    if quantities[item.id, default: 0] > 0 {
+                                        Text(quantities[item.id] == 1 ? "1 selezionato" : "\(quantities[item.id, default: 0]) selezionati")
+                                            .font(.caption.weight(.semibold)).foregroundStyle(FeniceTheme.cobalt)
+                                    }
                                     if !item.detail(store.locale).isEmpty { Text(item.detail(store.locale)).font(.caption).foregroundStyle(.secondary) }
                                     Text(guestPrice(item.priceCents)).font(.caption)
                                 }.padding(.vertical, 5)
@@ -52,20 +55,25 @@ struct GuestOrderView: View {
                 Text("Massimo 1.000 caratteri. Non inserire dati sanitari o altre informazioni sensibili.").font(.footnote).foregroundStyle(.secondary)
                 if notes.count > 1_000 { Text("Riduci la nota a 1.000 caratteri per proseguire.").font(.footnote).foregroundStyle(.red) }
             }
-            Section {
-                LabeledContent("Articoli selezionati", value: "\(count)")
-                Button("Rivedi ordine") {
-                    review = OrderDraft(id: clientRequestID, date: RomeDay.key(date), time: guestTime(time), location: location, notes: notes, quantities: quantities.filter { $0.value > 0 }, lines: products.compactMap { item in
-                        let quantity = quantities[item.id, default: 0]
-                        return quantity > 0 ? OrderLine(itemID: item.id, labels: item.labels, quantity: quantity, priceCents: item.priceCents) : nil
-                    })
+            Section {} footer: { Text("Nessun pagamento nell’app. I prezzi non indicati devono essere confermati dalla struttura.") }
+        }
+        .navigationTitle("Scegli dal menu")
+        .navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden)
+        .background(FeniceTheme.paper)
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 6) {
+                Button(action: prepareReview) {
+                    Text(count == 0 ? "Scegli qualcosa dal menu" : count == 1 ? "Rivedi ordine · 1 articolo" : "Rivedi ordine · \(count) articoli")
                 }
-                .buttonStyle(.borderedProminent).controlSize(.large).frame(maxWidth: .infinity, minHeight: 44)
+                .buttonStyle(FenicePrimaryButtonStyle())
                 .disabled(count == 0 || !orderable || !futureTime || notes.count > 1_000)
                 .accessibilityIdentifier("guest.order.review")
-            } footer: { Text("Nessun pagamento nell’app. I prezzi non indicati devono essere confermati dalla struttura.") }
+                Text("Il prossimo passo è il riepilogo.").font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 10)
+            .background(.regularMaterial)
         }
-        .navigationTitle("Ordina")
         .sheet(item: $review) { draft in
             GuestReviewSheet(title: "Rivedi ordine") {
                 Section("La tua scelta") {
@@ -88,6 +96,13 @@ struct GuestOrderView: View {
                 clientRequestID = UUID().uuidString
             }
         }
+    }
+
+    private func prepareReview() {
+        review = OrderDraft(id: clientRequestID, date: RomeDay.key(date), time: guestTime(time), location: location, notes: notes, quantities: quantities.filter { $0.value > 0 }, lines: products.compactMap { item in
+            let quantity = quantities[item.id, default: 0]
+            return quantity > 0 ? OrderLine(itemID: item.id, labels: item.labels, quantity: quantity, priceCents: item.priceCents) : nil
+        })
     }
 }
 
@@ -118,7 +133,7 @@ struct GuestExperienceForm: View {
     var body: some View {
         Form {
             Section {
-                Text(item.title(store.locale)).font(.title2.weight(.semibold))
+                Text(item.title(store.locale)).font(.system(.title2, design: .serif).weight(.medium)).foregroundStyle(FeniceTheme.cobalt)
                 if !item.detail(store.locale).isEmpty { Text(item.detail(store.locale)).foregroundStyle(.secondary) }
                 Text(guestPrice(item.priceCents)).font(.footnote)
                 if let note = item.bookingNote?[store.locale.rawValue] ?? item.bookingNote?["en"], !note.isEmpty { Text(note).font(.footnote) }
@@ -136,13 +151,15 @@ struct GuestExperienceForm: View {
                 Button("Rivedi richiesta") {
                     review = ExperienceDraft(id: clientRequestID, date: RomeDay.key(date), time: guestTime(time), participants: participants, notes: notes)
                 }
-                .buttonStyle(.borderedProminent).controlSize(.large).frame(maxWidth: .infinity, minHeight: 44)
+                .buttonStyle(FenicePrimaryButtonStyle())
                 .disabled(!orderable || !futureTime || notes.count > 1_000 || (item.kind == .guide && item.requestable != true))
                 .accessibilityIdentifier("guest.experience.review")
             }
         }
         .navigationTitle(item.kind == .guide ? "Richiedi assistenza" : "Richiedi esperienza")
         .navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden)
+        .background(FeniceTheme.paper)
         .onAppear {
             guard !initialized else { return }
             initialized = true
@@ -211,9 +228,9 @@ private struct GuestReviewSheet<Details: View>: View {
                     ContentUnavailableView {
                         Label("Salvata nella demo locale", systemImage: "checkmark.circle")
                     } description: {
-                        Text("Salvata nella demo locale. Nessuna richiesta inviata alla struttura. Puoi ritrovarla nella sezione Richieste.")
+                        Text("Nessuna richiesta inviata alla struttura. La trovi in Richieste, dove puoi seguirne lo stato su questo dispositivo.")
                     } actions: {
-                        Button("Chiudi") { dismiss() }.buttonStyle(.borderedProminent).controlSize(.large).frame(minHeight: 44)
+                        Button("Chiudi riepilogo") { dismiss() }.buttonStyle(FenicePrimaryButtonStyle())
                     }
                     .accessibilityIdentifier("guest.request.saved")
                 } else {
@@ -225,7 +242,7 @@ private struct GuestReviewSheet<Details: View>: View {
                             Button("Conferma nella demo") {
                                 do { try onConfirm(); saved = true } catch { self.error = error.localizedDescription }
                             }
-                            .buttonStyle(.borderedProminent).controlSize(.large).frame(maxWidth: .infinity, minHeight: 44)
+                            .buttonStyle(FenicePrimaryButtonStyle())
                             .accessibilityIdentifier("guest.request.confirm")
                         }
                     }
@@ -233,6 +250,8 @@ private struct GuestReviewSheet<Details: View>: View {
             }
             .navigationTitle(saved ? "Richiesta salvata" : title)
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(FeniceTheme.paper)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(saved ? "Chiudi" : "Indietro") { dismiss() } }
             }

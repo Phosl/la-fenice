@@ -22,6 +22,7 @@ private struct AdminRequestsView: View {
     @Bindable var store: PortalStore
     @State private var kind = "all"
     @State private var status = "all"
+    @State private var showFilters = false
 
     private var requests: [ServiceRequest] {
         store.visibleRequests.filter {
@@ -37,11 +38,22 @@ private struct AdminRequestsView: View {
         NavigationStack {
             List {
                 Section {
-                    LabeledContent("Da gestire", value: "\(store.visibleRequests.filter { $0.status == .pending }.count)")
-                    LabeledContent("Servizi per oggi", value: "\(store.visibleRequests.filter { $0.serviceDate == store.today && $0.status != .cancelled && $0.status != .rejected }.count)")
-                    LabeledContent("Soggiorni in corso", value: "\(store.state.stays.filter { $0.active && $0.checkIn <= store.today && $0.checkOut > store.today }.count)")
+                    let pending = store.visibleRequests.filter { $0.status == .pending }.count
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(pending == 0 ? "Tutto sotto controllo." : "\(pending) da gestire.")
+                            .font(.system(.title, design: .serif).weight(.medium)).foregroundStyle(FeniceTheme.cobalt)
+                        Text("\(store.visibleRequests.filter { $0.serviceDate == store.today && $0.status != .cancelled && $0.status != .rejected }.count) servizi oggi · \(store.state.stays.filter { $0.active && $0.checkIn <= store.today && $0.checkOut > store.today }.count) soggiorni in corso")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        if pending > 0 {
+                            Button("Vedi richieste in attesa", systemImage: "tray") { status = RequestStatus.pending.rawValue; kind = "all" }
+                                .buttonStyle(FenicePrimaryButtonStyle())
+                        } else {
+                            Text("Le nuove richieste compariranno qui.").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }.padding(.vertical, 8)
                 }
-                Section("Filtra richieste") {
+                Section {
+                  DisclosureGroup("\(kind == "all" ? "Tutti i tipi" : AdminCopy.kind(ServiceKind(rawValue: kind) ?? .order)) · \(status == "all" ? "Tutti gli stati" : AdminCopy.status(RequestStatus(rawValue: status) ?? .pending))", isExpanded: $showFilters) {
                     Picker("Tipo", selection: $kind) {
                         Text("Tutti").tag("all")
                         ForEach(ServiceKind.allCases, id: \.rawValue) { item in
@@ -54,6 +66,10 @@ private struct AdminRequestsView: View {
                             Text(AdminCopy.status(item)).tag(item.rawValue)
                         }
                     }
+                    if status != "all" || kind != "all" {
+                        Button("Mostra tutte le richieste") { status = "all"; kind = "all" }.frame(minHeight: 44)
+                    }
+                  }
                 }
                 Section("Coda richieste") {
                     if requests.isEmpty {
@@ -66,10 +82,10 @@ private struct AdminRequestsView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(request.title(store.locale)).font(.headline)
                                 if let stay = store.state.stays.first(where: { $0.id == request.stayID }) {
-                                    Text("\(stay.guestName) · \(stay.room)")
+                                    Text("\(stay.guestName) · \(stay.room)").font(.subheadline)
                                 }
-                                Text("\(AdminCopy.day(request.serviceDate)) · \(request.time)").font(.subheadline)
-                                Text(AdminCopy.status(request.status)).font(.caption.weight(.semibold)).foregroundStyle(FeniceTheme.cobalt)
+                                Text("\(AdminCopy.day(request.serviceDate)) · \(request.time)").font(.subheadline).foregroundStyle(.secondary)
+                                RequestStatusBadge(status: request.status)
                             }
                             .padding(.vertical, 4)
                         }
@@ -77,6 +93,9 @@ private struct AdminRequestsView: View {
                 }
             }
             .navigationTitle("Richieste")
+            .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(FeniceTheme.paper)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { AdminAccountMenu(store: store) } }
         }
     }
@@ -104,7 +123,7 @@ private struct AdminRequestDetail: View {
         Form {
             Section("Richiesta") {
                 Text(request.title(store.locale)).font(.headline)
-                LabeledContent("Stato attuale", value: AdminCopy.status(request.status))
+                RequestStatusBadge(status: request.status)
                 LabeledContent("Giorno", value: AdminCopy.day(request.serviceDate))
                 LabeledContent("Orario", value: request.time)
                 if let location = request.location { LabeledContent("Consegna", value: AdminCopy.location(location)) }
@@ -142,6 +161,7 @@ private struct AdminRequestDetail: View {
                 Button("Salva modifiche") {
                     if status != request.status { confirmation = true } else { save() }
                 }
+                .buttonStyle(FenicePrimaryButtonStyle())
                 .disabled(status == request.status && staffNote == request.staffNote)
                 if saved { Label("Aggiornamento salvato nella demo locale", systemImage: "checkmark.circle").foregroundStyle(.secondary) }
             } header: {

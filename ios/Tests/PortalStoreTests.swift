@@ -4,6 +4,18 @@ import XCTest
 
 @MainActor
 final class PortalStoreTests: XCTestCase {
+    func testDecorativePulseClampsAndReturnsToRest() {
+        let start = Date(timeIntervalSince1970: 100)
+        var pulse = WaterPulse(startedAt: start)
+        XCTAssertEqual(pulse.elapsed(at: start.addingTimeInterval(-10)), 0)
+        XCTAssertEqual(pulse.elapsed(at: start.addingTimeInterval(1.2)), 1.2)
+        XCTAssertEqual(pulse.elapsed(at: start.addingTimeInterval(500)), Float(WaterPulse.duration))
+        pulse.startedAt = nil
+        XCTAssertEqual(pulse.elapsed(at: start.addingTimeInterval(500)), 0)
+        pulse.startedAt = start.addingTimeInterval(500)
+        XCTAssertEqual(pulse.elapsed(at: start.addingTimeInterval(500)), 0)
+    }
+
     private var referenceNow: Date {
         ISO8601DateFormatter().date(from: "2026-09-23T10:00:00Z")!
     }

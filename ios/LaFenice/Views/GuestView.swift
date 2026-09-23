@@ -39,46 +39,76 @@ private struct GuestStayView: View {
     var openOrder: () -> Void
     @State private var error: String?
     @State private var confirmLogout = false
+    @State private var showCalendar = false
+    @State private var showPreferences = false
 
     var body: some View {
         Form {
             if let stay = store.stay {
                 Section {
-                    Text(stay.guestName).font(.title2.weight(.semibold))
-                    LabeledContent("Camera", value: stay.room)
-                    LabeledContent("Ospiti", value: "\(stay.guests)")
-                    LabeledContent("Arrivo", value: guestDate(stay.checkIn))
-                    LabeledContent("Partenza", value: guestDate(stay.checkOut))
-                } header: { Text("La tua scheda soggiorno") }
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text(stay.guestName).font(.system(.title, design: .serif).weight(.medium))
+                            .foregroundStyle(FeniceTheme.cobalt)
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 18) {
+                                Label(stay.room, systemImage: "key.horizontal")
+                                Label("\(stay.guests) ospiti", systemImage: "person.2")
+                            }
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label(stay.room, systemImage: "key.horizontal")
+                                Label("\(stay.guests) ospiti", systemImage: "person.2")
+                            }
+                        }.font(.subheadline)
+                        Text("\(guestDate(stay.checkIn)) — \(guestDate(stay.checkOut))")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }.padding(.vertical, 9)
+                } header: { Text("Benvenuti a La Fenice") }
                 Section {
-                    if let start = RomeDay.date(stay.checkIn), let end = RomeDay.date(stay.checkOut) {
-                        DatePicker("Giorno del soggiorno", selection: $date, in: start...end, displayedComponents: .date)
-                            .datePickerStyle(.graphical)
-                            .accessibilityIdentifier("guest.stay.calendar")
+                    DisclosureGroup(isExpanded: $showCalendar) {
+                        if let start = RomeDay.date(stay.checkIn), let end = RomeDay.date(stay.checkOut) {
+                            DatePicker("Giorno del soggiorno", selection: $date, in: start...end, displayedComponents: .date)
+                                .datePickerStyle(.graphical)
+                                .accessibilityIdentifier("guest.stay.calendar")
+                        }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("La tua giornata").font(.caption).foregroundStyle(.secondary)
+                            Label(guestDate(RomeDay.key(date)), systemImage: "calendar")
+                                .font(.headline).foregroundStyle(FeniceTheme.cobalt)
+                        }.padding(.vertical, 5)
                     }
+                    .accessibilityIdentifier("guest.stay.chooseDay")
                     let key = RomeDay.key(date)
+                    if RomeDay.orderable(key, stay: stay, now: store.now) {
+                        Button(action: openOrder) {
+                            Label("Scegli dal menu", systemImage: "fork.knife")
+                        }
+                        .buttonStyle(FenicePrimaryButtonStyle())
+                        .listRowSeparator(.hidden)
+                        .accessibilityIdentifier("guest.stay.order")
+                    } else {
+                        Text(key == stay.checkOut ? "Il giorno del check-out è consultabile; non è possibile richiedere servizi." : "Questo giorno è consultabile; non è possibile richiedere nuovi servizi.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                     let requests = store.visibleRequests.filter { $0.serviceDate == key }
                     if requests.isEmpty {
-                        Text("Nessuna richiesta per questo giorno.").foregroundStyle(.secondary)
+                        Label("Nessuna richiesta per questo giorno.", systemImage: "tray")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
                     ForEach(requests) { request in
                         NavigationLink {
                             GuestRequestDetail(store: store, requestID: request.id)
                         } label: { GuestRequestRow(request: request, locale: store.locale) }
                     }
-                    if RomeDay.orderable(key, stay: stay, now: store.now) {
-                        Button("Ordina per questo giorno", systemImage: "fork.knife", action: openOrder)
-                            .frame(minHeight: 44)
-                    } else {
-                        Text(key == stay.checkOut ? "Il giorno del check-out è consultabile; non è possibile richiedere servizi." : "Questo giorno è consultabile; non è possibile richiedere nuovi servizi.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                } header: { Text("Il calendario del soggiorno") }
-                Section("Una nota sulle scale") {
-                    Text("La Fenice si sviluppa su più livelli collegati da numerose scale. Contatta la struttura per valutare esigenze di mobilità e percorsi.")
-                        .font(.callout)
                 }
-                Section("Preferenze") {
+                Section("Una nota sulle scale") {
+                    Label {
+                        Text("La Fenice si sviluppa su più livelli collegati da numerose scale. Contatta la struttura per valutare esigenze di mobilità e percorsi.")
+                    } icon: { Image(systemName: "figure.stairs").foregroundStyle(FeniceTheme.cobalt) }
+                    .font(.callout)
+                }
+                Section {
+                  DisclosureGroup("Lingua e account", isExpanded: $showPreferences) {
                     Picker("Lingua dei contenuti", selection: Binding(get: { store.locale }, set: { locale in
                         do { try store.setLocale(locale) } catch { self.error = error.localizedDescription }
                     })) {
@@ -88,12 +118,16 @@ private struct GuestStayView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                     Button("Esci dall’account", role: .destructive) { confirmLogout = true }
                         .frame(minHeight: 44)
+                  }
                 }
             } else {
                 ContentUnavailableView("Soggiorno non disponibile", systemImage: "person.crop.circle.badge.exclamationmark", description: Text("Contatta l’amministratore per verificare l’accesso."))
             }
         }
-        .navigationTitle("Il tuo soggiorno")
+        .navigationTitle("Soggiorno")
+        .navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden)
+        .background(FeniceTheme.paper)
         .confirmationDialog("Uscire dall’account?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Esci", role: .destructive) { store.logout() }
         } message: { Text("Le richieste già salvate rimangono nella demo su questo dispositivo.") }
@@ -253,8 +287,7 @@ private struct GuestRequestRow: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(request.title(locale)).font(.headline)
             Text("\(guestDate(request.serviceDate)) · \(request.time)").font(.subheadline).foregroundStyle(.secondary)
-            Label(guestStatus(request.status), systemImage: guestStatusSymbol(request.status))
-                .font(.caption.weight(.medium)).foregroundStyle(guestStatusColor(request.status))
+            RequestStatusBadge(status: request.status)
             if !request.staffNote.isEmpty { Text(request.staffNote).font(.footnote).lineLimit(2) }
         }.padding(.vertical, 6)
     }
@@ -272,8 +305,7 @@ private struct GuestRequestDetail: View {
             if let request {
                 Section {
                     Text(request.title(store.locale)).font(.title2.weight(.semibold))
-                    Label(guestStatus(request.status), systemImage: guestStatusSymbol(request.status))
-                        .foregroundStyle(guestStatusColor(request.status))
+                    RequestStatusBadge(status: request.status)
                     LabeledContent("Giorno", value: guestDate(request.serviceDate))
                     LabeledContent("Orario preferito", value: request.time)
                     if let location = request.location { LabeledContent("Consegna", value: guestLocation(location)) }
@@ -349,24 +381,6 @@ func guestCategory(_ category: String) -> String {
 
 private func guestActivitySymbol(_ category: String) -> String {
     switch category { case "fishing": "fish"; case "boat-trip": "sailboat"; case "lemon-grove": "leaf"; default: "sun.max" }
-}
-
-private func guestStatus(_ status: RequestStatus) -> String {
-    switch status {
-    case .pending: String(localized: "In attesa")
-    case .confirmed: String(localized: "Confermata")
-    case .rejected: String(localized: "Non accolta")
-    case .fulfilled: String(localized: "Completata")
-    case .cancelled: String(localized: "Annullata")
-    }
-}
-
-private func guestStatusSymbol(_ status: RequestStatus) -> String {
-    switch status { case .pending: "clock"; case .confirmed: "checkmark.circle"; case .rejected: "xmark.circle"; case .fulfilled: "checkmark.seal"; case .cancelled: "minus.circle" }
-}
-
-private func guestStatusColor(_ status: RequestStatus) -> Color {
-    switch status { case .pending, .cancelled: .secondary; case .confirmed, .fulfilled: FeniceTheme.cobalt; case .rejected: .red }
 }
 
 private func guestTelephone(_ value: String) -> URL? {

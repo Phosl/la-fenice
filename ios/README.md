@@ -74,15 +74,25 @@ Per rigenerare `LaFenice/Resources/catalog.json` dopo una modifica approvata ai 
 
 ## Verifica eseguita · 23 settembre 2026
 
-- **19 test del core superati**, inclusi autorizzazioni e isolamento ospiti, date e ora di Roma, prezzi mancanti e storico ordini, idempotenza, transizioni di stato, credenziali, dati corrotti e scritture fallite senza perdita dello stato precedente.
+- **20 test del core superati**, inclusi autorizzazioni e isolamento ospiti, date e ora di Roma, prezzi mancanti e storico ordini, idempotenza, transizioni di stato, credenziali, dati corrotti, scritture fallite senza perdita dello stato precedente e durata limitata dell’effetto decorativo.
 - **Build Debug per simulatore e Release per dispositivo iOS riuscite**, entrambe senza firma. La build Release non è una distribuzione né una prova su telefono fisico.
 - Catalogo sincronizzato con i 35 elementi web tramite `--check`; controllo ESLint dello script di esportazione e validazione del progetto Xcode superati.
 - **iPhone 14 Pro, iOS 17:** login ospite, ordine con riepilogo e prezzo da confermare, salvataggio locale, cambio account admin, conferma e nota staff. Dopo ricompilazione e riavvio, nuovo login ospite e verifica della richiesta confermata con nota persistente.
 - **iPhone SE di terza generazione, iOS 18.3:** login, scheda soggiorno e calendario su schermo piccolo, blocco delle richieste al check-out, selezione dei contenuti russi, richiesta esperienza con riepilogo e salvataggio, consultazione della guida. Questa prova precede gli ultimi ritocchi alle righe descrittive vuote e ai messaggi delle note; la build finale è stata riprovata sul 14 Pro.
+- **Restyling calm, iPhone 14 Pro:** verificati nel simulatore il login, il riflesso sul mare con logo stabile, l’apertura/chiusura del calendario, il menu, l’aggiunta di una caprese, il riepilogo con prezzo da confermare e il salvataggio locale con svuotamento del carrello. La richiesta già presente è stata conservata durante l’aggiornamento. Debug simulatore e Release dispositivo compilano anche il nuovo shader Metal. I colori testuali dei badge confermato/completato e rifiutato superano 4,5:1 sui rispettivi fondi chiari e scuri.
+- **Restyling finale, iPhone SE (iOS 18.3):** verificati login, scheda soggiorno, comando principale e menu con contenuti russi; i nomi lunghi vanno a capo e il riepilogo fisso resta sopra la barra delle schede. La preferenza russa e la richiesta precedente sono rimaste presenti. Il tentativo di attivare Movimento ridotto tramite il controllo visuale del simulatore non ha modificato l’opzione: il fallback è implementato, ma la sua resa non è attestata da questa prova. Restano non misurate le prestazioni su iPhone fisico.
 
 La logica di creazione soggiorni, credenziali e modifiche catalogo è coperta dai test; non sono stati completati manualmente tutti i relativi percorsi dell’interfaccia. Restano da verificare VoiceOver, dimensioni testo estreme, iPad e un iPhone fisico. Non sono stati eseguiti firma, invio ad App Store Connect o distribuzione TestFlight. Nessun ordine o messaggio è stato inviato all’esterno.
 
 ## Confini della demo
+
+### Interfaccia calma e riflessi sul mare
+
+Il login riusa la fotografia e il logo originali. L’ospite vede prima camera, date e il comando per scegliere dal menu; il calendario completo e le preferenze si espandono su richiesta. Il riepilogo dell’ordine rimane raggiungibile sopra la barra delle schede. Gli stessi badge testuali e simbolici distinguono gli stati per ospite e admin, senza affidarsi soltanto al colore.
+
+Il solo header di benvenuto applica `colorEffect` SwiftUI con un piccolo shader Metal, compilato nello stesso target iOS 17+: un tocco produce un riflesso ottico circolare sulla zona di mare della fotografia e torna a riposo entro 2,4 secondi. Non è una simulazione fluidodinamica e non deforma logo, testi o controlli. Il rendering animato si ferma fuori vista, in background e a fine impulso; Movimento ridotto o Metal non disponibile mantengono la fotografia statica. Il controllo temporale ha un test di regressione; questo non sostituisce la verifica visiva su dispositivo.
+
+### Servizi non collegati
 
 Non sono collegati Supabase, un backend, la sincronizzazione fra dispositivi o con il sito, l’invio email, il concierge AI, le notifiche push, pagamenti o disponibilità reali. Le richieste non raggiungono la struttura né i fornitori. I collegamenti espliciti a siti, mappe e telefonate aprono invece servizi esterni: non costituiscono un’integrazione di prenotazione.
 
