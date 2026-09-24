@@ -7,6 +7,7 @@ import { getLocalizedPath } from "@/lib/content/routes";
 import type { SiteContent } from "@/lib/content/types";
 import { CtaSection } from "./cta-section";
 import { HomeExperiences } from "./home-experiences";
+import { EstateSection } from "@/components/estate/estate-section";
 import { SiteShell } from "@/components/layout/site-shell";
 
 type HomePageProps = {
@@ -57,6 +58,8 @@ export function HomePage({ content }: HomePageProps) {
             </div>
           </div>
         </section>
+
+        <EstateSection page={page} />
 
         <section className="story-flow">
           <div className="container">

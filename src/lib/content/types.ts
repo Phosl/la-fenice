@@ -127,6 +127,27 @@ export interface HomePageContent {
     title: string;
     text: string;
   };
+  estate: EstateCopy;
+}
+
+export interface EstateCopy {
+  eyebrow: string;
+  title: string;
+  lead: string;
+  study: string;
+  disclaimer: string;
+  posterAlt: string;
+  open: string;
+  close: string;
+  loading: string;
+  error: string;
+  help: string;
+  reset: string;
+  rotateLeft: string;
+  rotateRight: string;
+  zoomIn: string;
+  zoomOut: string;
+  stops: readonly { title: string; text: string }[];
 }
 
 export type TravelModeId = "car" | "train" | "plane" | "sea";

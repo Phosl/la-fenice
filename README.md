@@ -4,6 +4,11 @@ Rifacimento responsive e multilingue (inglese, italiano, tedesco e russo) del si
 
 Include l'intro animata con fenice SVG, selettore lingua accessibile, gallerie con lightbox, mappa caricata su richiesta, modulo disponibilità, esperienze richiedibili via email, SEO multilingua e redirect HTTP 301 dagli URL PHP precedenti. Il modulo non è un booking engine: non conferma camere, pagamenti o disponibilità in tempo reale.
 
+La homepage include uno **studio 3D illustrativo** di La Fenice e Positano,
+caricato solo su richiesta, con sei tappe dalla strada al mare, controlli da
+tastiera e immagine di fallback. Fonti, licenze, limiti e ricostruzione degli
+asset sono descritti in [docs/estate-3d.md](docs/estate-3d.md).
+
 ## Requisiti e avvio
 
 - Node.js 22 o successivo

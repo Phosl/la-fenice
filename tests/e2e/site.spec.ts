@@ -427,7 +427,7 @@ test("uses the concise blue-and-white editorial homepage", async ({ page }) => {
   await page.goto("/it");
   await expectHydrated(page);
 
-  await expect(page.locator("main > section")).toHaveCount(6);
+  await expect(page.locator("main > section")).toHaveCount(7);
   await expect(page.locator(".quote-section, .story-card__index, .location-tease__badge")).toHaveCount(0);
   await expect(page.getByText("Un luogo semplice, sul mare", { exact: true })).toBeVisible();
 

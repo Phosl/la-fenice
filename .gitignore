@@ -12,6 +12,8 @@
 /coverage
 /playwright-report
 /test-results
+/artifacts/estate/*.blend*
+/artifacts/estate/estate-poster.png
 
 # local environment files
 .env*
