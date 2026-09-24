@@ -2,7 +2,16 @@
 
 Rifacimento responsive e multilingue (inglese, italiano, tedesco e russo) del sito di La Fenice Positano, realizzato con Next.js App Router, TypeScript e Tailwind CSS.
 
-Include l'intro animata con fenice SVG, selettore lingua accessibile, gallerie con lightbox, mappa caricata su richiesta, modulo disponibilità, esperienze richiedibili via email, SEO multilingua e redirect HTTP 301 dagli URL PHP precedenti. Il modulo non è un booking engine: non conferma camere, pagamenti o disponibilità in tempo reale.
+Include l'intro animata con fenice SVG, selettore lingua accessibile, gallerie con lightbox, mappa caricata su richiesta, modulo disponibilità, esperienze richiedibili via email, SEO multilingua e redirect HTTP 301 dagli URL PHP precedenti. Nell'area ospite demo sono presenti la guida di Positano, i relativi filtri e un concierge OpenAI con lingua e voce selezionabili manualmente. Il modulo non è un booking engine: non conferma camere, pagamenti o disponibilità in tempo reale.
+
+Il catalogo ospite include **Pranzo · Menu del giorno** e **La sera · Pizza Fenice**
+in EN/IT/DE/RU. Lo staff può curare testo, prezzo e visibilità nell'editor catalogo
+esistente: non è un calendario automatico dei piatti. Finché mancano i dettagli
+confermati, le voci rimangono richieste con prezzo e proposte da confermare, mai
+ordini reali inviati. Web e iOS aggiungono soltanto le due voci mancanti ai dati
+locali precedenti, senza riattivare elementi nascosti o sostituire modifiche staff.
+Il catalogo condiviso resta leggibile da Android; questa fase non migra gli store
+Android già presenti né pubblica nuove build.
 
 La homepage include uno **studio 3D illustrativo** di La Fenice e Positano,
 caricato solo su richiesta, con sei tappe dalla strada al mare, controlli da
@@ -70,11 +79,23 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+OPENAI_API_KEY=
+OPENAI_CONCIERGE_MODEL=gpt-5.6-terra
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+CONCIERGE_SIGNING_SECRET=
+CONCIERGE_DEMO_ENABLED=false
 ```
 
 La Server Action valida le richieste, applica un honeypot anti-spam e invia l'email con Resend. Se Resend non è configurato o la consegna fallisce, l'interfaccia mostra email e telefono per il contatto diretto. La persistenza Supabase è opzionale e non blocca l'invio email.
 
 `RESEND_API_KEY` e `SUPABASE_SERVICE_ROLE_KEY` devono rimanere esclusivamente server-side. La service role non deve mai avere il prefisso `NEXT_PUBLIC_`.
+
+Anche `OPENAI_API_KEY` e `CONCIERGE_SIGNING_SECRET` sono esclusivamente server-side. Il secret di firma deve contenere almeno 32 caratteri casuali. Il concierge è inoltre disattivato per impostazione predefinita: si abilita esplicitamente con `CONCIERGE_DEMO_ENABLED=true`. Se la configurazione non è completa, la guida ospite rimane utilizzabile e il concierge mostra uno stato non disponibile senza esporre errori tecnici.
+
+Il concierge usa la guida locale come fonte e conserva la conversazione soltanto nella scheda corrente del browser. Quando viene interrogato, OpenAI riceve la domanda, una cronologia breve e le schede pertinenti della guida; `store: false` disabilita il salvataggio della risposta nell'API, mentre trattamento e conservazione del provider seguono le policy del progetto OpenAI. Per la lettura vocale viene inviato anche il testo della risposta, soltanto dopo un clic esplicito.
+
+Questa demo mostra pubblicamente `cliente / cliente`: prima di abilitare una chiave live servono un progetto OpenAI dedicato con budget rigido e una protezione/rate limit globale a monte. Il limite in memoria incluso nel prototipo è soltanto una seconda difesa e non è condiviso tra istanze serverless. La sessione server del concierge viene aperta soltanto con l'account ospite predefinito; gli account creati nell'admin restano dati locali del browser e richiederanno un backend reale nella fase successiva.
 
 ## Supabase — seconda fase
 

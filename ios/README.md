@@ -73,14 +73,14 @@ env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   --scratch-path /tmp/la-fenice-swift-tests
 ```
 
-Il catalogo incluso contiene 35 elementi del sito: 8 prodotti, 3 attività e 24 voci guida. Non include account o segreti. L’esportazione usa i seed TypeScript esistenti senza modificarli; le date dell’export sono deterministiche e non rappresentano una nuova verifica delle informazioni dei fornitori.
+Il catalogo incluso contiene 37 elementi del sito: 10 prodotti, 3 attività e 24 voci guida. Non include account o segreti. L’esportazione usa i seed TypeScript esistenti senza modificarli; le date dell’export sono deterministiche e non rappresentano una nuova verifica delle informazioni dei fornitori.
 
 ```sh
 /Users/filippodegennaro/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node \
   "/Users/filippodegennaro/siti/la fenice/scripts/export-ios-catalog.mjs" --check
 ```
 
-Per rigenerare `LaFenice/Resources/catalog.json` dopo una modifica approvata ai contenuti web, esegui lo stesso comando senza `--check`, poi ricompila. L’export non aggiorna il catalogo già salvato in un contenitore della demo: non sovrascrive le modifiche dell’admin.
+Per rigenerare `LaFenice/Resources/catalog.json` dopo una modifica approvata ai contenuti web, esegui lo stesso comando senza `--check`, poi ricompila. L’export non sovrascrive le modifiche dell’admin: all’avvio l’app aggiunge soltanto le due nuove voci pranzo/pizza se ID e slug non sono già presenti, come descritto sotto.
 
 ## Verifica eseguita · 23 settembre 2026
 
@@ -101,6 +101,40 @@ La logica di creazione soggiorni, credenziali e modifiche catalogo è coperta da
 - App Store Connect: caricamento **Complete**, informazioni sulla crittografia di sistema Apple completate, build **Testing** nel gruppo **La Fenice · Interni** con un tester interno. Note di prova e limiti della demo inseriti nella build.
 - [Build TestFlight](https://appstoreconnect.apple.com/teams/69a6de88-aa87-47e3-e053-5b8c7c11a4d1/apps/6815123720/testflight/ios/9b9b7649-2eea-4593-8112-4873fa7295b9).
 - La distribuzione interna non dimostra un'installazione su iPhone fisico. Nessuna revisione beta esterna inviata e nessun link pubblico creato: mancano i dati autorizzati del referente per Apple. Nessuna pubblicazione App Store, web o Android.
+
+### Aggiornamento mance · build 4
+
+- **0.1.0 (4)**, commit `62b3c954d12b7ba1d35a5d98936e5cdb625ec9e0`: workflow Xcode Cloud riuscito, caricamento App Store Connect **Complete** e informazioni crittografiche completate.
+- Note di prova sulle mance e limiti della demo salvate. Build **Testing** nel gruppo **La Fenice · Interni**, con un tester interno. [Build aggiornata](https://appstoreconnect.apple.com/teams/69a6de88-aa87-47e3-e053-5b8c7c11a4d1/apps/6815123720/testflight/ios/3e07ca9f-fd78-45ab-b939-9feeffb90f20).
+- Nessuna prova della build 4 su iPhone fisico. La revisione beta esterna non è stata inviata: il modulo del referente e degli accessi demo è preparato ma non salvato, in attesa dell'autorizzazione specifica alla trasmissione ad Apple. Nessun dato personale del referente è conservato nel repository.
+
+## Ottimizzazione iPad · verifica locale del 24 settembre 2026
+
+- Ospite: contenuti e pulsante riepilogo centrati con larghezza massima di 760 pt nelle finestre regular. Su iPadOS 18+ le schede possono diventare una sidebar nativa; su iOS 17 resta la navigazione a schede. La rotazione cambia il layout senza sostituire le viste del carrello.
+- Staff: richieste e soggiorni usano lista/dettaglio nativi, affiancati quando lo spazio lo consente e impilati su iPhone. Le schede staff restano separate dalla sidebar delle liste: annidare due sidebar restringeva la coda su iPadOS 18. I titoli dei dettagli restano nella barra solo in compact; in regular il contesto è già nelle sezioni e nella selezione, evitando sovrapposizioni con le schede superiori.
+- **Simulatore iPad Pro 13-inch (M4), iPadOS 18.3:** controllati ritratto/orizzontale, apertura sidebar ospite, menu, carrello conservato cambiando scheda e ruotando, riepilogo con mancia personalizzata `2,50`, salvataggio esclusivamente locale e svuotamento carrello. Verificati conto in attesa, lista/dettaglio staff, nota fittizia conservata alla rotazione e dopo riavvio, conferma admin e mancia di **2,50 EUR** nel conto soggiorno. Il totale dei prodotti senza prezzo resta da confermare.
+- **Simulatore iPhone 14 Pro, iOS 17:** verificati login staff, tabbar inferiore, apertura richiesta e ritorno alla coda, soggiorno → richiesta → soggiorno. I dati demo già presenti sono conservati.
+- **25 test del core superati**; build Debug simulatore e Release iOS senza firma riuscite, senza warning. `git diff --check` pulito. Nessuna nuova dipendenza, modifica al backend o invio esterno.
+
+Per ripetere la prova: aprire una richiesta in orizzontale, scorrere fino alla gestione, digitare una nota fittizia, ruotare e verificarne il testo; su iPhone usare Indietro sia dalla coda sia dal dettaglio soggiorno. La modifica non è ancora inclusa nella build TestFlight 4: nessun commit, push o nuova distribuzione eseguiti in questa fase. Restano da verificare iPad fisico, iPad da 11 pollici, Split View/Stage Manager, VoiceOver e dimensioni testo estreme.
+
+## Pranzo e Pizza Fenice · aggiunta locale
+
+- Nel menu ospite compaiono **Pranzo → Menu del giorno** e **La sera → Pizza Fenice**, con titoli e descrizioni in EN/IT/DE/RU. Piatti, proposte, prezzi, disponibilità e orari restano da confermare con lo staff; nessun ingrediente, listino o fascia oraria è inventato.
+- Si riusano quantità, data/orario preferito, riepilogo, mancia facoltativa, richieste e conto esistenti. I prezzi non impostati restano «Da confermare», mai zero. Non esiste un calendario automatico dei piatti giornalieri: lo staff può aggiornare nomi, descrizioni, prezzi e visibilità dall’editor catalogo.
+- Le installazioni precedenti mantengono `demo-v1.json`: dopo averlo validato, l’app aggiunge solo gli ID mancanti `product-daily-lunch` e `product-pizza-fenice`, senza rimpiazzare elementi esistenti o collisioni di slug. Soggiorni, credenziali, storico, modifiche e disattivazioni staff sono conservati. Il salvataggio è atomico e avviene soltanto se ci sono aggiunte; dati corrotti o non validi non vengono cancellati o riseminati.
+- **28 test del core superati**: inclusi upgrade idempotente, contenuti staff conservati, collisioni, errore di validazione senza perdita dati, ordini pranzo/pizza e mance separate. Build Debug simulatore riuscita; export `--check` sincronizzato con 37 elementi.
+- **Simulatore iPad Pro 13-inch (M4), iPadOS 18.3:** l’aggiornamento senza reset conserva la richiesta precedente e la mancia di 2,50 EUR; sono visibili le nuove sezioni pranzo/sera ed è stata selezionata una Pizza Fenice. Verificati anche riepilogo di un Menu del giorno senza prezzo, conferma esclusivamente locale, schermata «Richiesta salvata» e carrello svuotato. La conferma è raggiungibile con l’azione accessibile Scroll Down del form. Questo controllo è separato dalla verifica su dispositivo fisico, ancora da eseguire.
+- Nessun backend, invio ordine, pagamento, commit, push o aggiornamento TestFlight eseguito. Una build precedente non conosce le due nuove categorie: non usare il downgrade come recupero dei dati locali.
+
+## Preparazione aggiornamento completo · 24 settembre 2026
+
+Verifica ripetuta sui sorgenti iPad e pranzo/pizza: **28/28 test core**, build Debug
+simulatore e Release iOS senza firma riuscite, senza warning. Catalogo condiviso
+allineato a 37 elementi in quattro lingue; **4/4 regressioni Metal** superate.
+La distribuzione TestFlight va verificata sul nuovo commit dopo il push: questi
+controlli locali non attestano ancora caricamento, assegnazione al gruppo o prova
+su iPhone/iPad fisico. Non sono stati collegati Supabase o servizi operativi.
 
 ## Confini della demo
 

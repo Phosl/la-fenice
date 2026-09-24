@@ -21,6 +21,7 @@ struct GuestView: View {
             NavigationStack { GuestRequestsView(store: store) }
                 .tabItem { Label("Richieste", systemImage: "list.bullet.rectangle") }.tag(GuestTab.requests)
         }
+        .feniceAdaptiveTabs()
         .tint(FeniceTheme.cobalt)
         .environment(\.timeZone, RomeDay.calendar.timeZone)
         .onAppear {
@@ -125,6 +126,7 @@ private struct GuestStayView: View {
                 ContentUnavailableView("Soggiorno non disponibile", systemImage: "person.crop.circle.badge.exclamationmark", description: Text("Contatta l’amministratore per verificare l’accesso."))
             }
         }
+        .feniceReadableWidth()
         .navigationTitle("Soggiorno")
         .navigationBarTitleDisplayMode(.inline)
         .scrollContentBackground(.hidden)
@@ -164,6 +166,7 @@ private struct GuestExperiencesView: View {
                 ContentUnavailableView("Nessuna esperienza disponibile", systemImage: "sailboat", description: Text("Riprova più tardi o rivolgiti alla struttura."))
             }
         }
+        .feniceReadableWidth()
         .navigationTitle("Esperienze")
     }
 }
@@ -211,6 +214,7 @@ private struct GuestGuideView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
+        .feniceReadableWidth()
         .searchable(text: $search, prompt: "Cerca nella guida")
         .navigationTitle("Positano e dintorni")
     }
@@ -250,6 +254,7 @@ private struct GuestGuideDetail: View {
                 }
             }
         }
+        .feniceReadableWidth()
         .navigationTitle("Guida")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -276,6 +281,7 @@ private struct GuestRequestsView: View {
                 ContentUnavailableView("Nessuna richiesta", systemImage: "tray", description: Text("Gli ordini e le esperienze salvati compariranno qui con il loro stato."))
             }
         }
+        .feniceReadableWidth()
         .navigationTitle("Le tue richieste")
     }
 }
@@ -342,6 +348,7 @@ private struct GuestRequestDetail: View {
                 ContentUnavailableView("Richiesta non disponibile", systemImage: "tray")
             }
         }
+        .feniceReadableWidth()
         .navigationTitle("Dettaglio richiesta")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Annullare questa richiesta?", isPresented: $confirmCancellation, titleVisibility: .visible) {
@@ -389,8 +396,12 @@ func guestLocation(_ location: DeliveryLocation) -> String {
     switch location { case .room: String(localized: "Camera"); case .pool: String(localized: "Piscina"); case .beach: String(localized: "Spiaggia") }
 }
 
-func guestCategory(_ category: String) -> String {
+func guestCategory(_ category: String, locale: PortalLocale = .it) -> String {
     switch category {
+    case "lunch":
+        switch locale { case .en: "Lunch"; case .it: "Pranzo"; case .de: "Mittagessen"; case .ru: "Обед" }
+    case "dinner":
+        switch locale { case .en: "In the evening"; case .it: "La sera"; case .de: "Am Abend"; case .ru: "Вечером" }
     case "food": String(localized: "Da mangiare")
     case "classic-drink": String(localized: "Da bere")
     case "wine": String(localized: "Vini")

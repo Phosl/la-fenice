@@ -12,8 +12,11 @@
 /coverage
 /playwright-report
 /test-results
+/artifacts/ios/
 /artifacts/estate/*.blend*
 /artifacts/estate/estate-poster.png
+/artifacts/estate/*.png
+/artifacts/estate/context/la-fenice-location-source.html
 
 # local environment files
 .env*

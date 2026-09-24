@@ -16,7 +16,7 @@ export function AvailabilityPage({ content }: AvailabilityPageProps) {
         <PageHero image={page.heroImage} intro={page.intro} />
         <section className="page-body">
           <div className="container">
-            <AvailabilityForm locale={content.locale} page={page} />
+            <AvailabilityForm locale={content.locale} page={page} stepsNotice={content.pages.home.stepsNotice} />
           </div>
         </section>
       </main>

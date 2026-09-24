@@ -5,6 +5,98 @@ const GUEST_PASSWORD = "cliente";
 const ADMIN_CODE = "admin";
 const ADMIN_PASSWORD = "admin";
 
+type ConciergeMockState = {
+  chatBodies: Record<string, unknown>[];
+  sessionMethods: string[];
+  speechBodies: Record<string, unknown>[];
+};
+
+async function mockConciergeApi(
+  page: Page,
+  chatResponder: (
+    attempt: number,
+  ) =>
+    | {
+        status: 200;
+        body: Record<string, unknown>;
+      }
+    | {
+        status: 429 | 503;
+        code: "rate_limited" | "provider_unavailable";
+      } = () => ({
+    status: 200,
+    body: {
+      answer:
+        "Le Tre Sorelle è un indirizzo informale vicino al mare. Puoi verificare i dettagli direttamente o chiedere a La Fenice.",
+      recommendationIds: ["guide-le-tre-sorelle"],
+      suggestedPrompts: ["Qualcosa di più tranquillo?"],
+      requestId: "concierge-request-demo",
+      messageId: "concierge-message-demo",
+      speechToken: "signed-speech-token-demo",
+    },
+  }),
+): Promise<ConciergeMockState> {
+  const state: ConciergeMockState = {
+    chatBodies: [],
+    sessionMethods: [],
+    speechBodies: [],
+  };
+
+  await page.route("**/api/demo/concierge/session", async (route) => {
+    const method = route.request().method();
+    if (method === "DELETE") {
+      await new Promise((resolve) => setTimeout(resolve, 75));
+    }
+    state.sessionMethods.push(method);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ authenticated: true, configured: true }),
+    });
+  });
+
+  await page.route("**/api/demo/concierge/chat", async (route) => {
+    const body: unknown = route.request().postDataJSON();
+    if (body && typeof body === "object" && !Array.isArray(body)) {
+      state.chatBodies.push(body as Record<string, unknown>);
+    }
+    const response = chatResponder(state.chatBodies.length);
+    if (response.status === 200) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(response.body),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: response.status,
+      contentType: "application/json",
+      headers: response.status === 429 ? { "Retry-After": "12" } : undefined,
+      body: JSON.stringify({
+        ok: false,
+        code: response.code,
+        requestId: `concierge-error-${state.chatBodies.length}`,
+        ...(response.status === 429 ? { retryAfterSeconds: 12 } : {}),
+      }),
+    });
+  });
+
+  await page.route("**/api/demo/concierge/speech", async (route) => {
+    const body: unknown = route.request().postDataJSON();
+    if (body && typeof body === "object" && !Array.isArray(body)) {
+      state.speechBodies.push(body as Record<string, unknown>);
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "audio/mpeg",
+      body: "ID3\u0004\u0000\u0000\u0000\u0000\u0000\u0000",
+    });
+  });
+
+  return state;
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {
     const viewportWidth = document.documentElement.clientWidth;
@@ -158,7 +250,7 @@ test("guest login, stay calendar, order persistence, cancellation and guard work
 
 test("guest language follows the selected Russian locale", async ({ page }) => {
   await page.goto("/demo/login");
-  await page.getByLabel("Lingua").selectOption("ru");
+  await page.getByLabel("Lingua", { exact: true }).selectOption("ru");
   await expect(
     page.getByRole("heading", { level: 1, name: "Добро пожаловать в La Fenice" }),
   ).toBeVisible();
@@ -173,7 +265,7 @@ test("guest language follows the selected Russian locale", async ({ page }) => {
 
 test("guest browses the Positano guide and sends a non-binding request", async ({ page }) => {
   await loginAsGuest(page);
-  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  await page.getByRole("link", { name: "Guida e concierge" }).click();
   await expect(page).toHaveURL(/\/demo\/guide$/);
   await expect(
     page.getByRole("heading", { level: 1, name: "La nostra Positano" }),
@@ -232,14 +324,212 @@ test("guest browses the Positano guide and sends a non-binding request", async (
   ).toHaveCount(1);
   await expectNoHorizontalOverflow(page);
 
-  await page.getByLabel("Lingua").selectOption("ru");
+  await page.getByLabel("Lingua", { exact: true }).selectOption("ru");
   await expect(page.getByRole("heading", { level: 1, name: "Наш Позитано" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 });
 
+test("guest uses the virtual concierge with manual language, voice, recommendations and audio", async ({ page }) => {
+  await page.addInitScript(() => {
+    class MockAudio extends EventTarget {
+      src = "";
+
+      pause() {}
+
+      play() {
+        return Promise.resolve();
+      }
+    }
+
+    Object.defineProperty(window, "Audio", {
+      configurable: true,
+      value: MockAudio,
+    });
+  });
+  const api = await mockConciergeApi(page);
+
+  await loginAsGuest(page);
+  await page.getByRole("link", { name: "Guida e concierge" }).click();
+  await expect(page).toHaveURL(/\/demo\/guide$/);
+
+  const concierge = page.getByRole("region", {
+    name: "Il tuo concierge personale",
+  });
+  await expect(concierge).toBeVisible();
+  await expect(concierge).toHaveAttribute("lang", "it");
+  await expect(concierge.getByText("Disponibile", { exact: true })).toBeVisible();
+  await expect(
+    concierge.getByText(/voce che ascolti è generata dall.intelligenza artificiale/i),
+  ).toBeVisible();
+  await expect(
+    concierge.getByText(/una breve cronologia e le schede pertinenti della guida/i),
+  ).toBeVisible();
+  await expect(
+    concierge.getByText(/il testo della risposta viene inviato di nuovo/i),
+  ).toBeVisible();
+  await expect(concierge.getByText(/non inserire dati sensibili/i)).toBeVisible();
+  await expect(concierge.getByLabel("Suggerimenti")).toBeVisible();
+
+  const femaleVoice = concierge.getByRole("button", { name: "Voce femminile" });
+  const maleVoice = concierge.getByRole("button", { name: "Voce maschile" });
+  await expect(femaleVoice).toHaveAttribute("aria-pressed", "true");
+  await maleVoice.click();
+  await expect(maleVoice).toHaveAttribute("aria-pressed", "true");
+
+  const filters = page.getByRole("group", {
+    name: "Filtra i luoghi per categoria",
+  });
+  await filters.getByRole("button", { name: "A tavola" }).click();
+
+  const question = concierge.getByLabel("Chiedi al concierge");
+  await question.fill("Dove possiamo cenare con calma?");
+  await question.press("Enter");
+  const answer =
+    "Le Tre Sorelle è un indirizzo informale vicino al mare. Puoi verificare i dettagli direttamente o chiedere a La Fenice.";
+  await expect(concierge.getByText(answer, { exact: true })).toBeVisible();
+  await expect(
+    concierge.locator('article[data-role="user"]').last(),
+  ).toHaveAttribute("lang", "it");
+  await expect(
+    concierge.locator('article[data-role="assistant"]').last(),
+  ).toHaveAttribute("lang", "it");
+  await expect(
+    concierge.getByRole("button", { name: "Qualcosa di più tranquillo?" }),
+  ).toBeVisible();
+  await expect(concierge.locator('[aria-live="polite"]')).toHaveCount(1);
+  await expect.poll(() => api.chatBodies.length).toBe(1);
+  expect(api.chatBodies[0]).toMatchObject({
+    locale: "it",
+    category: "dining",
+    message: "Dove possiamo cenare con calma?",
+    history: [],
+  });
+  expect(api.chatBodies[0].guide).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: "guide-le-tre-sorelle",
+        category: "dining",
+        requestable: true,
+      }),
+    ]),
+  );
+
+  const recommendation = concierge.locator("aside").filter({
+    hasText: "Le Tre Sorelle",
+  });
+  const requestButton = recommendation.getByRole("button", {
+    name: "Chiedi a La Fenice",
+  });
+  await expect(requestButton).toBeVisible();
+  await requestButton.click();
+  await expect(page.getByRole("dialog", { name: "Richiedi informazioni" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Richiedi informazioni" })).toHaveCount(0);
+  await expect(requestButton).toBeFocused();
+
+  expect(api.speechBodies).toHaveLength(0);
+  const listen = concierge.getByRole("button", { name: /^Ascolta:/ });
+  await listen.click();
+  await expect.poll(() => api.speechBodies.length).toBe(1);
+  expect(api.speechBodies[0]).toMatchObject({
+    locale: "it",
+    voice: "male",
+    messageId: "concierge-message-demo",
+    text: answer,
+    speechToken: "signed-speech-token-demo",
+  });
+  await expect(
+    concierge.getByRole("button", { name: /^Interrompi:/ }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(concierge.getByRole("button", { name: /^Ascolta:/ })).toBeVisible();
+
+  await concierge.getByLabel("Lingua del concierge").selectOption("ru");
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Ваш личный консьерж" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Мужской голос" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  const russianConciergeBeforeReload = page.getByRole("region", {
+    name: "Ваш личный консьерж",
+  });
+  await expect(russianConciergeBeforeReload).toHaveAttribute("lang", "ru");
+  await expect(
+    russianConciergeBeforeReload.getByLabel("Предложения"),
+  ).toBeVisible();
+  await expect(
+    russianConciergeBeforeReload.getByRole("button", {
+      name: "Семейный ужин неподалёку",
+    }),
+  ).toBeVisible();
+  await expect(
+    russianConciergeBeforeReload.getByRole("button", {
+      name: "Qualcosa di più tranquillo?",
+    }),
+  ).toHaveCount(0);
+  await expect(
+    russianConciergeBeforeReload.locator('article[data-role="assistant"]').last(),
+  ).toHaveAttribute("lang", "it");
+
+  await page.reload();
+  const russianConcierge = page.getByRole("region", {
+    name: "Ваш личный консьерж",
+  });
+  await expect(russianConcierge).toBeVisible();
+  await expect(
+    russianConcierge.getByRole("button", { name: "Мужской голос" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(russianConcierge.getByText(answer, { exact: true })).toBeVisible();
+
+  await russianConcierge.getByRole("button", { name: "Новый диалог" }).click();
+  await russianConcierge
+    .getByRole("button", { name: "Подтвердить сброс" })
+    .click();
+  await expect(russianConcierge.getByText(answer, { exact: true })).toHaveCount(0);
+  await expect(russianConcierge.getByText(/Добро пожаловать/)).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("button", { name: "Esci" }).click();
+  await expect(page).toHaveURL(/\/demo\/login$/);
+  expect(api.sessionMethods).toContain("DELETE");
+});
+
+test("virtual concierge keeps the guide usable after rate-limit and provider errors", async ({ page }) => {
+  const api = await mockConciergeApi(page, (attempt) =>
+    attempt === 1
+      ? { status: 429, code: "rate_limited" }
+      : { status: 503, code: "provider_unavailable" },
+  );
+
+  await loginAsGuest(page);
+  await page.getByRole("link", { name: "Guida e concierge" }).click();
+  const concierge = page.getByRole("region", {
+    name: "Il tuo concierge personale",
+  });
+  const question = concierge.getByLabel("Chiedi al concierge");
+
+  await question.fill("Un ristorante tranquillo");
+  await concierge.getByRole("button", { name: "Invia" }).click();
+  await expect(concierge.getByRole("alert")).toContainText(
+    "Facciamo una breve pausa",
+  );
+  await expect(question).toHaveValue("Un ristorante tranquillo");
+
+  await concierge.getByRole("button", { name: "Invia" }).click();
+  await expect(concierge.getByRole("alert")).toContainText(
+    "Il concierge riposa un momento",
+  );
+  await expect.poll(() => api.chatBodies.length).toBe(2);
+  await expect(
+    page.getByRole("heading", { level: 3, name: "Le Tre Sorelle" }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
+
 test("staff manages guide places and confirms a concierge request", async ({ page }) => {
   await loginAsGuest(page);
-  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  await page.getByRole("link", { name: "Guida e concierge" }).click();
   const leTreSorelle = page
     .getByRole("article")
     .filter({ has: page.getByRole("heading", { level: 3, name: "Le Tre Sorelle" }) });
@@ -295,7 +585,7 @@ test("staff manages guide places and confirms a concierge request", async ({ pag
 
   await page.getByRole("main").getByRole("button", { name: "Esci" }).click();
   await loginAsGuest(page);
-  await page.getByRole("link", { name: "Guida a Positano" }).click();
+  await page.getByRole("link", { name: "Guida e concierge" }).click();
   const confirmed = page
     .getByRole("region", { name: "Richieste dalla guida" })
     .getByRole("article")

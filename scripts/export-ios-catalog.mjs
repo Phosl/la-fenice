@@ -17,7 +17,7 @@ function evaluateCatalog(source, filename, exportName) {
     fileName: filename,
   });
   const exports = {};
-  // Only the two repository seed functions run here: no require, process, network or account seed.
+  // Only public repository catalog seeds run here: no require, process, network or account seed.
   new Script(outputText, { filename }).runInNewContext({ exports }, { timeout: 1_000 });
   assert.equal(typeof exports[exportName], "function", `Missing ${exportName}`);
   return exports[exportName](timestamp);
@@ -26,12 +26,12 @@ function evaluateCatalog(source, filename, exportName) {
 const seed = await readFile(seedFile, "utf8");
 const parsed = ts.createSourceFile(fileURLToPath(seedFile), seed, ts.ScriptTarget.Latest, true);
 const catalogDeclarations = parsed.statements.filter((statement) =>
-  (ts.isFunctionDeclaration(statement) && statement.name?.text === "createSeedCatalog") ||
+  (ts.isFunctionDeclaration(statement) && ["createSeedCatalog", "createDiningSeedCatalog"].includes(statement.name?.text)) ||
   (ts.isVariableStatement(statement) && statement.declarationList.declarations.some(
     (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === "labels",
   )),
 );
-assert.equal(catalogDeclarations.length, 2, "The web catalog declarations changed; review the exporter.");
+assert.equal(catalogDeclarations.length, 3, "The web catalog declarations changed; review the exporter.");
 const catalog = [
   ...evaluateCatalog(
     catalogDeclarations.map((statement) => statement.getFullText(parsed)).join("\n") + "\nexport { createSeedCatalog };",
@@ -47,7 +47,7 @@ assert.deepEqual(catalog.reduce((counts, item) => {
   assert(!("password" in item) && !("passwordHash" in item) && !("accounts" in item), "Unexpected account data.");
   counts[item.kind] = (counts[item.kind] ?? 0) + 1;
   return counts;
-}, {}), { product: 8, activity: 3, guide: 24 }, "Catalog changed; review the exported scope.");
+}, {}), { product: 10, activity: 3, guide: 24 }, "Catalog changed; review the exported scope.");
 
 const json = `${JSON.stringify(catalog, null, 2)}\n`;
 if (process.argv.includes("--check")) {

@@ -8,6 +8,8 @@ import { LogoLockup } from "@/components/brand/logo-lockup";
 import { PageTransition } from "@/components/layout/page-transition";
 import { type DemoLocale, useDemoPortal } from "@/lib/demo-portal";
 
+import { endConciergeSession } from "./guest/concierge-client";
+import { clearAllConciergeStorage } from "./guest/concierge-storage";
 import styles from "./demo-chrome.module.css";
 
 type DemoChromeProps = {
@@ -25,61 +27,71 @@ const chromeCopy: Record<DemoLocale, {
   publicSite: string;
   skip: string;
   stay: string;
+  storageError: string;
+  retry: string;
 }> = {
   en: {
     admin: "Administration",
-    footer: "No data is sent or stored online.",
+    footer: "Demo data stays in this browser. When you use the concierge, OpenAI processes the question and relevant guide context.",
     guest: "Guest area",
     guestNavigation: "Guest navigation",
-    guide: "Positano guide",
+    guide: "Guide & concierge",
     logout: "Sign out",
     notice: "Demo data — visible only in this browser",
     publicSite: "Public website",
     skip: "Skip to content",
     stay: "Your stay",
+    storageError: "Saved demo data could not be read. Nothing has been deleted or replaced. Try again or contact the team for help recovering it.",
+    retry: "Try again",
   },
   it: {
     admin: "Amministrazione",
-    footer: "Nessun dato viene inviato o salvato online.",
+    footer: "I dati demo restano nel browser. Quando usi il concierge, OpenAI elabora la domanda e il contesto pertinente della guida.",
     guest: "Area ospite",
     guestNavigation: "Navigazione area ospite",
-    guide: "Guida a Positano",
+    guide: "Guida e concierge",
     logout: "Esci",
     notice: "Dati dimostrativi — visibili solo in questo browser",
     publicSite: "Sito pubblico",
     skip: "Salta al contenuto",
     stay: "Soggiorno",
+    storageError: "Non è possibile leggere i dati demo salvati. Nulla è stato cancellato o sostituito. Riprova oppure contatta lo staff per recuperarli.",
+    retry: "Riprova",
   },
   de: {
     admin: "Verwaltung",
-    footer: "Es werden keine Daten online gesendet oder gespeichert.",
+    footer: "Demodaten bleiben im Browser. Bei Nutzung des Concierge verarbeitet OpenAI die Frage und den passenden Guide-Kontext.",
     guest: "Gästebereich",
     guestNavigation: "Navigation im Gästebereich",
-    guide: "Positano-Guide",
+    guide: "Guide & Concierge",
     logout: "Abmelden",
     notice: "Demodaten — nur in diesem Browser sichtbar",
     publicSite: "Öffentliche Website",
     skip: "Zum Inhalt springen",
     stay: "Aufenthalt",
+    storageError: "Die gespeicherten Demodaten konnten nicht gelesen werden. Nichts wurde gelöscht oder ersetzt. Versuchen Sie es erneut oder bitten Sie das Team um Hilfe bei der Wiederherstellung.",
+    retry: "Erneut versuchen",
   },
   ru: {
     admin: "Управление",
-    footer: "Данные не отправляются и не сохраняются онлайн.",
+    footer: "Демо-данные остаются в браузере. При использовании консьержа OpenAI обрабатывает вопрос и подходящий контекст путеводителя.",
     guest: "Личный кабинет",
     guestNavigation: "Навигация личного кабинета",
-    guide: "Путеводитель по Позитано",
+    guide: "Гид и консьерж",
     logout: "Выйти",
     notice: "Демонстрационные данные видны только в этом браузере",
     publicSite: "Открыть сайт",
     skip: "Перейти к содержимому",
     stay: "Проживание",
+    storageError: "Не удалось прочитать сохранённые демо-данные. Ничего не удалено и не заменено. Повторите попытку или обратитесь к команде за помощью в восстановлении.",
+    retry: "Повторить попытку",
   },
 };
 
 export function DemoChrome({ children }: DemoChromeProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentStay, logout, session } = useDemoPortal();
+  const { bootstrapError, currentStay, logout, session } = useDemoPortal();
   const isAdmin = pathname.startsWith("/demo/admin");
   const locale: DemoLocale =
     session?.role === "guest" && currentStay ? currentStay.locale : "it";
@@ -93,8 +105,12 @@ export function DemoChrome({ children }: DemoChromeProps) {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  function handleLogout() {
+  async function handleLogout() {
     const role = session?.role;
+    if (role === "guest") {
+      clearAllConciergeStorage();
+      await endConciergeSession();
+    }
     logout();
     router.push(role === "admin" ? "/demo/admin/login" : "/demo/login");
   }
@@ -127,7 +143,11 @@ export function DemoChrome({ children }: DemoChromeProps) {
             {copy.publicSite}
           </Link>
           {session ? (
-            <button className={styles.logoutButton} onClick={handleLogout} type="button">
+            <button
+              className={styles.logoutButton}
+              onClick={() => void handleLogout()}
+              type="button"
+            >
               {copy.logout}
             </button>
           ) : null}
@@ -152,7 +172,14 @@ export function DemoChrome({ children }: DemoChromeProps) {
       ) : null}
 
       <main className={styles.main} id="main-content">
-        <PageTransition>{children}</PageTransition>
+        {bootstrapError ? (
+          <section aria-label={copy.guest}>
+            <p role="alert">{copy.storageError}</p>
+            <button className={styles.logoutButton} onClick={() => window.location.reload()} type="button">
+              {copy.retry}
+            </button>
+          </section>
+        ) : <PageTransition>{children}</PageTransition>}
       </main>
 
       <footer className={styles.footer}>

@@ -57,12 +57,16 @@ interface DemoPricedCatalogItemBase extends DemoCatalogItemBase {
   priceCents?: number;
 }
 
-export type DemoProductCategory =
-  | "food"
-  | "classic-drink"
-  | "wine"
-  | "champagne"
-  | "raw-fish";
+export const DEMO_PRODUCT_CATEGORIES = [
+  "lunch",
+  "dinner",
+  "food",
+  "classic-drink",
+  "wine",
+  "champagne",
+  "raw-fish",
+] as const;
+export type DemoProductCategory = (typeof DEMO_PRODUCT_CATEGORIES)[number];
 
 export interface DemoProductCatalogItem extends DemoPricedCatalogItemBase {
   kind: "product";
@@ -318,6 +322,8 @@ export type DemoPortalErrorCode =
   | "not_found"
   | "duplicate_login_code"
   | "invalid_status_transition"
+  | "invalid_storage"
+  | "storage_unavailable"
   | "concurrent_update";
 
 export class DemoPortalError extends Error {

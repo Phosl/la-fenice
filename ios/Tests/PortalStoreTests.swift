@@ -426,6 +426,102 @@ final class PortalStoreTests: XCTestCase {
         }
     }
 
+    func testDiningCatalogUpgradePreservesStateAndAdminOverrides() async throws {
+        let fileURL = try temporaryDirectory().appendingPathComponent("state.json")
+        let bundle = try catalog()
+        let diningIDs = ["product-daily-lunch", "product-pizza-fenice"]
+        let original = try PortalStore(catalog: bundle.filter { !diningIDs.contains($0.id) }, fileURL: fileURL, clock: { self.referenceNow })
+        try guest(original)
+        _ = try order(original, tipCents: 250)
+        try admin(original)
+        var edited = try XCTUnwrap(original.state.catalog.first)
+        edited.labels["it"] = "Nome scelto dallo staff"
+        edited.priceCents = 1_800
+        edited.active = false
+        try original.saveItem(edited)
+
+        let upgraded = try store(at: fileURL)
+        XCTAssertEqual(upgraded.state.catalog.filter { !diningIDs.contains($0.id) }, original.state.catalog)
+        XCTAssertEqual(upgraded.state.catalog.count, original.state.catalog.count + 2)
+        XCTAssertEqual(upgraded.state.requests, original.state.requests)
+        XCTAssertEqual(upgraded.state.stays, original.state.stays)
+        XCTAssertEqual(upgraded.state.accounts.map(\.id), original.state.accounts.map(\.id))
+        XCTAssertEqual(upgraded.state.accounts.map(\.passwordHash), original.state.accounts.map(\.passwordHash))
+        try admin(upgraded)
+        var lunch = try XCTUnwrap(upgraded.state.catalog.first { $0.id == diningIDs[0] })
+        lunch.labels["it"] = "Menu aggiornato dallo staff"
+        lunch.priceCents = 2_200
+        lunch.active = false
+        try upgraded.saveItem(lunch)
+
+        let savedBytes = try Data(contentsOf: fileURL)
+        let reopened = try store(at: fileURL)
+        XCTAssertEqual(reopened.state.catalog, upgraded.state.catalog)
+        XCTAssertEqual(try Data(contentsOf: fileURL), savedBytes, "A repeated launch must not rewrite or reactivate staff content")
+        XCTAssertNil(reopened.account)
+    }
+
+    func testDiningCatalogUpgradeRespectsSlugConflictsAndDoesNotWriteInvalidData() async throws {
+        let bundle = try catalog()
+        let diningIDs = ["product-daily-lunch", "product-pizza-fenice"]
+        let previousCatalog = bundle.filter { !diningIDs.contains($0.id) }
+        let fileURL = try temporaryDirectory().appendingPathComponent("state.json")
+        let original = try PortalStore(catalog: previousCatalog, fileURL: fileURL, clock: { self.referenceNow })
+        try admin(original)
+        var staffItem = try XCTUnwrap(bundle.first { $0.id == diningIDs[0] })
+        staffItem.id = "staff-owned-lunch"
+        staffItem.labels["it"] = "Proposta dello staff"
+        try original.saveItem(staffItem)
+        let upgraded = try store(at: fileURL)
+        XCTAssertEqual(upgraded.state.catalog.first { $0.slug == staffItem.slug }, staffItem)
+        XCTAssertFalse(upgraded.state.catalog.contains { $0.id == diningIDs[0] })
+        XCTAssertTrue(upgraded.state.catalog.contains { $0.id == diningIDs[1] })
+
+        let invalidFile = try temporaryDirectory().appendingPathComponent("state.json")
+        _ = try PortalStore(catalog: previousCatalog, fileURL: invalidFile, clock: { self.referenceNow })
+        let bytes = try Data(contentsOf: invalidFile)
+        var invalidBundle = bundle
+        let index = try XCTUnwrap(invalidBundle.firstIndex { $0.id == diningIDs[0] })
+        invalidBundle[index].priceCents = -1
+        expect(.invalidInput) {
+            _ = try PortalStore(catalog: invalidBundle, fileURL: invalidFile, clock: { self.referenceNow })
+        }
+        XCTAssertEqual(try Data(contentsOf: invalidFile), bytes)
+    }
+
+    func testLunchAndEveningPizzaReuseOrderSnapshotsAndTipAccounting() async throws {
+        let store = try store()
+        try guest(store)
+        let lunch = try XCTUnwrap(store.activeCatalog(.product).first { $0.id == "product-daily-lunch" })
+        let pizza = try XCTUnwrap(store.activeCatalog(.product).first { $0.id == "product-pizza-fenice" })
+        XCTAssertEqual(lunch.category, "lunch")
+        XCTAssertEqual(pizza.category, "dinner")
+        for item in [lunch, pizza] {
+            XCTAssertNil(item.priceCents)
+            for locale in PortalLocale.allCases {
+                XCTAssertFalse(item.title(locale).isEmpty)
+                XCTAssertFalse(item.detail(locale).isEmpty)
+            }
+        }
+        let lunchRequest = try store.submitOrder(date: store.today, location: .room, time: "14:30", notes: "",
+                                                quantities: [lunch.id: 2], tipCents: 200, clientRequestID: UUID().uuidString)
+        let pizzaRequest = try store.submitOrder(date: store.today, location: .room, time: "20:30", notes: "",
+                                                quantities: [pizza.id: 1], tipCents: 300, clientRequestID: UUID().uuidString)
+        XCTAssertNil(lunchRequest.totalCents)
+        XCTAssertNil(pizzaRequest.totalCents)
+        try admin(store)
+        var updatedLunch = lunch
+        updatedLunch.labels["it"] = "Menu del giorno seguente"
+        updatedLunch.priceCents = 2_500
+        try store.saveItem(updatedLunch)
+        try store.updateRequest(id: lunchRequest.id, status: .confirmed, staffNote: "Da concordare")
+        XCTAssertEqual(store.state.requests.first { $0.id == lunchRequest.id }?.lines, lunchRequest.lines)
+        let bill = store.orderBill(for: lunchRequest.stayID)
+        XCTAssertNil(bill.totalCents)
+        XCTAssertEqual(bill.tipCents, 200)
+        XCTAssertEqual(bill.pendingTipCents, 300)
+    }
+
     func testKnownOrderTotalIncludesTipExactlyOnceAndAcceptsBoundary() async throws {
         let store = try store()
         try admin(store)

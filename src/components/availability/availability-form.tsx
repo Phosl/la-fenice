@@ -6,13 +6,14 @@ import { submitAvailabilityAction, type AvailabilityActionState } from "@/app/ac
 import { ArrowIcon } from "@/components/ui/icons";
 import { getLocalizedPath } from "@/lib/content/routes";
 import { siteIdentity } from "@/lib/content/site";
-import type { AvailabilityPageContent, Locale } from "@/lib/content/types";
+import type { AvailabilityPageContent, HomePageContent, Locale } from "@/lib/content/types";
 
 const initialState: AvailabilityActionState = { status: "idle" };
 
 type AvailabilityFormProps = {
   locale: Locale;
   page: AvailabilityPageContent;
+  stepsNotice: HomePageContent["stepsNotice"];
 };
 
 function localizedIssue(
@@ -30,7 +31,7 @@ function localizedIssue(
   return page.form.validation.required;
 }
 
-export function AvailabilityForm({ locale, page }: AvailabilityFormProps) {
+export function AvailabilityForm({ locale, page, stepsNotice }: AvailabilityFormProps) {
   const [state, action, pending] = useActionState(submitAvailabilityAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -62,6 +63,42 @@ export function AvailabilityForm({ locale, page }: AvailabilityFormProps) {
         </div>
 
         <p>{page.form.requiredHint}</p>
+        <fieldset aria-describedby="availability-steps-title availability-steps-notice" className="availability-dates">
+          <legend>{page.form.datesTitle}</legend>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="checkIn">{page.form.fields.checkIn.label}</label>
+              <input
+                aria-describedby={issue("checkIn") ? "check-in-error" : undefined}
+                aria-invalid={Boolean(issue("checkIn"))}
+                id="checkIn"
+                name="checkIn"
+                required
+                type="date"
+              />
+              {issue("checkIn") ? <span className="field-error" id="check-in-error">{issue("checkIn")}</span> : null}
+            </div>
+
+            <div className="field">
+              <label htmlFor="checkOut">{page.form.fields.checkOut.label}</label>
+              <input
+                aria-describedby={issue("checkOut") ? "check-out-error" : undefined}
+                aria-invalid={Boolean(issue("checkOut"))}
+                id="checkOut"
+                name="checkOut"
+                required
+                type="date"
+              />
+              {issue("checkOut") ? <span className="field-error" id="check-out-error">{issue("checkOut")}</span> : null}
+            </div>
+          </div>
+        </fieldset>
+
+        <aside aria-labelledby="availability-steps-title" className="availability-steps">
+          <strong id="availability-steps-title">{stepsNotice.title}</strong>
+          <p id="availability-steps-notice">{stepsNotice.text}</p>
+        </aside>
+
         <div className="form-grid">
           <div className="field">
             <label htmlFor="name">{page.form.fields.name.label}</label>
@@ -120,32 +157,6 @@ export function AvailabilityForm({ locale, page }: AvailabilityFormProps) {
               type="number"
             />
             {issue("guests") ? <span className="field-error" id="guests-error">{issue("guests")}</span> : null}
-          </div>
-
-          <div className="field">
-            <label htmlFor="checkIn">{page.form.fields.checkIn.label}</label>
-            <input
-              aria-describedby={issue("checkIn") ? "check-in-error" : undefined}
-              aria-invalid={Boolean(issue("checkIn"))}
-              id="checkIn"
-              name="checkIn"
-              required
-              type="date"
-            />
-            {issue("checkIn") ? <span className="field-error" id="check-in-error">{issue("checkIn")}</span> : null}
-          </div>
-
-          <div className="field">
-            <label htmlFor="checkOut">{page.form.fields.checkOut.label}</label>
-            <input
-              aria-describedby={issue("checkOut") ? "check-out-error" : undefined}
-              aria-invalid={Boolean(issue("checkOut"))}
-              id="checkOut"
-              name="checkOut"
-              required
-              type="date"
-            />
-            {issue("checkOut") ? <span className="field-error" id="check-out-error">{issue("checkOut")}</span> : null}
           </div>
 
           <div className="field field--full">

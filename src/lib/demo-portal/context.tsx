@@ -66,6 +66,7 @@ import { DemoPortalError } from "./types";
 
 export interface DemoPortalContextValue {
   ready: boolean;
+  bootstrapError: boolean;
   state: DemoPortalState | null;
   session: DemoSession | null;
   today: string;
@@ -104,6 +105,7 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<DemoSession | null>(null);
   const sessionRef = useRef<DemoSession | null>(null);
   const [ready, setReady] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState(false);
   const [lastMutationError, setLastMutationError] =
     useState<DemoPortalError | null>(null);
   const today = getRomeToday();
@@ -125,6 +127,13 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
           ? { ...next, revision: current.revision + 1 }
           : next;
       const saveResult = saveDemoState(candidate, current?.revision);
+      if (!saveResult.ok && saveResult.reason === "storage_unavailable") {
+        throw new DemoPortalError("storage_unavailable", "The demo could not be saved. Your changes have not been applied.");
+      }
+      if (!saveResult.ok && saveResult.reason === "invalid_storage") {
+        setBootstrapError(true);
+        throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+      }
       if (!saveResult.ok && saveResult.reason === "concurrent_update") {
         if (saveResult.current) {
           stateRef.current = saveResult.current;
@@ -162,6 +171,9 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
         : await createDemoPortalSeed();
       if (stored && initial !== stored) {
         const saveResult = saveDemoState(initial, stored.revision);
+        if (!saveResult.ok && saveResult.reason === "invalid_storage") {
+          throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+        }
         if (
           !saveResult.ok &&
           saveResult.reason === "concurrent_update" &&
@@ -170,7 +182,10 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
           initial = saveResult.current;
         }
       } else if (!stored) {
-        saveDemoState(initial);
+        const saveResult = saveDemoState(initial);
+        if (!saveResult.ok && saveResult.reason === "invalid_storage") {
+          throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+        }
       }
       if (cancelled) return;
       stateRef.current = initial;
@@ -184,9 +199,17 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
       if (!validSession) saveDemoSession(null);
       setReady(true);
     };
-    void bootstrap();
+    void bootstrap().catch(() => {
+      if (!cancelled) setBootstrapError(true);
+    });
     const unsubscribe = subscribeToDemoState((next) => {
-      const persisted = loadDemoState();
+      let persisted: DemoPortalState | null;
+      try {
+        persisted = loadDemoState();
+      } catch {
+        setBootstrapError(true);
+        return;
+      }
       const incoming =
         persisted && persisted.revision >= next.revision ? persisted : next;
       const current = stateRef.current;
@@ -429,6 +452,7 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DemoPortalContextValue>(
     () => ({
       ready,
+      bootstrapError,
       state,
       session,
       today,
@@ -456,6 +480,7 @@ export function DemoPortalProvider({ children }: { children: ReactNode }) {
     }),
     [
       ready,
+      bootstrapError,
       state,
       session,
       today,

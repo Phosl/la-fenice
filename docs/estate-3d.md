@@ -341,3 +341,18 @@ Before a new public deployment, review and patch at least
 and [Sharp's libheif advisory](https://github.com/lovell/sharp/security/advisories/GHSA-rgj7-g3m4-5g8c),
 including the explicit Sharp override, then repeat audit/build/browser verification.
 The dependency changes are intentionally not bundled into this 3D-only push.
+
+### Full-source release follow-up · 24 September 2026
+
+The subsequent full-source release updates Next and its ESLint config to 16.3.6,
+the explicit Sharp override to 0.35.4, Nano ID to 3.3.19 and js-yaml to 4.3.2.
+`npm audit --omit=dev` now reports **zero advisories**. Two moderate development-only
+alerts remain in the Vitest 3 / mocker chain; upgrading that test runner across a
+major version is deferred, and no Vitest server is exposed publicly.
+Typecheck, lint, all **121 unit tests** and the production build pass with the
+updated dependencies. The full browser suite passes **130 checks**, with 20
+deliberate viewport-specific skips, at 360, 768 and 1440 pixels (local Chrome).
+The Next.js architecture audit reports zero errors and 20 heuristic warnings.
+This does not attest a Vercel deployment or a physical-device
+test; App Store Connect processing and internal TestFlight assignment are verified
+separately for the resulting commit.

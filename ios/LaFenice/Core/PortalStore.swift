@@ -60,6 +60,15 @@ final class PortalStore {
                 state = try JSONDecoder().decode(PortalState.self, from: bytes)
                 try Self.validate(state)
             } catch { throw PortalError.corruptData }
+            let additions = catalog.filter { item in
+                ["product-daily-lunch", "product-pizza-fenice"].contains(item.id)
+                    && !state.catalog.contains { $0.id == item.id || $0.slug == item.slug }
+            }
+            if !additions.isEmpty {
+                var next = state
+                next.catalog.append(contentsOf: additions)
+                try commit(next)
+            }
         } else {
             let stay = Stay(surname: "Rossi", guestName: "Famiglia Rossi", room: "Camera 3 · Terrazza mare", guests: 2,
                             checkIn: RomeDay.key(RomeDay.adding(-2, to: instant)), checkOut: RomeDay.key(RomeDay.adding(4, to: instant)), locale: .it)

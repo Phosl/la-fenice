@@ -229,8 +229,8 @@ export const germanContent = {
         ],
       },
       stepsNotice: {
-        title: "Barrierefreiheit",
-        text: "Viele Stufen verbinden Straße, Zimmer, Gärten und Meer. Schreiben Sie uns vor Ihrem Aufenthalt bei besonderen Mobilitätsbedürfnissen.",
+        title: "Ein Hinweis zu den Treppen",
+        text: "La Fenice erstreckt sich über mehrere Ebenen, die durch zahlreiche Treppen verbunden sind. Die Unterkunft ist möglicherweise nicht für Menschen mit eingeschränkter Mobilität oder Schwierigkeiten beim Treppensteigen geeignet. Bitte kontaktieren Sie uns vor der Buchung, damit wir gemeinsam Ihre Bedürfnisse besprechen können.",
       },
       estate: {
         eyebrow: "Das Anwesen entdecken", title: "Viele Ebenen. Ein Meer.",
@@ -535,6 +535,7 @@ export const germanContent = {
       heroImage: availabilityImage,
       form: {
         title: "Ihre Anfrage",
+        datesTitle: "Wählen Sie Ihre Reisedaten",
         requiredHint: "Mit * gekennzeichnete Felder sind Pflichtfelder.",
         honeypotLabel: "Website",
         fields: {

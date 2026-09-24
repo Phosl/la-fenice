@@ -8,6 +8,7 @@ import type {
   DemoPortalContextValue,
   DemoProductCatalogItem,
 } from "@/lib/demo-portal";
+import { DEMO_PRODUCT_CATEGORIES } from "@/lib/demo-portal";
 
 import type { GuestCopy, GuestShopCategory } from "./copy";
 import { createClientRequestId, formatGuestPrice } from "./format";
@@ -25,11 +26,7 @@ type SubmitStatus = "idle" | "success" | "error";
 
 const shopCategories: readonly GuestShopCategory[] = [
   "all",
-  "food",
-  "classic-drink",
-  "wine",
-  "champagne",
-  "raw-fish",
+  ...DEMO_PRODUCT_CATEGORIES,
 ];
 
 export function ShopPanel({
@@ -151,51 +148,64 @@ export function ShopPanel({
               </div>
 
               {visibleProducts.length ? (
-                <div className={styles.catalogGrid}>
-                  {visibleProducts.map((product) => {
-                    const quantity = quantities[product.id] ?? 0;
-                    const productName = product.labels[locale];
+                <div className={styles.requestForm}>
+                  {DEMO_PRODUCT_CATEGORIES.map((productCategory) => {
+                    const group = visibleProducts.filter((product) => product.category === productCategory);
+                    if (!group.length) return null;
                     return (
-                      <article className={styles.catalogItem} data-active={quantity > 0} key={product.id}>
-                        <div className={styles.itemTopline}>
-                          <strong>{productName}</strong>
-                          <span className={styles.price}>
-                            {product.priceCents == null
-                              ? copy.order.priceOnRequest
-                              : `${formatGuestPrice(product.priceCents, locale)} ${copy.order.each}`}
-                          </span>
+                      <section aria-labelledby={`shop-${productCategory}`} key={productCategory}>
+                        <h4 className={styles.panelLead} id={`shop-${productCategory}`}>
+                          {copy.order.categories[productCategory]}
+                        </h4>
+                        <div className={styles.catalogGrid}>
+                          {group.map((product) => {
+                            const quantity = quantities[product.id] ?? 0;
+                            const productName = product.labels[locale];
+                            return (
+                              <article className={styles.catalogItem} data-active={quantity > 0} key={product.id}>
+                                <div className={styles.itemTopline}>
+                                  <strong>{productName}</strong>
+                                  <span className={styles.price}>
+                                    {product.priceCents == null
+                                      ? copy.order.priceOnRequest
+                                      : `${formatGuestPrice(product.priceCents, locale)} ${copy.order.each}`}
+                                  </span>
+                                </div>
+                                {product.description?.[locale] ? (
+                                  <p className={styles.requestMeta}>{product.description[locale]}</p>
+                                ) : null}
+                                <div
+                                  aria-label={`${copy.order.quantityFor} ${productName}`}
+                                  className={styles.quantityControl}
+                                  role="group"
+                                >
+                                  <button
+                                    aria-label={`${copy.order.quantityDecrease}: ${productName}`}
+                                    className={styles.quantityButton}
+                                    disabled={quantity === 0}
+                                    onClick={() => changeQuantity(product.id, -1)}
+                                    type="button"
+                                  >
+                                    <span aria-hidden="true">−</span>
+                                  </button>
+                                  <output aria-live="polite" className={styles.quantityValue}>
+                                    {quantity}
+                                  </output>
+                                  <button
+                                    aria-label={`${copy.order.quantityIncrease}: ${productName}`}
+                                    className={styles.quantityButton}
+                                    disabled={quantity >= 20}
+                                    onClick={() => changeQuantity(product.id, 1)}
+                                    type="button"
+                                  >
+                                    <span aria-hidden="true">+</span>
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
-                        {product.description?.[locale] ? (
-                          <p className={styles.requestMeta}>{product.description[locale]}</p>
-                        ) : null}
-                        <div
-                          aria-label={`${copy.order.quantityFor} ${productName}`}
-                          className={styles.quantityControl}
-                          role="group"
-                        >
-                          <button
-                            aria-label={`${copy.order.quantityDecrease}: ${productName}`}
-                            className={styles.quantityButton}
-                            disabled={quantity === 0}
-                            onClick={() => changeQuantity(product.id, -1)}
-                            type="button"
-                          >
-                            <span aria-hidden="true">−</span>
-                          </button>
-                          <output aria-live="polite" className={styles.quantityValue}>
-                            {quantity}
-                          </output>
-                          <button
-                            aria-label={`${copy.order.quantityIncrease}: ${productName}`}
-                            className={styles.quantityButton}
-                            disabled={quantity >= 20}
-                            onClick={() => changeQuantity(product.id, 1)}
-                            type="button"
-                          >
-                            <span aria-hidden="true">+</span>
-                          </button>
-                        </div>
-                      </article>
+                      </section>
                     );
                   })}
                 </div>

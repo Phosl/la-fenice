@@ -13,6 +13,7 @@ import { GuestLanguageSelect } from "./guest-language-select";
 import { GuideRequestModal } from "./guide-request-modal";
 import { GuideRequests } from "./guide-requests";
 import { useGuestPortalAccess } from "./use-guest-portal-access";
+import { VirtualConcierge } from "./virtual-concierge";
 import styles from "./guide.module.css";
 
 type GuideFilter = DemoGuideCategory | "all";
@@ -97,6 +98,14 @@ export function PositanoGuide() {
           onChange={setGuestLocale}
         />
       </header>
+
+      <VirtualConcierge
+        category={filter}
+        defaultLocale={locale}
+        guideItems={items}
+        onRequest={setSelectedItem}
+        stayId={currentStay.id}
+      />
 
       <section aria-labelledby="guide-places-title" className={styles.placesSection}>
         <h2 className={styles.visuallyHidden} id="guide-places-title">

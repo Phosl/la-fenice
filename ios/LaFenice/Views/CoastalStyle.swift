@@ -1,6 +1,33 @@
 import Metal
 import SwiftUI
 
+extension View {
+    @ViewBuilder
+    func feniceAdaptiveTabs() -> some View {
+        if #available(iOS 18.0, *) {
+            self.tabViewStyle(.sidebarAdaptable)
+        } else {
+            self
+        }
+    }
+
+    func feniceReadableWidth(_ maximum: CGFloat = 760) -> some View {
+        modifier(FeniceReadableWidth(maximum: maximum))
+    }
+}
+
+private struct FeniceReadableWidth: ViewModifier {
+    let maximum: CGFloat
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: sizeClass == .regular ? maximum : .infinity)
+            .frame(maxWidth: .infinity)
+            .background(FeniceTheme.paper)
+    }
+}
+
 struct FenicePrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 

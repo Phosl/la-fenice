@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/content/types";
 import { DEMO_GUEST_CREDENTIALS, useDemoPortal } from "@/lib/demo-portal";
 
+import { establishConciergeSession } from "./concierge-client";
 import { guestDemoCopy, guestDemoLocales, isGuestDemoLocale } from "./copy";
 import styles from "./guest.module.css";
 
@@ -21,34 +22,44 @@ export function GuestLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
+  const [conciergeHandshakeReady, setConciergeHandshakeReady] = useState(true);
   const [copied, setCopied] = useState<CopiedField>(null);
   const pendingLocaleRef = useRef<Locale | null>(null);
   const copy = guestDemoCopy[locale];
 
   useEffect(() => {
-    if (ready && session?.role === "guest") {
+    if (ready && conciergeHandshakeReady && session?.role === "guest") {
       const pendingLocale = pendingLocaleRef.current;
       pendingLocaleRef.current = null;
       if (pendingLocale) setGuestLocale(pendingLocale);
       router.replace("/demo/stay");
     }
-  }, [ready, router, session, setGuestLocale]);
+  }, [conciergeHandshakeReady, ready, router, session, setGuestLocale]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
 
     setPending(true);
+    setConciergeHandshakeReady(false);
     setError(false);
     const result = await login(loginCode, password, "guest");
 
     if (result.ok) {
       pendingLocaleRef.current = locale;
+      try {
+        await establishConciergeSession({ loginCode, password });
+      } catch {
+        // The guest area and its curated guide remain available without OpenAI.
+      } finally {
+        setConciergeHandshakeReady(true);
+      }
       return;
     }
 
     setError(true);
     setPending(false);
+    setConciergeHandshakeReady(true);
   }
 
   async function copyCredential(field: Exclude<CopiedField, null>, value: string) {

@@ -52,7 +52,7 @@ struct CatalogItem: Codable, Identifiable, Equatable {
 
     func title(_ locale: PortalLocale) -> String { labels[locale.rawValue] ?? labels["en"] ?? slug }
     func detail(_ locale: PortalLocale) -> String { description?[locale.rawValue] ?? description?["en"] ?? "" }
-    static let productCategories = ["food", "classic-drink", "wine", "champagne", "raw-fish"]
+    static let productCategories = ["lunch", "dinner", "food", "classic-drink", "wine", "champagne", "raw-fish"]
     static let activityCategories = ["fishing", "boat-trip", "lemon-grove", "other"]
     static let guideCategories = ["dining", "after-dark", "sea", "see", "getting-around", "essentials"]
     var categories: [String] {

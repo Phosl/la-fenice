@@ -23,6 +23,7 @@ private struct AdminRequestsView: View {
     @State private var kind = "all"
     @State private var status = "all"
     @State private var showFilters = false
+    @State private var selectedRequestID: String?
 
     private var requests: [ServiceRequest] {
         store.visibleRequests.filter {
@@ -35,8 +36,8 @@ private struct AdminRequestsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
+        NavigationSplitView {
+            List(selection: $selectedRequestID) {
                 Section {
                     let pending = store.visibleRequests.filter { $0.status == .pending }.count
                     VStack(alignment: .leading, spacing: 10) {
@@ -76,9 +77,7 @@ private struct AdminRequestsView: View {
                         ContentUnavailableView("Nessuna richiesta", systemImage: "tray", description: Text("Le richieste degli ospiti compariranno qui. Puoi cambiare i filtri."))
                     }
                     ForEach(requests) { request in
-                        NavigationLink {
-                            AdminRequestDetail(store: store, request: request)
-                        } label: {
+                        NavigationLink(value: request.id) {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(request.title(store.locale)).font(.headline)
                                 if let stay = store.state.stays.first(where: { $0.id == request.stayID }) {
@@ -97,13 +96,23 @@ private struct AdminRequestsView: View {
             .scrollContentBackground(.hidden)
             .background(FeniceTheme.paper)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { AdminAccountMenu(store: store) } }
+            .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
+        } detail: {
+            if let request = store.visibleRequests.first(where: { $0.id == selectedRequestID }) {
+                AdminRequestDetail(store: store, request: request)
+                    .id(request.id)
+            } else {
+                ContentUnavailableView("Scegli una richiesta", systemImage: "tray", description: Text("Seleziona una richiesta per vedere i dettagli e aggiornare lo stato."))
+            }
         }
+        .navigationSplitViewStyle(.balanced)
     }
 }
 
 private struct AdminRequestDetail: View {
     @Bindable var store: PortalStore
     let initialRequest: ServiceRequest
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var status: RequestStatus
     @State private var staffNote: String
     @State private var confirmation = false
@@ -174,7 +183,8 @@ private struct AdminRequestDetail: View {
                 Text(request.status.next.isEmpty ? "La richiesta è conclusa. Puoi aggiornare soltanto la nota." : "La nota è visibile all’ospite. Le modifiche rimangono su questo dispositivo.")
             }
         }
-        .navigationTitle("Dettaglio richiesta")
+        .feniceReadableWidth()
+        .navigationTitle(sizeClass == .regular ? "" : "Dettaglio richiesta")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Impostare lo stato «\(AdminCopy.status(status))»?", isPresented: $confirmation, titleVisibility: .visible) {
             Button("Conferma modifica", role: status == .cancelled || status == .rejected ? .destructive : nil) { save() }
@@ -197,6 +207,7 @@ private struct AdminStaysView: View {
     @Bindable var store: PortalStore
     @State private var search = ""
     @State private var creating = false
+    @State private var selectedStayID: String?
 
     private var stays: [Stay] {
         store.state.stays.filter { search.isEmpty || "\($0.surname) \($0.guestName) \($0.room)".localizedCaseInsensitiveContains(search) }
@@ -204,11 +215,11 @@ private struct AdminStaysView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
+        NavigationSplitView {
+            List(selection: $selectedStayID) {
                 if stays.isEmpty { ContentUnavailableView.search(text: search) }
                 ForEach(stays) { stay in
-                    NavigationLink { AdminStayDetail(store: store, stay: stay) } label: {
+                    NavigationLink(value: stay.id) {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(stay.guestName).font(.headline)
                             Text("\(stay.room) · \(stay.guests) ospiti")
@@ -225,13 +236,26 @@ private struct AdminStaysView: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Aggiungi", systemImage: "plus") { creating = true } }
             }
             .sheet(isPresented: $creating) { AdminStayForm(store: store, stay: nil) }
+            .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
+        } detail: {
+            NavigationStack {
+                if let stay = store.state.stays.first(where: { $0.id == selectedStayID }) {
+                    AdminStayDetail(store: store, stay: stay)
+                        .id(stay.id)
+                } else {
+                    ContentUnavailableView("Scegli un soggiorno", systemImage: "bed.double", description: Text("Seleziona un ospite per vedere soggiorno, conto e richieste."))
+                }
+            }
+            .id(selectedStayID)
         }
+        .navigationSplitViewStyle(.balanced)
     }
 }
 
 private struct AdminStayDetail: View {
     @Bindable var store: PortalStore
     let initialStay: Stay
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var editing = false
     @State private var resetConfirmation = false
     @State private var disableConfirmation = false
@@ -272,7 +296,7 @@ private struct AdminStayDetail: View {
                 let requests = store.visibleRequests.filter { $0.stayID == stay.id }
                 if requests.isEmpty { Text("Nessuna richiesta").foregroundStyle(.secondary) }
                 ForEach(requests) { request in
-                    NavigationLink { AdminRequestDetail(store: store, request: request) } label: {
+                    NavigationLink { AdminRequestDetail(store: store, request: request).id(request.id) } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(request.title(store.locale))
                             Text("\(AdminCopy.day(request.serviceDate)) · \(AdminCopy.status(request.status))").font(.subheadline).foregroundStyle(.secondary)
@@ -281,7 +305,8 @@ private struct AdminStayDetail: View {
                 }
             }
         }
-        .navigationTitle(stay.guestName)
+        .feniceReadableWidth()
+        .navigationTitle(sizeClass == .regular ? "" : stay.guestName)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $editing) { AdminStayForm(store: store, stay: stay) }
         .sheet(item: $credential) { AdminCredentialView(credential: $0) }
@@ -343,6 +368,7 @@ private struct AdminCatalogView: View {
                     }
                 } footer: { Text("Le modifiche riguardano soltanto la demo locale, non il sito pubblico.") }
             }
+            .feniceReadableWidth()
             .searchable(text: $search, prompt: "Cerca nel catalogo")
             .navigationTitle("Catalogo")
             .toolbar {
@@ -405,7 +431,7 @@ enum AdminCopy {
         switch value { case .room: "Camera"; case .pool: "Piscina"; case .beach: "Spiaggia" }
     }
     static func category(_ value: String) -> String {
-        ["food": "Cibo", "classic-drink": "Drink", "wine": "Vini", "champagne": "Champagne", "raw-fish": "Crudo di pesce", "fishing": "Pesca", "boat-trip": "Gita in barca", "lemon-grove": "Limonaia", "other": "Altre esperienze", "dining": "Mangiare", "after-dark": "La sera", "sea": "Mare", "see": "Da vedere", "getting-around": "Spostarsi", "essentials": "Servizi utili"][value] ?? value
+        ["lunch": "Pranzo", "dinner": "Pizza la sera", "food": "Cibo", "classic-drink": "Drink", "wine": "Vini", "champagne": "Champagne", "raw-fish": "Crudo di pesce", "fishing": "Pesca", "boat-trip": "Gita in barca", "lemon-grove": "Limonaia", "other": "Altre esperienze", "dining": "Mangiare", "after-dark": "La sera", "sea": "Mare", "see": "Da vedere", "getting-around": "Spostarsi", "essentials": "Servizi utili"][value] ?? value
     }
     static func price(_ cents: Int) -> String { (Decimal(cents) / 100).formatted(.currency(code: "EUR").locale(Locale(identifier: "it_IT"))) }
     static func day(_ value: String) -> String {

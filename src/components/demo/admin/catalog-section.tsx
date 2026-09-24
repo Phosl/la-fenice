@@ -2,6 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 import {
+  DEMO_PRODUCT_CATEGORIES,
   type DemoActivityCategory,
   type DemoActivityCatalogItem,
   type DemoCatalogItemInput,
@@ -12,13 +13,19 @@ import {
 import { AdminModal, formatPrice } from "./admin-ui";
 import styles from "./admin.module.css";
 
-const productCategories: Array<{ value: DemoProductCategory; label: string }> = [
-  { value: "food", label: "Cibo" },
-  { value: "classic-drink", label: "Bevanda classica" },
-  { value: "wine", label: "Vino" },
-  { value: "champagne", label: "Champagne" },
-  { value: "raw-fish", label: "Crudo di pesce" },
-];
+const productCategoryLabels: Record<DemoProductCategory, string> = {
+  lunch: "Pranzo · Menu del giorno",
+  dinner: "La sera · Pizza Fenice",
+  food: "Cibo",
+  "classic-drink": "Bevanda classica",
+  wine: "Vino",
+  champagne: "Champagne",
+  "raw-fish": "Crudo di pesce",
+};
+const productCategories = DEMO_PRODUCT_CATEGORIES.map((value) => ({
+  value,
+  label: productCategoryLabels[value],
+}));
 
 const activityCategories: Array<{ value: DemoActivityCategory; label: string }> = [
   { value: "fishing", label: "Pesca" },
@@ -200,6 +207,7 @@ type CatalogFormInitial = Pick<StandardCatalogInput, "kind" | "category" | "labe
   active: boolean;
   priceCents?: number;
   sortOrder?: number;
+  description?: StandardCatalogInput["description"];
 };
 
 type CatalogFormProps = {
@@ -211,6 +219,7 @@ type CatalogFormProps = {
 function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
   const [category, setCategory] = useState(initial.category);
   const [labels, setLabels] = useState(initial.labels);
+  const [description, setDescription] = useState(initial.description ?? { en: "", it: "", de: "", ru: "" });
   const [price, setPrice] = useState(
     initial.priceCents === undefined ? "" : (initial.priceCents / 100).toFixed(2),
   );
@@ -230,6 +239,7 @@ function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
       const common = {
         id: initial.id,
         labels,
+        description,
         priceCents: parsedPrice,
         active,
         sortOrder: initial.sortOrder,
@@ -297,6 +307,29 @@ function CatalogForm({ initial, labels: copy, onSubmit }: CatalogFormProps) {
             </div>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset className={styles.fieldset}>
+        <legend>Descrizione e dettagli del menu (facoltativi)</legend>
+        <div className={styles.localeGrid}>
+          {(["it", "en", "de", "ru"] as const).map((locale) => (
+            <div className={styles.field} key={locale}>
+              <label htmlFor={`catalog-description-${locale}-${initial.id ?? "new"}`}>
+                Descrizione · {localeLabels[locale]}
+              </label>
+              <textarea
+                id={`catalog-description-${locale}-${initial.id ?? "new"}`}
+                maxLength={600}
+                onChange={(event) => {
+                  setDescription((current) => ({ ...current, [locale]: event.target.value }));
+                  setNotice(null);
+                }}
+                value={description[locale]}
+              />
+            </div>
+          ))}
+        </div>
+        <p>Se aggiungi dettagli, compilali in tutte le lingue. Non indicare prezzi, piatti o orari non confermati.</p>
       </fieldset>
 
       <label className={styles.switchField}>

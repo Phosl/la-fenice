@@ -196,6 +196,8 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
       categoryLabel: "Filter shop products by category",
       categories: {
         all: "All",
+        lunch: "Lunch · Menu of the day",
+        dinner: "Evening · Pizza Fenice",
         food: "Food",
         "classic-drink": "Classic drinks",
         wine: "Wines",
@@ -325,6 +327,8 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
       categoryLabel: "Filtra i prodotti dello shop per categoria",
       categories: {
         all: "Tutto",
+        lunch: "Pranzo · Menu del giorno",
+        dinner: "La sera · Pizza Fenice",
         food: "Cucina",
         "classic-drink": "Bevande",
         wine: "Vini",
@@ -454,6 +458,8 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
       categoryLabel: "Shop-Produkte nach Kategorie filtern",
       categories: {
         all: "Alle",
+        lunch: "Mittagessen · Tagesmenü",
+        dinner: "Am Abend · Pizza Fenice",
         food: "Speisen",
         "classic-drink": "Getränke",
         wine: "Weine",
@@ -583,6 +589,8 @@ export const guestDemoCopy: Record<Locale, GuestCopy> = {
       categoryLabel: "Фильтр товаров магазина по категории",
       categories: {
         all: "Все",
+        lunch: "Обед · Меню дня",
+        dinner: "Вечером · Pizza Fenice",
         food: "Еда",
         "classic-drink": "Напитки",
         wine: "Вина",

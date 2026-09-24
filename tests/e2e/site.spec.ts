@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
+import { getContent } from "../../src/lib/content";
+import { getLocalizedPath, supportedLocales } from "../../src/lib/content/routes";
 
 const INTRO_STORAGE_KEY = "la-fenice-intro-seen";
 
@@ -190,15 +192,73 @@ test("opens and closes the room gallery lightbox", async ({ page }) => {
   await expect(lightbox).not.toBeVisible();
 });
 
-test("availability form exposes the complete request contract", async ({ page }) => {
-  await page.goto("/availability");
-  await expect(page.getByLabel("Name *")).toBeVisible();
-  await expect(page.getByLabel("Email *")).toHaveAttribute("type", "email");
-  await expect(page.getByLabel("Guests *")).toHaveAttribute("min", "1");
-  await expect(page.getByLabel("Check-in *")).toHaveAttribute("type", "date");
-  await expect(page.getByLabel("Check-out *")).toHaveAttribute("type", "date");
-  await expect(page.getByRole("button", { name: /send request/i })).toBeVisible();
-});
+for (const locale of supportedLocales) {
+  test(`availability form highlights dates and stairs in ${locale}`, async ({ page }, testInfo) => {
+    const { pages } = getContent(locale);
+    const { form } = pages.availability;
+    const { stepsNotice } = pages.home;
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(getLocalizedPath("availability", locale));
+    await expectHydrated(page);
+
+    const dateGroup = page.getByRole("group", { name: form.datesTitle });
+    const checkIn = dateGroup.getByLabel(form.fields.checkIn.label);
+    const checkOut = dateGroup.getByLabel(form.fields.checkOut.label);
+    const notice = page.getByRole("complementary", { name: stepsNotice.title });
+    await expect(notice).toContainText(stepsNotice.text);
+    await expect(dateGroup).toHaveAccessibleDescription(`${stepsNotice.title} ${stepsNotice.text}`);
+    await expect(page.getByLabel(form.fields.email.label)).toHaveAttribute("type", "email");
+    await expect(page.getByLabel(form.fields.guests.label)).toHaveAttribute("min", "1");
+    expect(await page.locator('.availability-form input:not([type="hidden"]):not([name="website"])')
+      .evaluateAll((inputs) => inputs.slice(0, 2).map((input) => input.id)))
+      .toEqual(["checkIn", "checkOut"]);
+
+    for (const input of [checkIn, checkOut]) {
+      await expect(input).toHaveAttribute("type", "date");
+      await expect(input).toHaveCSS("font-size", "18px");
+      expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(64);
+    }
+    const arrivalBounds = (await checkIn.boundingBox())!;
+    const departureBounds = (await checkOut.boundingBox())!;
+    if (page.viewportSize()!.width <= 560) {
+      expect(departureBounds.y).toBeGreaterThan(arrivalBounds.y + arrivalBounds.height);
+    } else {
+      expect(departureBounds.y).toBe(arrivalBounds.y);
+    }
+    expect((await notice.boundingBox())!.y).toBeGreaterThan(departureBounds.y + departureBounds.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+    await checkIn.focus();
+    await dateGroup.evaluate((element) => window.scrollTo({
+      top: window.scrollY + element.getBoundingClientRect().top - 100,
+      behavior: "instant",
+    }));
+    await page.screenshot({ path: testInfo.outputPath("availability-dates.png") });
+
+    await page.getByLabel(form.fields.name.label).focus();
+    await page.keyboard.press("Shift+Tab");
+    await expect(checkOut).toBeFocused();
+    await expect(checkOut).toHaveCSS("outline-width", "2px");
+    await expect(checkOut).toHaveCSS("outline-style", "solid");
+    await page.getByRole("button", { name: form.submitLabel, exact: true }).click();
+    await expect(checkIn).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator("#check-in-error")).toHaveText(form.validation.required);
+
+    await checkIn.fill("2099-07-20");
+    await checkOut.fill("2099-07-19");
+    await page.getByLabel(form.fields.name.label).fill("Test Guest");
+    await page.getByLabel(form.fields.email.label).fill("test@example.com");
+    await page.getByLabel(form.fields.guests.label).fill("2");
+    await page.locator('input[name="consent"]').check();
+    // Invalid dates exercise the real server validation without sending an email.
+    await page.getByRole("button", { name: form.submitLabel, exact: true }).click();
+    await expect(checkOut).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator("#check-out-error")).toHaveText(form.validation.invalidDateRange);
+    await expect(notice).toContainText(stepsNotice.text);
+
+    await page.goto(getLocalizedPath("home", locale));
+    await expect(page.locator(".location-tease__accessibility")).toContainText(stepsNotice.text);
+  });
+}
 
 test("German and Russian forms expose localised email-only contracts", async ({ page }) => {
   await page.goto("/de/verfuegbarkeit");

@@ -1,5 +1,49 @@
 [
   {
+    "id": "product-daily-lunch",
+    "slug": "daily-lunch",
+    "kind": "product",
+    "category": "lunch",
+    "sortOrder": 0,
+    "labels": {
+      "en": "Menu of the day",
+      "it": "Menu del giorno",
+      "de": "Tagesmenü",
+      "ru": "Меню дня"
+    },
+    "description": {
+      "en": "Request the daily lunch menu. The team will confirm the dishes, price, availability and time.",
+      "it": "Richiedi il menu del giorno per pranzo. Lo staff confermerà piatti, prezzo, disponibilità e orario.",
+      "de": "Fragen Sie das Tagesmenü zum Mittagessen an. Das Team bestätigt Gerichte, Preis, Verfügbarkeit und Uhrzeit.",
+      "ru": "Запросите меню дня на обед. Команда подтвердит блюда, цену, наличие и время."
+    },
+    "active": true,
+    "createdAt": "2026-09-23T00:00:00.000Z",
+    "updatedAt": "2026-09-23T00:00:00.000Z"
+  },
+  {
+    "id": "product-pizza-fenice",
+    "slug": "pizza-fenice",
+    "kind": "product",
+    "category": "dinner",
+    "sortOrder": 5,
+    "labels": {
+      "en": "Pizza Fenice",
+      "it": "Pizza Fenice",
+      "de": "Pizza Fenice",
+      "ru": "Pizza Fenice"
+    },
+    "description": {
+      "en": "Request Pizza Fenice for the evening. The team will confirm the available options, price and time. This request is not a confirmed order.",
+      "it": "Richiedi Pizza Fenice per la sera. Lo staff confermerà le proposte disponibili, il prezzo e l’orario. La richiesta non è un ordine confermato.",
+      "de": "Fragen Sie Pizza Fenice für den Abend an. Das Team bestätigt die verfügbaren Varianten, den Preis und die Uhrzeit. Die Anfrage ist noch keine bestätigte Bestellung.",
+      "ru": "Запросите Pizza Fenice на вечер. Команда подтвердит доступные варианты, цену и время. Запрос не является подтверждённым заказом."
+    },
+    "active": true,
+    "createdAt": "2026-09-23T00:00:00.000Z",
+    "updatedAt": "2026-09-23T00:00:00.000Z"
+  },
+  {
     "id": "product-caprese-sandwich",
     "slug": "caprese-sandwich",
     "kind": "product",

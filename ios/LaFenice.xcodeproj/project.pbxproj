@@ -1,21 +1,34 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 77;
 	objects = {
-		A10000000000000000000001 /* LaFenice.app */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.application;
-			includeInIndex = 0;
-			path = LaFenice.app;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
+
+/* Begin PBXFileReference section */
+		A10000000000000000000001 /* LaFenice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LaFenice.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
 		A10000000000000000000002 /* LaFenice */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LaFenice;
 			sourceTree = "<group>";
 		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
 		A10000000000000000000003 = {
 			isa = PBXGroup;
 			children = (
@@ -26,45 +39,40 @@
 		};
 		A10000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
-			children = (A10000000000000000000001 /* LaFenice.app */);
+			children = (
+				A10000000000000000000001 /* LaFenice.app */,
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
 		A10000000000000000000005 /* LaFenice */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A10000000000000000000011;
+			buildConfigurationList = A10000000000000000000011 /* Build configuration list for PBXNativeTarget "LaFenice" */;
 			buildPhases = (
 				A10000000000000000000006 /* Sources */,
 				A10000000000000000000007 /* Frameworks */,
 				A10000000000000000000008 /* Resources */,
 			);
-			buildRules = ();
-			dependencies = ();
-			fileSystemSynchronizedGroups = (A10000000000000000000002 /* LaFenice */);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000002 /* LaFenice */,
+			);
 			name = LaFenice;
-			packageProductDependencies = ();
+			packageProductDependencies = (
+			);
 			productName = LaFenice;
 			productReference = A10000000000000000000001 /* LaFenice.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A10000000000000000000006 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = ();
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A10000000000000000000007 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = ();
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A10000000000000000000008 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = ();
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
 		A10000000000000000000009 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
@@ -72,33 +80,54 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					A10000000000000000000005 = { CreatedOnToolsVersion = 16.2; };
+					A10000000000000000000005 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 				};
 			};
-			buildConfigurationList = A10000000000000000000010;
+			buildConfigurationList = A10000000000000000000010 /* Build configuration list for PBXProject "LaFenice" */;
 			developmentRegion = it;
 			hasScannedForEncodings = 0;
-			knownRegions = (it, en, de, ru, Base);
+			knownRegions = (
+				it,
+				en,
+				de,
+				ru,
+				Base,
+			);
 			mainGroup = A10000000000000000000003;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = A10000000000000000000004;
+			productRefGroup = A10000000000000000000004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (A10000000000000000000005 /* LaFenice */);
+			targets = (
+				A10000000000000000000005 /* LaFenice */,
+			);
 		};
-		A10000000000000000000010 = {
-			isa = XCConfigurationList;
-			buildConfigurations = (A10000000000000000000012, A10000000000000000000013);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A10000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A10000000000000000000011 = {
-			isa = XCConfigurationList;
-			buildConfigurations = (A10000000000000000000014, A10000000000000000000015);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A10000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
 		A10000000000000000000012 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -146,7 +175,10 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = it.lafenicepositano.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -173,7 +205,10 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = it.lafenicepositano.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -185,6 +220,28 @@
 			};
 			name = Release;
 		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10000000000000000000010 /* Build configuration list for PBXProject "LaFenice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000012 /* Debug */,
+				A10000000000000000000013 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000011 /* Build configuration list for PBXNativeTarget "LaFenice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000014 /* Debug */,
+				A10000000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
 	};
 	rootObject = A10000000000000000000009 /* Project object */;
 }

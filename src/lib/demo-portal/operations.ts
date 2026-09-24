@@ -24,6 +24,7 @@ import type {
 import {
   DEMO_GUIDE_CATEGORIES,
   DEMO_LOCALES,
+  DEMO_PRODUCT_CATEGORIES,
   DemoPortalError,
 } from "./types";
 
@@ -564,9 +565,7 @@ function validateCatalogInput(input: DemoCatalogItemInput): void {
 
   if (input.kind === "product") {
     if (
-      !["food", "classic-drink", "wine", "champagne", "raw-fish"].includes(
-        input.category,
-      )
+      !DEMO_PRODUCT_CATEGORIES.includes(input.category)
     ) {
       throw new DemoPortalError("invalid_input", "Category and item type do not match.");
     }

@@ -32,7 +32,7 @@ struct GuestOrderView: View {
             ForEach(CatalogItem.productCategories, id: \.self) { category in
                 let items = products.filter { $0.category == category }
                 if !items.isEmpty {
-                    Section(guestCategory(category)) {
+                    Section(guestCategory(category, locale: store.locale)) {
                         ForEach(items) { item in
                             Stepper(value: Binding(get: { quantities[item.id, default: 0] }, set: { quantities[item.id] = $0 }), in: 0...20) {
                                 VStack(alignment: .leading, spacing: 6) {
@@ -60,6 +60,7 @@ struct GuestOrderView: View {
             }
             Section {} footer: { Text("Nessun pagamento nell’app. I prezzi non indicati devono essere confermati dalla struttura.") }
         }
+        .feniceReadableWidth()
         .navigationTitle("Scegli dal menu")
         .navigationBarTitleDisplayMode(.inline)
         .scrollContentBackground(.hidden)
@@ -75,6 +76,7 @@ struct GuestOrderView: View {
                 Text("Il prossimo passo è il riepilogo.").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20).padding(.vertical, 10)
+            .feniceReadableWidth()
             .background(.regularMaterial)
         }
         .sheet(item: $review) { draft in
@@ -207,6 +209,7 @@ struct GuestExperienceForm: View {
                 .accessibilityIdentifier("guest.experience.review")
             }
         }
+        .feniceReadableWidth()
         .navigationTitle(item.kind == .guide ? "Richiedi assistenza" : "Richiedi esperienza")
         .navigationBarTitleDisplayMode(.inline)
         .scrollContentBackground(.hidden)

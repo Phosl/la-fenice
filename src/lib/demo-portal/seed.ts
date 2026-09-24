@@ -5,6 +5,7 @@ import type {
   DemoCatalogItem,
   DemoLocalizedLabel,
   DemoPortalState,
+  DemoProductCatalogItem,
 } from "./types";
 import { DEMO_PORTAL_VERSION } from "./types";
 
@@ -25,10 +26,47 @@ const labels = (
   ru: string,
 ): DemoLocalizedLabel => ({ en, it, de, ru });
 
+export function createDiningSeedCatalog(timestamp: string): DemoProductCatalogItem[] {
+  const shared = { active: true, createdAt: timestamp, updatedAt: timestamp };
+  return [
+    {
+      id: "product-daily-lunch",
+      slug: "daily-lunch",
+      kind: "product",
+      category: "lunch",
+      sortOrder: 0,
+      labels: labels("Menu of the day", "Menu del giorno", "Tagesmenü", "Меню дня"),
+      description: labels(
+        "Request the daily lunch menu. The team will confirm the dishes, price, availability and time.",
+        "Richiedi il menu del giorno per pranzo. Lo staff confermerà piatti, prezzo, disponibilità e orario.",
+        "Fragen Sie das Tagesmenü zum Mittagessen an. Das Team bestätigt Gerichte, Preis, Verfügbarkeit und Uhrzeit.",
+        "Запросите меню дня на обед. Команда подтвердит блюда, цену, наличие и время.",
+      ),
+      ...shared,
+    },
+    {
+      id: "product-pizza-fenice",
+      slug: "pizza-fenice",
+      kind: "product",
+      category: "dinner",
+      sortOrder: 5,
+      labels: labels("Pizza Fenice", "Pizza Fenice", "Pizza Fenice", "Pizza Fenice"),
+      description: labels(
+        "Request Pizza Fenice for the evening. The team will confirm the available options, price and time. This request is not a confirmed order.",
+        "Richiedi Pizza Fenice per la sera. Lo staff confermerà le proposte disponibili, il prezzo e l’orario. La richiesta non è un ordine confermato.",
+        "Fragen Sie Pizza Fenice für den Abend an. Das Team bestätigt die verfügbaren Varianten, den Preis und die Uhrzeit. Die Anfrage ist noch keine bestätigte Bestellung.",
+        "Запросите Pizza Fenice на вечер. Команда подтвердит доступные варианты, цену и время. Запрос не является подтверждённым заказом.",
+      ),
+      ...shared,
+    },
+  ];
+}
+
 function createSeedCatalog(timestamp: string): DemoCatalogItem[] {
   const shared = { active: true, priceCents: undefined, createdAt: timestamp, updatedAt: timestamp };
 
   return [
+    ...createDiningSeedCatalog(timestamp),
     { id: "product-caprese-sandwich", slug: "caprese-sandwich", kind: "product", category: "food", sortOrder: 10, labels: labels("Caprese sandwich", "Panino caprese", "Caprese-Sandwich", "Сэндвич «Капрезе»"), ...shared },
     { id: "product-tuna-tomato-sandwich", slug: "tuna-tomato-sandwich", kind: "product", category: "food", sortOrder: 20, labels: labels("Tuna and tomato sandwich", "Panino tonno e pomodoro", "Thunfisch-Tomaten-Sandwich", "Сэндвич с тунцом и помидорами"), ...shared },
     { id: "product-caprese", slug: "caprese", kind: "product", category: "food", sortOrder: 30, labels: labels("Caprese", "Caprese", "Caprese", "Капрезе"), ...shared },

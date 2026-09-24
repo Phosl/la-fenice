@@ -87,13 +87,36 @@ describe("demo calendar", () => {
 });
 
 describe("demo seed and credentials", () => {
+  it("offers translated lunch and evening requests without invented prices", () => {
+    for (const [id, category] of [["product-daily-lunch", "lunch"], ["product-pizza-fenice", "dinner"]] as const) {
+      const item = seed.catalog.find((candidate) => candidate.id === id)!;
+      expect(item).toMatchObject({ kind: "product", category, active: true });
+      expect(item).not.toHaveProperty("priceCents");
+      for (const locale of ["en", "it", "de", "ru"] as const) {
+        expect(item.labels[locale].trim()).not.toBe("");
+        expect(item.description?.[locale].trim()).not.toBe("");
+      }
+      const saved = saveAdminCatalogItem(seed, adminSession(), {
+        ...item, kind: "product", category, priceCents: undefined,
+      });
+      expect(saved.item).toMatchObject({ id, category, description: item.description });
+      const result = createGuestOrder(saved.state, guestSession(), {
+        serviceDate: "2026-08-01", location: "room", requestedTime: category === "lunch" ? "13:00" : "20:00",
+        lines: [{ catalogItemId: id, quantity: 2 }],
+      }, "2026-08-01", fixedNow);
+      expect(result.order.status).toBe("pending");
+      expect(result.order.lines[0]).toMatchObject({ catalogItemId: id, quantity: 2, labelSnapshot: item.labels });
+      expect(result.order.lines[0].unitPriceCents).toBeUndefined();
+    }
+  });
+
   it("creates an active stay around today and the complete catalog", () => {
     const stay = seed.stays[0];
     const guide = seed.catalog.filter((item) => item.kind === "guide");
 
     expect(stay.checkIn).toBe("2026-07-30");
     expect(stay.checkOut).toBe("2026-08-05");
-    expect(seed.catalog.filter(({ kind }) => kind === "product")).toHaveLength(8);
+    expect(seed.catalog.filter(({ kind }) => kind === "product")).toHaveLength(10);
     expect(seed.catalog.filter(({ kind }) => kind === "activity")).toHaveLength(3);
     expect(guide).toHaveLength(24);
     expect(guide.filter((item) => item.requestable)).toHaveLength(7);

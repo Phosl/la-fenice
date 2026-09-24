@@ -201,6 +201,7 @@ export interface FormFieldCopy {
 
 export interface AvailabilityFormCopy {
   title: string;
+  datesTitle: string;
   requiredHint: string;
   honeypotLabel: string;
   fields: Record<AvailabilityField, FormFieldCopy>;

@@ -1,4 +1,5 @@
 import { createGuideSeedCatalog } from "./guide-seed";
+import { createDiningSeedCatalog } from "./seed";
 import type {
   DemoAccount,
   DemoActivityCatalogItem,
@@ -19,6 +20,8 @@ import {
   DEMO_GUIDE_CATEGORIES,
   DEMO_LOCALES,
   DEMO_PORTAL_VERSION,
+  DEMO_PRODUCT_CATEGORIES,
+  DemoPortalError,
 } from "./types";
 
 export const DEMO_STATE_STORAGE_KEY = "la-fenice:demo-portal:v4";
@@ -135,7 +138,7 @@ function isProductCatalogItem(value: unknown): value is DemoProductCatalogItem {
     return false;
   }
   return (
-    ["food", "classic-drink", "wine", "champagne", "raw-fish"].includes(
+    DEMO_PRODUCT_CATEGORIES.includes(
       value.category as DemoProductCatalogItem["category"],
     ) && hasOptionalPrice(value)
   );
@@ -309,16 +312,32 @@ export function migrateDemoPortalStateV3(
   now = new Date(),
 ): DemoPortalState {
   const timestamp = now.toISOString();
-  const existingIds = new Set(legacy.catalog.map((item) => item.id));
-  const guideCatalog = createGuideSeedCatalog(timestamp).filter(
-    (item) => !existingIds.has(item.id),
+  const additions = [...createGuideSeedCatalog(timestamp), ...createDiningSeedCatalog(timestamp)].filter(
+    (item) => !legacy.catalog.some((existing) => existing.id === item.id || existing.slug === item.slug),
   );
   return {
     ...legacy,
     version: DEMO_PORTAL_VERSION,
     revision: legacy.revision + 1,
-    catalog: [...legacy.catalog, ...guideCatalog],
+    catalog: [...legacy.catalog, ...additions],
     guideRequests: [],
+    updatedAt: timestamp,
+  };
+}
+
+export function addMissingDiningCatalog(
+  state: DemoPortalState,
+  now = new Date(),
+): DemoPortalState {
+  const timestamp = now.toISOString();
+  const additions = createDiningSeedCatalog(timestamp).filter(
+    (item) => !state.catalog.some((existing) => existing.id === item.id || existing.slug === item.slug),
+  );
+  if (!additions.length) return state;
+  return {
+    ...state,
+    catalog: [...state.catalog, ...additions],
+    revision: state.revision + 1,
     updatedAt: timestamp,
   };
 }
@@ -335,18 +354,42 @@ function parseStoredValue(storage: Storage, key: string): unknown {
 export function loadDemoState(): DemoPortalState | null {
   if (typeof window === "undefined") return null;
   try {
+    const currentRaw = window.localStorage.getItem(DEMO_STATE_STORAGE_KEY);
     const current = parseStoredValue(window.localStorage, DEMO_STATE_STORAGE_KEY);
-    if (isDemoPortalState(current)) return current;
+    if (currentRaw !== null) {
+      if (!isDemoPortalState(current)) {
+        throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+      }
+      const updated = addMissingDiningCatalog(current);
+      if (updated === current) return current;
+      const result = saveDemoState(updated, current.revision);
+      if (result.ok) return updated;
+      if (result.reason === "concurrent_update") return result.current ?? current;
+      if (result.reason === "invalid_storage") {
+        throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+      }
+      return current;
+    }
 
+    const legacyRaw = window.localStorage.getItem(DEMO_LEGACY_STATE_STORAGE_KEY);
     const legacy = parseStoredValue(
       window.localStorage,
       DEMO_LEGACY_STATE_STORAGE_KEY,
     );
-    if (!isDemoPortalStateV3(legacy)) return null;
+    if (!isDemoPortalStateV3(legacy)) {
+      if (legacyRaw !== null) {
+        throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+      }
+      return null;
+    }
     const migrated = migrateDemoPortalStateV3(legacy);
-    saveDemoState(migrated);
+    const result = saveDemoState(migrated);
+    if (!result.ok && result.reason === "invalid_storage") {
+      throw new DemoPortalError("invalid_storage", "Saved demo data is unreadable. It has not been changed.");
+    }
     return migrated;
-  } catch {
+  } catch (error) {
+    if (error instanceof DemoPortalError) throw error;
     return null;
   }
 }
@@ -354,6 +397,7 @@ export function loadDemoState(): DemoPortalState | null {
 export type DemoStateSaveResult =
   | { ok: true }
   | { ok: false; reason: "storage_unavailable" }
+  | { ok: false; reason: "invalid_storage" }
   | { ok: false; reason: "concurrent_update"; current: DemoPortalState | null };
 
 export function saveDemoState(
@@ -364,8 +408,12 @@ export function saveDemoState(
     return { ok: false, reason: "storage_unavailable" };
   }
   try {
+    const raw = window.localStorage.getItem(DEMO_STATE_STORAGE_KEY);
+    const parsed = parseStoredValue(window.localStorage, DEMO_STATE_STORAGE_KEY);
+    if (raw !== null && !isDemoPortalState(parsed)) {
+      return { ok: false, reason: "invalid_storage" };
+    }
     if (expectedRevision !== undefined) {
-      const parsed = parseStoredValue(window.localStorage, DEMO_STATE_STORAGE_KEY);
       const current = isDemoPortalState(parsed) ? parsed : null;
       if (current && current.revision !== expectedRevision) {
         return { ok: false, reason: "concurrent_update", current };

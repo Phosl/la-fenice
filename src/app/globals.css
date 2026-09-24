@@ -1899,6 +1899,56 @@ img {
   border-bottom-color: #a52b3c;
 }
 
+.availability-dates {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.availability-dates legend {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  line-height: 1.2;
+  margin-bottom: 24px;
+  padding: 0;
+}
+
+.availability-dates .field input {
+  background: var(--ivory-deep);
+  border: 1px solid var(--line);
+  font-size: 18px;
+  min-height: 64px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.availability-dates .field input:focus-within {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 3px;
+}
+
+.availability-dates .field [aria-invalid="true"] {
+  border-color: #a52b3c;
+}
+
+.availability-steps {
+  background: var(--ivory-deep);
+  border-left: 2px solid var(--sea);
+  color: var(--ink-soft);
+  font-size: .88rem;
+  line-height: 1.6;
+  padding: 16px 20px;
+}
+
+.availability-steps strong {
+  color: var(--cobalt);
+}
+
+.availability-steps p {
+  margin: 6px 0 0;
+}
+
 .field-error {
   color: #8c2535;
   font-size: .74rem;

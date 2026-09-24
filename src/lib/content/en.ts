@@ -229,8 +229,8 @@ export const englishContent = {
         ],
       },
       stepsNotice: {
-        title: "Accessibility",
-        text: "Many steps connect the road, rooms, gardens and sea. Please write before your stay about any mobility needs.",
+        title: "A note about the stairs",
+        text: "La Fenice is set across several levels connected by many stairs. The property may not be suitable for guests with reduced mobility or difficulty using stairs. Please contact us before booking so we can discuss your needs together.",
       },
       estate: {
         eyebrow: "Explore the property", title: "Many levels. One sea.",
@@ -535,6 +535,7 @@ export const englishContent = {
       heroImage: availabilityImage,
       form: {
         title: "Your request",
+        datesTitle: "Choose your dates",
         requiredHint: "Fields marked with * are required.",
         honeypotLabel: "Website",
         fields: {

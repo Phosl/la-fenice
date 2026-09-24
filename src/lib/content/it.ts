@@ -229,8 +229,8 @@ export const italianContent = {
         ],
       },
       stepsNotice: {
-        title: "Accessibilità",
-        text: "Molti gradini collegano strada, camere, giardini e mare. Scrivici prima del soggiorno per esigenze di mobilità.",
+        title: "Una nota sulle scale",
+        text: "La Fenice si sviluppa su più livelli collegati da numerose scale. La struttura può non essere adatta a chi ha mobilità ridotta o difficoltà a percorrere le scale. Contattaci prima di prenotare per valutare insieme le tue esigenze.",
       },
       estate: {
         eyebrow: "Esplora la casa",
@@ -536,6 +536,7 @@ export const italianContent = {
       heroImage: availabilityImage,
       form: {
         title: "La tua richiesta",
+        datesTitle: "Scegli le date",
         requiredHint: "I campi contrassegnati con * sono obbligatori.",
         honeypotLabel: "Sito web",
         fields: {
